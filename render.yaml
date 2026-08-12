@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fixmaadi-whatsapp-bot
+    env: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
