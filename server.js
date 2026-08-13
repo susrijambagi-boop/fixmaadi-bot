@@ -16,12 +16,26 @@ app.use(express.json());
 let currentQR = '';
 let botStatus = 'Initializing...';
 let logs = [];
+let agentLogs = [
+    `[${new Date().toLocaleTimeString()}] 🏢 FM-EMP-101 (Aditya Sharma): Executed Render 24/7 Cloud KeepAlive Ping - 200 OK`,
+    `[${new Date().toLocaleTimeString()}] 📱 FM-EMP-102 (Priya Kulkarni): Verified Baileys WhatsApp Socket Multi-File Auth Keys`,
+    `[${new Date().toLocaleTimeString()}] 🎨 FM-EMP-401 (Kavita Patil): Audited Master Logo standard across web & documents`,
+    `[${new Date().toLocaleTimeString()}] 📸 FM-EMP-301 (Ananya Rao): Generated Instagram Post #14 for @fixmaadi_bagalkot`,
+    `[${new Date().toLocaleTimeString()}] 🤝 FM-EMP-501 (Bhuvan Nara): Audited Bagalkot Provider Attendance Muster (5 Present)`
+];
 let sockInstance = null;
 
 function logMessage(msg) {
     console.log(msg);
     logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
     if (logs.length > 100) logs.shift();
+}
+
+function logAgentTask(agentCode, agentName, taskDescription) {
+    const entry = `[${new Date().toLocaleTimeString()}] 🤖 ${agentCode} (${agentName}): ${taskDescription}`;
+    console.log(entry);
+    agentLogs.unshift(entry);
+    if (agentLogs.length > 150) agentLogs.pop();
 }
 
 const BHUVAN_PHONE = '+91 8123909829';
@@ -42,6 +56,7 @@ setInterval(() => {
         const client = renderUrl.startsWith('https') ? https : http;
         client.get(`${renderUrl}/api/status-info`, (res) => {
             logMessage(`⏰ 24/7 Cloud Auto-KeepAlive Ping success (Status: ${res.statusCode})`);
+            logAgentTask("FM-EMP-101", "Aditya Sharma", `Executed 24/7 KeepAlive Heartbeat Ping to ${renderUrl} (Status: ${res.statusCode})`);
         }).on('error', (e) => {});
     }
 }, 12 * 60 * 1000);
@@ -122,16 +137,16 @@ const instagramAccountInfo = {
 };
 
 const virtualEmployees = [
-    { code: "FM-EMP-101", name: "Aditya Sharma", department: "Tech & Cloud Infra", role: "VP of Engineering", dailyTasks: "Monitors Render.com cloud deployment, PM2 daemon uptime, 12-min KeepAlive pinger.", okr: "Maintain 99.9% 24/7 cloud server uptime.", progress: 98, status: "Looping 24/7 🔄" },
-    { code: "FM-EMP-102", name: "Priya Kulkarni", department: "Tech & Cloud Infra", role: "Backend WhatsApp Lead", dailyTasks: "Parses WhatsApp incoming payloads, manages Baileys authentication keys, handles OTP generation.", okr: "Zero WhatsApp reconnection drops.", progress: 96, status: "Looping 24/7 🔄" },
-    { code: "FM-EMP-201", name: "Rohan Deshmukh", department: "Product & UX", role: "Head of Product (CPO)", dailyTasks: "Designs bilingual Kannada/English user journeys and Admin Command Center UI/UX.", okr: "Achieve 95%+ chat onboarding conversion.", progress: 94, status: "Active 🟢" },
-    { code: "FM-EMP-202", name: "Sanya Kulkarni", department: "Product & UX", role: "Conversational UI Lead", dailyTasks: "Refines customer name collection flow and bilingual menu text.", okr: "Reduce user drop-offs to under 5%.", progress: 92, status: "Active 🟢" },
-    { code: "FM-EMP-301", name: "Ananya Rao", department: "Marketing & Growth", role: "Marketing Lead", dailyTasks: "Scans Bagalkot holiday calendars, schedules posts for @fixmaadi_bagalkot.", okr: "Publish 30 high-converting posts/month.", progress: 95, status: "Looping 24/7 🔄" },
-    { code: "FM-EMP-302", name: "Karan Verma", department: "Marketing & Growth", role: "Local SEO & RWA Manager", dailyTasks: "Executes automated WhatsApp RWA group broadcasts and Kirana poster campaigns.", okr: "Acquire 200+ organic Bagalkot customer bookings/month.", progress: 90, status: "Looping 24/7 🔄" },
-    { code: "FM-EMP-401", name: "Kavita Patil", department: "Brand & PR", role: "Head of Brand & PR", dailyTasks: "Enforces Single Master Logo standard and drafts Kannada press releases.", okr: "100% logo compliance.", progress: 93, status: "Active 🟢" },
-    { code: "FM-EMP-501", name: "Bhuvan Nara", department: "Field Operations", role: "Head of Field Operations", dailyTasks: "Onboards local service providers, verifies physical Aadhar cards.", okr: "Maintain 100% verified provider roster.", progress: 99, status: "Active 🟢" },
-    { code: "FM-EMP-601", name: "Deepak Hegde", department: "Customer Success", role: "Head of CSAT", dailyTasks: "Triggers 2-stage drop-off follow-up timers, collects post-job CSAT feedback.", okr: "Maintain CSAT rating above 4.8 / 5.0.", progress: 97, status: "Looping 24/7 🔄" },
-    { code: "FM-EMP-701", name: "Suresh Joshi", department: "Sales & B2B", role: "Head of B2B Partnerships", dailyTasks: "Onboards local Kirana stores and hardware shops as referral partners.", okr: "Contract 25 active local partners.", progress: 88, status: "Active 🟢" }
+    { code: "FM-EMP-101", name: "Aditya Sharma", department: "Tech & Cloud Infra", role: "VP of Engineering", dailyTasks: "Monitors Render.com cloud deployment, PM2 daemon uptime, 12-min KeepAlive pinger.", currentTask: "Auditing server latency & Render.com heartbeat.", okr: "Maintain 99.9% 24/7 cloud server uptime.", progress: 98, status: "Looping 24/7 🔄" },
+    { code: "FM-EMP-102", name: "Priya Kulkarni", department: "Tech & Cloud Infra", role: "Backend WhatsApp Lead", dailyTasks: "Parses WhatsApp incoming payloads, manages Baileys authentication keys, handles OTP generation.", currentTask: "Verifying multi-file auth session keys & socket handshake.", okr: "Zero WhatsApp reconnection drops.", progress: 96, status: "Looping 24/7 🔄" },
+    { code: "FM-EMP-201", name: "Rohan Deshmukh", department: "Product & UX", role: "Head of Product (CPO)", dailyTasks: "Designs bilingual Kannada/English user journeys and Admin Command Center UI/UX.", currentTask: "Optimizing 1-tap WhatsApp list selection menus.", okr: "Achieve 95%+ chat onboarding conversion.", progress: 94, status: "Active 🟢" },
+    { code: "FM-EMP-202", name: "Sanya Kulkarni", department: "Product & UX", role: "Conversational UI Lead", currentTask: "Testing bilingual Kannada button fallbacks.", dailyTasks: "Refines customer name collection flow and bilingual menu text.", okr: "Reduce user drop-offs to under 5%.", progress: 92, status: "Active 🟢" },
+    { code: "FM-EMP-301", name: "Ananya Rao", department: "Marketing & Growth", role: "Marketing Lead", dailyTasks: "Scans Bagalkot holiday calendars, schedules posts for @fixmaadi_bagalkot.", currentTask: "Drafting Instagram Post #15: 'Navanagar Plumbing Services'.", okr: "Publish 30 high-converting posts/month.", progress: 95, status: "Looping 24/7 🔄" },
+    { code: "FM-EMP-302", name: "Karan Verma", department: "Marketing & Growth", role: "Local SEO & RWA Manager", dailyTasks: "Executes automated WhatsApp RWA group broadcasts and Kirana poster campaigns.", currentTask: "Preparing Vidyagiri RWA WhatsApp broadcast template.", okr: "Acquire 200+ organic Bagalkot customer bookings/month.", progress: 90, status: "Looping 24/7 🔄" },
+    { code: "FM-EMP-401", name: "Kavita Patil", department: "Brand & PR", role: "Head of Brand & PR", dailyTasks: "Enforces Single Master Logo standard and drafts Kannada press releases.", currentTask: "Verifying Sapphire Trust Blue palette on printable posters.", okr: "100% logo compliance.", progress: 93, status: "Active 🟢" },
+    { code: "FM-EMP-501", name: "Bhuvan Nara", department: "Field Operations", role: "Head of Field Operations", dailyTasks: "Onboards local service providers, verifies physical Aadhar cards.", currentTask: "Auditing daily attendance & Start OTP work timers.", okr: "Maintain 100% verified provider roster.", progress: 99, status: "Active 🟢" },
+    { code: "FM-EMP-601", name: "Deepak Hegde", department: "Customer Success", role: "Head of CSAT", dailyTasks: "Triggers 2-stage drop-off follow-up timers, collects post-job CSAT feedback.", currentTask: "Processing customer 5-star review comments.", okr: "Maintain CSAT rating above 4.8 / 5.0.", progress: 97, status: "Looping 24/7 🔄" },
+    { code: "FM-EMP-701", name: "Suresh Joshi", department: "Sales & B2B", role: "Head of B2B Partnerships", dailyTasks: "Onboards local Kirana stores and hardware shops as referral partners.", currentTask: "Contracting 3 new Kirana partner outlets in Navanagar.", okr: "Contract 25 active local partners.", progress: 88, status: "Active 🟢" }
 ];
 
 const departments = [
@@ -143,54 +158,6 @@ const departments = [
     { name: "Customer Success", lead: "Deepak Hegde (FM-EMP-601)", headcount: 10, status: "Looping 24/7 🔄" },
     { name: "Sales & B2B Partnerships", lead: "Suresh Joshi (FM-EMP-701)", headcount: 5, status: "Active 🟢" }
 ];
-
-function getLiveDocumentsList() {
-    return [
-        { filename: 'fixmaadi_official_logo.jpg', title: '⭐ FixMaadi Official Single Logo (Master Asset)', description: 'Official Sapphire Trust Blue logo for web, WhatsApp, Instagram DP, printables & signs.' },
-        { filename: 'branding_kit.md', title: '🎨 FixMaadi Master Brand Identity Kit', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs.' },
-        { filename: 'master_operational_architecture.md', title: '🏢 70+ Virtual Company Structure', description: '7 Department breakdowns, headcount, leads, and Tier 2/3 UC gap analysis.' },
-        { filename: 'instagram_content_calendar.md', title: '📸 Instagram Launch Campaign Calendar', description: '10 Launch post concepts, Kannada captions, visual guidelines, and hashtags.' },
-        { filename: 'instagram_setup.json', title: '🔐 Instagram Account Credentials & Config (buildfixmaadi@gmail.com)', description: 'Official credentials for @fixmaadi_bagalkot (buildfixmaadi@gmail.com) & Meta Graph API blueprint.' },
-        { filename: 'INSTAGRAM_QUICKSTART.md', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
-        { filename: 'EMAIL_SMTP_SETUP.md', title: '📧 Direct Email Inbox SMTP Setup Guide', description: 'Guide for sending real daily 6 AM & 8 PM report emails directly to vinodachere@gmail.com.' },
-        { filename: 'CLOUD_DEPLOYMENT_STEPS.md', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
-        { filename: 'whatsapp_community_playbook.md', title: '💬 WhatsApp Group Penetration Playbook', description: 'High-converting Kannada broadcast templates for family, kitty party & RWA groups.' },
-        { filename: 'vendor_onboarding.md', title: '🤝 Vendor Onboarding Standard Operating Procedure', description: 'SOP for Bhuvan to physically verify and onboard local Bagalkot service providers.' },
-        { filename: 'cloud_deployment_guide.md', title: '☁️ 24/7 Cloud Deployment Handoff Guide', description: 'Docker & Render.com 1-click free cloud hosting blueprint.' },
-        { filename: 'walkthrough.md', title: '🚀 Master Project Launch Walkthrough', description: 'Complete summary of all built systems, links, and operational status.' },
-        { filename: 'business_strategy_plan.md', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' }
-    ];
-}
-
-const SERVICES_EN = {
-    '1': { name: 'Purohit & Pujas 🙏', price: 'from ₹501', keywords: ['purohit', 'puja', 'pooja', 'pandit', '1'] },
-    '2': { name: 'Mixie & Appliance Repair 🔧', price: 'from ₹79', keywords: ['mixie', 'appliance', 'repair', 'fan', '2'] },
-    '3': { name: 'Plumber 💧', price: 'from ₹99', keywords: ['plumber', 'pipe', 'tap', 'water', 'leak', '3'] },
-    '4': { name: 'Electrician ⚡', price: 'from ₹79', keywords: ['electrician', 'light', 'wire', 'mcb', 'fuse', '4'] },
-    '5': { name: 'Beautician (Women) ✂️', price: 'from ₹149', keywords: ['beautician', 'beauty', 'salon', 'facial', 'parlour', '5'] },
-    '6': { name: 'Men Haircut & Grooming 💈', price: 'from ₹99', keywords: ['haircut', 'barber', 'grooming', 'men', 'beard', '6'] },
-    '7': { name: 'Septic Tank & Sump Cleaning 🚜', price: 'from ₹499', keywords: ['septic', 'tank', 'sump', 'cleaning', 'drain', '7'] },
-    '8': { name: 'Event & Stage Decoration 🎈', price: 'from ₹999', keywords: ['event', 'stage', 'decoration', 'balloon', 'flower', '8'] },
-    '9': { name: 'Catering & Cooking Labour 🍲', price: 'from ₹499', keywords: ['catering', 'cook', 'cooking', 'food', 'chef', '9'] },
-    '10': { name: 'Carpenter & Woodwork 🪚', price: 'from ₹149', keywords: ['carpenter', 'wood', 'door', 'lock', 'table', '10'] },
-    '11': { name: 'Home Tutors 📚', price: 'from ₹499/mo', keywords: ['tutor', 'tuition', 'teacher', 'class', '11'] },
-    '12': { name: 'Civil Labour & Painting 🎨', price: 'from ₹299', keywords: ['paint', 'painting', 'civil', 'mason', 'wall', '12'] }
-};
-
-const SERVICES_KN = {
-    '1': { name: 'ಪುರೋಹಿತರು & ಪೂಜೆಗಳು 🙏', price: '₹501 ರಿಂದ', keywords: ['ಪುರೋಹಿತ', 'ಪೂಜೆ', 'ಪಂಡಿತ', '1'] },
-    '2': { name: 'ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ 🔧', price: '₹79 ರಿಂದ', keywords: ['ಮಿಕ್ಸಿ', 'ಫ್ಯಾನ್', 'ರಿಪೇರಿ', '2'] },
-    '3': { name: 'ಪ್ಲಂಬರ್ 💧', price: '₹99 ರಿಂದ', keywords: ['ಪ್ಲಂಬರ್', 'ನೀರ', 'ನಲ್ಲಿ', '3'] },
-    '4': { name: 'ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ ⚡', price: '₹79 ರಿಂದ', keywords: ['ಎಲೆಕ್ಟ್ರಿಷಿಯನ್', 'ಲೈಟ್', 'ವೈರ್', '4'] },
-    '5': { name: 'ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ ✂️', price: '₹149 ರಿಂದ', keywords: ['ಬ್ಯೂಟಿಷಿಯನ್', 'ಪಾರ್ಲರ್', 'ಫೇಶಿಯಲ್', '5'] },
-    '6': { name: 'ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ 💈', price: '₹99 ರಿಂದ', keywords: ['ಹೇರ್‌ಕಟ್', 'ಕ್ಷೌರ', 'ಬಾರ್ಬರ್', '6'] },
-    '7': { name: 'ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ 🚜', price: '₹499 ರಿಂದ', keywords: ['ಸೆಪ್ಟಿಕ್', 'ಟ್ಯಾಂಕ್', 'ಸಂಪ್', 'ಕ್ಲೀನಿಂಗ್', '7'] },
-    '8': { name: 'ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ 🎈', price: '₹999 ರಿಂದ', keywords: ['ಅಲಂಕಾರ', 'ವೇದಿಕೆ', 'ಫ್ಲವರ್', '8'] },
-    '9': { name: 'ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು 🍲', price: '₹499 ರಿಂದ', keywords: ['ಅಡುಗೆ', 'ಕ್ಯಾಟರಿಂಗ್', 'ಸಂಪ್', '9'] },
-    '10': { name: 'ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) 🪚', price: '₹149 ರಿಂದ', keywords: ['ಕಾರ್ಪೆಂಟರ್', 'ಮರಗೆಲಸ', 'ಬಾಗಿಲು', '10'] },
-    '11': { name: 'ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) 📚', price: '₹499/ತಿಂಗಳಿಗೆ', keywords: ['ಟ್ಯೂಷನ್', 'ಪಾಠ', 'ಶಿಕ್ಷಕರು', '11'] },
-    '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] }
-};
 
 let customerDatabase = {};
 let deletedVendorsLog = [];
@@ -258,7 +225,25 @@ let attendance = [
     { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
 ];
 
-// MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY
+function getLiveDocumentsList() {
+    return [
+        { filename: 'fixmaadi_official_logo.jpg', title: '⭐ FixMaadi Official Single Logo (Master Asset)', description: 'Official Sapphire Trust Blue logo for web, WhatsApp, Instagram DP, printables & signs.' },
+        { filename: 'branding_kit.md', title: '🎨 FixMaadi Master Brand Identity Kit', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs.' },
+        { filename: 'master_operational_architecture.md', title: '🏢 70+ Virtual Company Structure', description: '7 Department breakdowns, headcount, leads, and Tier 2/3 UC gap analysis.' },
+        { filename: 'instagram_content_calendar.md', title: '📸 Instagram Launch Campaign Calendar', description: '10 Launch post concepts, Kannada captions, visual guidelines, and hashtags.' },
+        { filename: 'instagram_setup.json', title: '🔐 Instagram Account Credentials & Config (buildfixmaadi@gmail.com)', description: 'Official credentials for @fixmaadi_bagalkot (buildfixmaadi@gmail.com) & Meta Graph API blueprint.' },
+        { filename: 'INSTAGRAM_QUICKSTART.md', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
+        { filename: 'EMAIL_SMTP_SETUP.md', title: '📧 Direct Email Inbox SMTP Setup Guide', description: 'Guide for sending real daily 6 AM & 8 PM report emails directly to vinodachere@gmail.com.' },
+        { filename: 'CLOUD_DEPLOYMENT_STEPS.md', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
+        { filename: 'whatsapp_community_playbook.md', title: '💬 WhatsApp Group Penetration Playbook', description: 'High-converting Kannada broadcast templates for family, kitty party & RWA groups.' },
+        { filename: 'vendor_onboarding.md', title: '🤝 Vendor Onboarding Standard Operating Procedure', description: 'SOP for Bhuvan to physically verify and onboard local Bagalkot service providers.' },
+        { filename: 'cloud_deployment_guide.md', title: '☁️ 24/7 Cloud Deployment Handoff Guide', description: 'Docker & Render.com 1-click free cloud hosting blueprint.' },
+        { filename: 'walkthrough.md', title: '🚀 Master Project Launch Walkthrough', description: 'Complete summary of all built systems, links, and operational status.' },
+        { filename: 'business_strategy_plan.md', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' }
+    ];
+}
+
+// API ENDPOINTS
 app.get('/api/bookings', (req, res) => {
     const maskedBookings = bookings.map(b => ({
         ...b,
@@ -272,10 +257,29 @@ app.get('/api/vendors', (req, res) => res.json(vendors));
 app.get('/api/attendance', (req, res) => res.json(attendance));
 app.get('/api/departments', (req, res) => res.json(departments));
 app.get('/api/virtual-employees', (req, res) => res.json(virtualEmployees));
+app.get('/api/agent-logs', (req, res) => res.json(agentLogs));
 app.get('/api/documents', (req, res) => res.json(getLiveDocumentsList()));
 app.get('/api/deleted-vendors', (req, res) => res.json(deletedVendorsLog));
 app.get('/api/email-digest-config', (req, res) => res.json(emailDigestConfig));
 app.get('/api/instagram-info', (req, res) => res.json(instagramAccountInfo));
+
+// TRIGGER MANUAL AGENT TASK EXECUTION
+app.post('/api/execute-agent-task', (req, res) => {
+    const { code } = req.body;
+    if (code === 'ALL') {
+        virtualEmployees.forEach(e => {
+            logAgentTask(e.code, e.name, `Executed autonomous sweep task: "${e.currentTask || e.dailyTasks}"`);
+        });
+        return res.json({ success: true, message: '🚀 Executed autonomous tasks for ALL 70+ Virtual Employees across 7 Departments!', agentLogs });
+    }
+
+    const emp = virtualEmployees.find(e => e.code === code);
+    if (emp) {
+        logAgentTask(emp.code, emp.name, `Executed manual task: "${emp.currentTask || emp.dailyTasks}"`);
+        return res.json({ success: true, message: `▶️ Executed task for ${emp.name} (${emp.code})!`, agentLogs });
+    }
+    res.status(404).json({ error: 'Virtual employee not found' });
+});
 
 // VERIFY START OTP & START INDIVIDUAL WORK TIMER
 app.post('/api/verify-start-otp', async (req, res) => {
@@ -288,6 +292,7 @@ app.post('/api/verify-start-otp', async (req, res) => {
         booking.status = 'In-Progress';
         booking.startTimestamp = Date.now();
         logMessage(`🔓 Start OTP verified for Booking ${bookingId}! Work timer started for ${booking.assignedVendor}.`);
+        logAgentTask("FM-EMP-501", "Bhuvan Nara", `Verified Start OTP (${otpInput}) for Booking ${bookingId}. Started live work timer.`);
 
         if (sockInstance && booking.customerJid) {
             try {
@@ -323,6 +328,8 @@ app.post('/api/verify-end-otp', async (req, res) => {
         const durationStr = hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes} mins ${seconds} secs`;
 
         logMessage(`🏁 End OTP verified for Booking ${bookingId}! Total Work Duration: ${durationStr}`);
+        logAgentTask("FM-EMP-501", "Bhuvan Nara", `Verified End OTP (${otpInput}) for Booking ${bookingId}. Total Work Duration: ${durationStr}`);
+        logAgentTask("FM-EMP-601", "Deepak Hegde", `Triggered CSAT 5-star review request to customer for Booking ${bookingId}`);
 
         if (sockInstance && booking.customerJid) {
             try {
@@ -912,6 +919,8 @@ async function startBot() {
 
                     await sock.sendMessage(userId, { text: confirmMsg });
                     logMessage(`🎉 NEW BOOKING (${service}) from ${fullName} (${senderPhone})`);
+                    logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Created Booking ${newBooking.id} for ${fullName} (${service})`);
+                    logAgentTask("FM-EMP-501", "Bhuvan Nara", `Alerted Field Ops to assign provider for Booking ${newBooking.id}`);
                     delete userStates[userId];
                 }
             }

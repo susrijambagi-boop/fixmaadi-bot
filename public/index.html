@@ -78,7 +78,8 @@
         .status-Completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .status-Cancelled { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-        .timer-badge { background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 0.88rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; }
+        .progress-bar-container { background: #e2e8f0; border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin: 8px 0; }
+        .progress-bar-fill { background: var(--primary); height: 100%; border-radius: 10px; transition: width 0.3s ease; }
 
         select, button, input[type="text"], input[type="number"], input[type="file"] { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; outline: none; transition: all 0.2s; }
         select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,82,186,0.12); }
@@ -94,11 +95,11 @@
         .btn-secondary { background: #ffffff; color: var(--text); border: 1px solid var(--border); font-weight: 600; }
         .btn-secondary:hover { background: #f1f5f9; }
 
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 16px; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
 
-        .logs-box { background: #0f172a; color: #38bdf8; padding: 18px; border-radius: 12px; font-family: monospace; font-size: 12px; height: 320px; overflow-y: auto; line-height: 1.6; }
+        .logs-box { background: #0f172a; color: #38bdf8; padding: 18px; border-radius: 12px; font-family: monospace; font-size: 12px; height: 260px; overflow-y: auto; line-height: 1.6; }
         .doc-item { padding: 16px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: transform 0.15s; }
         .doc-item:hover { transform: translateX(4px); border-color: var(--primary); }
 
@@ -121,7 +122,7 @@
             <div class="nav-item" onclick="switchNav('bookings', 'Customer Bookings', event)">📋 Customer Bookings</div>
             <div class="nav-item" onclick="switchNav('vendors', 'Service Providers', event)">👥 Service Providers</div>
             <div class="nav-item" onclick="switchNav('attendance', 'Attendance & Analytics', event)">📅 Attendance & Analytics</div>
-            <div class="nav-item" onclick="switchNav('virtual-org', 'Virtual Staff & Email Engine', event)">🏢 70+ Virtual Team HQ</div>
+            <div class="nav-item" onclick="switchNav('virtual-org', 'Virtual Staff & Live Task Monitor', event)">🏢 70+ Virtual Team HQ</div>
             <div class="nav-item" onclick="switchNav('repository', 'Document Repository', event)">📁 Document Repository</div>
             <div class="nav-item" onclick="switchNav('bot-status', 'WhatsApp Linkage', event)">📱 WhatsApp Connection</div>
         </div>
@@ -319,12 +320,33 @@
                 </div>
             </div>
 
-            <!-- TAB 5: VIRTUAL TEAM HQ -->
+            <!-- TAB 5: VIRTUAL TEAM HQ & LIVE TASK MONITOR -->
             <div id="tab-virtual-org" class="tab-content">
+                <!-- LIVE ACTIVITY STREAM MONITOR -->
                 <div class="card">
                     <div class="card-title">
-                        <span>🏢 70+ Virtual AI Team HQ & Department Leads</span>
-                        <button class="btn-action" onclick="triggerEmailReport()">📧 Send Instant Digest Email</button>
+                        <span>📡 Live Agent Work Execution Log (Realtime Stream)</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-action" onclick="executeAgentTask('ALL')">🚀 Run Task Sweep Across All Agents</button>
+                            <button class="btn-secondary" onclick="triggerEmailReport()">📧 Email Report</button>
+                        </div>
+                    </div>
+                    <div class="logs-box" id="agent-activity-stream">Loading agent activity stream...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>🏢 70+ Virtual Team Roster & Active Work Monitor</span>
+                        <select id="dept-filter" onchange="filterEmployeesByDept()" style="min-width: 220px;">
+                            <option value="ALL">All 7 Departments</option>
+                            <option value="Tech & Cloud Infra">Tech & Cloud Infra</option>
+                            <option value="Product & UX">Product & UX</option>
+                            <option value="Marketing & Growth">Marketing & Growth</option>
+                            <option value="Brand & PR">Brand & PR</option>
+                            <option value="Field Operations">Field Operations</option>
+                            <option value="Customer Success">Customer Success</option>
+                            <option value="Sales & B2B">Sales & B2B Partnerships</option>
+                        </select>
                     </div>
                     <div id="employees-grid" class="form-row">Loading virtual employee roster...</div>
                 </div>
@@ -450,6 +472,7 @@
     <script>
         let globalBookings = [];
         let globalVendors = [];
+        let globalEmployees = [];
         let selectedRatingScore = 5;
         let activeRatingBookingId = null;
         let activeDeleteVendorId = null;
@@ -477,29 +500,41 @@
 
         async function loadData() {
             try {
-                const [bookings, vendors, attendance, employees, documents, deletedLogs] = await Promise.all([
+                const [bookings, vendors, attendance, employees, documents, deletedLogs, agentLogs] = await Promise.all([
                     fetchSafe('/api/bookings', []),
                     fetchSafe('/api/vendors', []),
                     fetchSafe('/api/attendance', []),
                     fetchSafe('/api/virtual-employees', []),
                     fetchSafe('/api/documents', []),
-                    fetchSafe('/api/deleted-vendors', [])
+                    fetchSafe('/api/deleted-vendors', []),
+                    fetchSafe('/api/agent-logs', [])
                 ]);
 
                 globalBookings = bookings;
                 globalVendors = vendors;
+                globalEmployees = employees;
 
                 renderDispatch(globalBookings, globalVendors);
                 renderBookingsTable(globalBookings);
                 renderVendorsTable(globalVendors);
                 renderAttendanceTable(attendance);
-                renderEmployeesGrid(employees);
+                renderEmployeesGrid(globalEmployees);
+                renderAgentLogs(agentLogs);
                 renderDocuments(documents);
                 renderDeletedLogs(deletedLogs);
                 updateStats(globalBookings, globalVendors, attendance);
             } catch (err) {
                 console.error("Data load error:", err);
             }
+        }
+
+        function renderAgentLogs(logs) {
+            const box = document.getElementById('agent-activity-stream');
+            if (logs.length === 0) {
+                box.innerText = 'No agent task activity recorded.';
+                return;
+            }
+            box.innerText = logs.join('\n');
         }
 
         function formatTimer(startTimestamp) {
@@ -704,19 +739,59 @@
             let html = '';
             employees.forEach(e => {
                 html += `
-                    <div style="background:#ffffff; padding:18px; border-radius:12px; border:1px solid var(--border);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <strong style="color:var(--primary);">${e.code}</strong>
-                            <span class="status-tag status-Completed">${e.status}</span>
+                    <div style="background:#ffffff; padding:18px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <strong style="color:var(--primary); font-size:0.9rem;">${e.code}</strong>
+                                <span class="status-tag status-Completed">${e.status}</span>
+                            </div>
+                            <h4 style="font-size:1.05rem; font-weight:700; margin-bottom:2px;">${e.name}</h4>
+                            <p style="font-size:0.82rem; color:var(--text-muted); font-weight:600; margin-bottom:8px;">${e.role} (${e.department})</p>
+                            
+                            <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #edf2f7; margin-bottom:10px;">
+                                <div style="font-size:0.75rem; font-weight:700; color:var(--primary); text-transform:uppercase; margin-bottom:2px;">Active Running Task:</div>
+                                <div style="font-size:0.82rem; font-weight:600; color:var(--text);">${e.currentTask || e.dailyTasks}</div>
+                            </div>
+
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; font-weight:700; color:var(--text-muted);">
+                                <span>OKR Progress</span>
+                                <span>${e.progress}%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: ${e.progress}%;"></div>
+                            </div>
                         </div>
-                        <h4 style="font-size:1rem; font-weight:700; margin-bottom:4px;">${e.name}</h4>
-                        <p style="font-size:0.82rem; color:var(--text-muted); font-weight:600; margin-bottom:8px;">${e.role}</p>
-                        <p style="font-size:0.8rem; margin-bottom:10px;">${e.dailyTasks}</p>
-                        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">OKR: ${e.okr}</div>
+
+                        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+                            <button class="btn-action" style="padding:6px 12px; font-size:11px;" onclick="executeAgentTask('${e.code}')">▶️ Execute Task</button>
+                        </div>
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        function filterEmployeesByDept() {
+            const selectedDept = document.getElementById('dept-filter').value;
+            if (selectedDept === 'ALL') {
+                renderEmployeesGrid(globalEmployees);
+            } else {
+                const filtered = globalEmployees.filter(e => e.department.includes(selectedDept));
+                renderEmployeesGrid(filtered);
+            }
+        }
+
+        async function executeAgentTask(code) {
+            const res = await fetch('/api/execute-agent-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            if (data.success) {
+                renderAgentLogs(data.agentLogs);
+                alert(data.message);
+            }
         }
 
         function renderDocuments(docs) {
@@ -934,7 +1009,7 @@
             alert(data.message);
         }
 
-        // Live Poll Status
+        // Live Poll Status & Agent Stream Logs
         setInterval(async () => {
             try {
                 const res = await fetch('/api/status-info');
@@ -943,6 +1018,12 @@
                 if (data.logs) {
                     document.getElementById('system-logs').innerText = data.logs.join('\n');
                 }
+            } catch (e) {}
+
+            try {
+                const agentRes = await fetch('/api/agent-logs');
+                const agentLogs = await agentRes.json();
+                renderAgentLogs(agentLogs);
             } catch (e) {}
         }, 3000);
 
