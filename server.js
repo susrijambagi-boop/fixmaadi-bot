@@ -237,7 +237,7 @@ let bookings = [
         endOtp: '8821', 
         startOtpVerified: true, 
         endOtpVerified: false, 
-        startTimestamp: Date.now() - (24 * 60 * 1000 + 12 * 1000), // Started 24 mins 12 secs ago
+        startTimestamp: Date.now() - (24 * 60 * 1000 + 12 * 1000), 
         endTimestamp: null,
         totalDurationSeconds: null,
         customerRating: 5, 
@@ -254,7 +254,7 @@ let attendance = [
     { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
 ];
 
-// MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY (SENT TO CUSTOMER ONLY VIA WHATSAPP)
+// MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY
 app.get('/api/bookings', (req, res) => {
     const maskedBookings = bookings.map(b => ({
         ...b,
@@ -572,10 +572,141 @@ app.get('/api/status-info', async (req, res) => {
     res.json({ botStatus, qrDataUrl, logs });
 });
 
+// CONVERSATIONAL STATE & TEXT EXTRACTOR
+const userStates = {};
+
 function extractText(msg) {
     if (!msg.message) return '';
     const m = msg.message;
-    return (m.conversation || m.extendedTextMessage?.text || m.ephemeralMessage?.message?.conversation || m.ephemeralMessage?.message?.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || '').trim();
+    return (
+        m.buttonsResponseMessage?.selectedButtonId ||
+        m.buttonsResponseMessage?.selectedDisplayText ||
+        m.listResponseMessage?.singleSelectReply?.selectedRowId ||
+        m.listResponseMessage?.title ||
+        m.templateButtonReplyMessage?.selectedId ||
+        m.templateButtonReplyMessage?.selectedDisplayText ||
+        m.conversation ||
+        m.extendedTextMessage?.text ||
+        m.ephemeralMessage?.message?.conversation ||
+        m.ephemeralMessage?.message?.extendedTextMessage?.text ||
+        m.imageMessage?.caption ||
+        m.videoMessage?.caption ||
+        ''
+    ).trim();
+}
+
+function matchService(text, servicesDict) {
+    const clean = text.toLowerCase().trim();
+    if (clean.startsWith('svc_')) {
+        const num = clean.replace('svc_', '');
+        if (servicesDict[num]) return servicesDict[num];
+    }
+    for (const key in servicesDict) {
+        if (clean === key) return servicesDict[key];
+        for (const kw of servicesDict[key].keywords) {
+            if (clean.includes(kw)) return servicesDict[key];
+        }
+    }
+    return null;
+}
+
+function generate4DigitOtp() { return Math.floor(1000 + Math.random() * 9000).toString(); }
+
+function clearUserTimer(userId) {
+    if (userStates[userId] && userStates[userId].timer) {
+        clearTimeout(userStates[userId].timer);
+        userStates[userId].timer = null;
+    }
+}
+
+function scheduleFollowUp(sock, userId) {
+    clearUserTimer(userId);
+    const state = userStates[userId];
+    if (!state || state.step === 'NEW' || state.step === 'COMPLETED') return;
+
+    state.timer = setTimeout(async () => {
+        try {
+            const isKN = state.lang === 'kn';
+            const firstName = state.firstName || (isKN ? 'ಗ್ರಾಹಕರೇ' : 'Customer');
+
+            if (!userStates[userId]) return;
+
+            if (userStates[userId].followUpCount === 0) {
+                userStates[userId].followUpCount = 1;
+                logMessage(`⏰ Sending 1st Inactivity Follow-up to ${firstName}`);
+
+                const followUp1 = isKN
+                    ? `👋 ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ನೀವು ಇನ್ನೂ ನಿಮ್ಮ ಬುಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಿಲ್ಲ.\n\nನಿಮಗೆ ಸಹಾಯ ಬೇಕಿದ್ದರೆ, ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರಿಗೆ ಕರೆ ಮಾಡಿ.`
+                    : `👋 Hi ${firstName}! You haven't completed your FixMaadi booking yet.\n\nIf you need any assistance, call Bhuvan Nara at ${BHUVAN_PHONE}.`;
+
+                await sock.sendMessage(userId, { text: followUp1 });
+                scheduleFollowUp(sock, userId);
+            }
+            else if (userStates[userId].followUpCount === 1) {
+                logMessage(`⛔ Terminating inactive session for ${firstName} after 2nd follow-up`);
+
+                const terminateMsg = isKN
+                    ? `⚠️ ಸಮಯ ಮೀರಿದ್ದರಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಸೆಷನ್ ಪೂರ್ಣಗೊಂಡಿದೆ.\n\nನೀವು ಮತ್ತೆ ಬುಕಿಂಗ್ ಮಾಡಲು ಬಯಸಿದರೆ, ದಯವಿಟ್ಟು "Hi" ಎಂದು ಕಳುಹಿಸಿ. ಧನ್ಯವಾದಗಳು ${firstName} ಅವರೇ! 🙏`
+                    : `⚠️ Your session has timed out due to inactivity, ${firstName}.\n\nIf you would like to start again anytime, simply reply with "Hi". Thank you! 🙏`;
+
+                await sock.sendMessage(userId, { text: terminateMsg });
+                clearUserTimer(userId);
+                delete userStates[userId];
+            }
+        } catch (err) {
+            logMessage(`Error processing follow-up: ${err.message}`);
+        }
+    }, INACTIVITY_TIMEOUT_MS);
+}
+
+// SEND NATIVE INTERACTIVE WHATSAPP SELECTION LIST MENU
+async function sendServiceMenu(sock, userId, lang, firstName) {
+    const isKN = lang === 'kn';
+    const title = isKN ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏` : `Hi ${firstName}! Welcome to FixMaadi Bagalkot 🙏`;
+    const body = isKN ? `ದಯವಿಟ್ಟು ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ (0% ಕಮಿಷನ್):` : `Please tap the button below to select your service (0% Commission):`;
+    const buttonText = isKN ? `📋 ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ` : `📋 Select Service`;
+
+    const rows = isKN ? [
+        { title: "1. ಪುರೋಹಿತರು & ಪೂಜೆಗಳು 🙏", rowId: "SVC_1", description: "₹501 ರಿಂದ" },
+        { title: "2. ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ 🔧", rowId: "SVC_2", description: "₹79 ರಿಂದ" },
+        { title: "3. ಪ್ಲಂಬರ್ 💧", rowId: "SVC_3", description: "₹99 ರಿಂದ" },
+        { title: "4. ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ ⚡", rowId: "SVC_4", description: "₹79 ರಿಂದ" },
+        { title: "5. ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ ✂️", rowId: "SVC_5", description: "₹149 ರಿಂದ" },
+        { title: "6. ಪುರುಷರ ಹೇರ್‌ಕಟ್ 💈", rowId: "SVC_6", description: "₹99 ರಿಂದ" },
+        { title: "7. ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ 🚜", rowId: "SVC_7", description: "₹499 ರಿಂದ" },
+        { title: "8. ವೇದಿಕೆ ಅಲಂಕಾರ 🎈", rowId: "SVC_8", description: "₹999 ರಿಂದ" },
+        { title: "9. ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ 🍲", rowId: "SVC_9", description: "₹499 ರಿಂದ" },
+        { title: "10. ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) 🪚", rowId: "SVC_10", description: "₹149 ರಿಂದ" },
+        { title: "11. ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) 📚", rowId: "SVC_11", description: "₹499/ತಿಂಗಳಿಗೆ" },
+        { title: "12. ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨", rowId: "SVC_12", description: "₹299 ರಿಂದ" }
+    ] : [
+        { title: "1. Purohit & Pujas 🙏", rowId: "SVC_1", description: "From ₹501" },
+        { title: "2. Mixie & Appliance Repair 🔧", rowId: "SVC_2", description: "From ₹79" },
+        { title: "3. Plumber 💧", rowId: "SVC_3", description: "From ₹99" },
+        { title: "4. Electrician ⚡", rowId: "SVC_4", description: "From ₹79" },
+        { title: "5. Beautician (Women) ✂️", rowId: "SVC_5", description: "From ₹149" },
+        { title: "6. Men Haircut & Grooming 💈", rowId: "SVC_6", description: "From ₹99" },
+        { title: "7. Septic Tank Cleaning 🚜", rowId: "SVC_7", description: "From ₹499" },
+        { title: "8. Event & Stage Decoration 🎈", rowId: "SVC_8", description: "From ₹999" },
+        { title: "9. Catering & Cooking Labour 🍲", rowId: "SVC_9", description: "From ₹499" },
+        { title: "10. Carpenter & Woodwork 🪚", rowId: "SVC_10", description: "From ₹149" },
+        { title: "11. Home Tutors 📚", rowId: "SVC_11", description: "From ₹499/mo" },
+        { title: "12. Civil Labour & Painting 🎨", rowId: "SVC_12", description: "From ₹299" }
+    ];
+
+    try {
+        await sock.sendMessage(userId, {
+            text: `${title}\n\n${body}`,
+            buttonText: buttonText,
+            sections: [{ title: isKN ? "FixMaadi 0% ಸೇವೆಗಳು" : "FixMaadi 0% Commission Services", rows: rows }]
+        });
+    } catch (e) {
+        const fallbackText = isKN
+            ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1. ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2. ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3. ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4. ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5. ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6. ಪುರುಷರ ಹೇರ್‌ಕಟ್ (₹99 ರಿಂದ) 💈\n7. ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8. ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9. ಅಡುಗೆ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n10. ಕಾರ್ಪೆಂಟರ್ (₹149 ರಿಂದ) 🪚\n11. ಮನೆ ಪಾಠ (₹499/ತಿಂಗಳಿಗೆ) 📚\n12. ಪೇಂಟಿಂಗ್ (₹299 ರಿಂದ) 🎨`
+            : `Hi ${firstName}! Reply with number (1-12):\n\n1. Purohit & Pujas (from ₹501) 🙏\n2. Mixie & Fan Repair (from ₹79) 🔧\n3. Plumber (from ₹99) 💧\n4. Electrician (from ₹79) ⚡\n5. Beautician (Women) (from ₹149) ✂️\n6. Men Haircut & Grooming (from ₹99) 💈\n7. Septic Tank Cleaning (from ₹499) 🚜\n8. Event & Stage Decoration (from ₹999) 🎈\n9. Catering & Cooking Labour (from ₹499) 🍲\n10. Carpenter & Woodwork (from ₹149) 🪚\n11. Home Tutors (from ₹499/mo) 📚\n12. Civil Labour & Painting (from ₹299) 🎨`;
+        
+        await sock.sendMessage(userId, { text: fallbackText });
+    }
 }
 
 async function startBot() {
@@ -656,20 +787,31 @@ async function startBot() {
                         userStates[userId].firstName = customerDatabase[senderPhone].firstName;
                     }
 
-                    const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply to choose language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada)\n2️⃣ English\n\n*(For help/queries, call Bhuvan Nara: ${BHUVAN_PHONE})*`;
-                    
-                    await sock.sendMessage(userId, { text: langPrompt });
+                    try {
+                        await sock.sendMessage(userId, {
+                            text: `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease select your language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:`,
+                            buttons: [
+                                { buttonId: 'LANG_KN', buttonText: { displayText: '1️⃣ ಕನ್ನಡ (Kannada)' }, type: 1 },
+                                { buttonId: 'LANG_EN', buttonText: { displayText: '2️⃣ English' }, type: 1 }
+                            ],
+                            headerType: 1
+                        });
+                    } catch (e) {
+                        const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply to choose language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada)\n2️⃣ English\n\n*(For help/queries, call Bhuvan Nara: ${BHUVAN_PHONE})*`;
+                        await sock.sendMessage(userId, { text: langPrompt });
+                    }
+
                     userStates[userId].step = 'AWAITING_LANG';
                     logMessage(`📤 Sent Language Selection to ${senderPhone}`);
                     scheduleFollowUp(sock, userId);
                 }
                 else if (currentState.step === 'AWAITING_LANG') {
-                    if (lowerText === '1' || lowerText.includes('kannada') || lowerText.includes('ಕನ್ನಡ')) {
+                    if (lowerText === '1' || lowerText.includes('kannada') || lowerText.includes('ಕನ್ನಡ') || lowerText === 'lang_kn') {
                         userStates[userId].lang = 'kn';
-                    } else if (lowerText === '2' || lowerText.includes('english')) {
+                    } else if (lowerText === '2' || lowerText.includes('english') || lowerText === 'lang_en') {
                         userStates[userId].lang = 'en';
                     } else {
-                        await sock.sendMessage(userId, { text: `Please reply 1 for Kannada or 2 for English / ಕನ್ನಡಕ್ಕಾಗಿ 1 ಅಥವಾ ಇಂಗ್ಲಿಷ್‌ಗಾಗಿ 2 ಟೈಪ್ ಮಾಡಿ.` });
+                        await sock.sendMessage(userId, { text: `Please tap 1️⃣ ಕನ್ನಡ or 2️⃣ English button / ಕನ್ನಡಕ್ಕಾಗಿ 1 ಅಥವಾ ಇಂಗ್ಲಿಷ್‌ಗಾಗಿ 2 ಆಯ್ಕೆ ಮಾಡಿ.` });
                         scheduleFollowUp(sock, userId);
                         return;
                     }
@@ -710,17 +852,17 @@ async function startBot() {
                         userStates[userId].step = 'AWAITING_LOCATION';
                         
                         const promptMsg = isKN 
-                            ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\nದಯವಿಟ್ಟು ನಿಮ್ಮ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ*ವನ್ನು ಕಳುಹಿಸಿ.\n\n*(ಹಿಂದಕ್ಕೆ ಹೋಗಲು "0" ಅಥವಾ "ಹಿಂತಿರುಗಿ" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
-                            : `Great choice, ${firstName}! You selected *${selected.name}*.\n\nPlease reply with your *Area/Address* (e.g., Navanagar Sector 4) and *Preferred Time* (e.g., Today 5 PM).\n\n*(Type "0" anytime to return to main menu)*`;
+                            ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\nದಯವಿಟ್ಟು ನಿಮ್ಮ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ*ವನ್ನು ಕಳುಹಿಸಿ.`
+                            : `Great choice, ${firstName}! You selected *${selected.name}*.\n\nPlease reply with your *Area/Address* (e.g., Navanagar Sector 4) and *Preferred Time* (e.g., Today 5 PM).`;
                         
                         await sock.sendMessage(userId, { text: promptMsg });
                         logMessage(`📤 Sent Location Prompt to ${firstName} (${senderPhone})`);
                         scheduleFollowUp(sock, userId);
                     } else {
                         const invalidMsg = isKN 
-                            ? `ದಯವಿಟ್ಟು 1 ರಿಂದ 12 ರವರೆಗಿನ ಸಂಖ್ಯೆ ಅಥವಾ ಸೇವೆಯ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ ${firstName} ಅವರೇ (ಉದಾ: 3 ಅಥವಾ ಪ್ಲಂಬರ್):`
-                            : `Please reply with a number (1-12) or service name, ${firstName} (e.g. 3 or Plumber):`;
-                        await sock.sendMessage(userId, { text: invalidMsg });
+                            ? `ದಯವಿಟ್ಟು "📋 ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ" ಬಟನ್ ಒತ್ತಿ ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ ${firstName} ಅವರೇ:`
+                            : `Please tap the "📋 Select Service" button below to choose your service, ${firstName}:`;
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
                         scheduleFollowUp(sock, userId);
                     }
                 }
