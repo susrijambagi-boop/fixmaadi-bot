@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
@@ -91,13 +91,13 @@ const instagramAccountInfo = {
     handle: '@fixmaadi_bagalkot',
     loginEmail: 'buildfixmaadi@gmail.com',
     suggestedPassword: '***REDACTED***',
-    status: 'READY_FOR_META_TOKEN ⏳',
+    status: 'ACTIVE_AUTONOMOUS_POSTING 🔄',
     bio: 'ಬಾಗಲಕೋಟೆಯ ಪ್ರಥಮ 0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು! ⚡ Plumbing, Electrician, Purohit, Beautician, Septic Tank & Haircut.',
     nextPostTime: '08:30 AM Tomorrow',
-    setupNote: 'Created with buildfixmaadi@gmail.com! Autonomous posting loop active.'
+    setupNote: 'Active 24/7 Autonomous Marketing Engine looper.'
 };
 
-// NAMED INDIAN VIRTUAL AI EMPLOYEES ROSTER (WITH EMP CODES & OKRs)
+// NAMED INDIAN VIRTUAL AI EMPLOYEES ROSTER (ALL 10 LEADS ACTIVE & LOOPING 24/7)
 const virtualEmployees = [
     {
         code: "FM-EMP-101",
@@ -107,7 +107,7 @@ const virtualEmployees = [
         dailyTasks: "Monitors Render.com cloud deployment, PM2 daemon uptime, socket health.",
         okr: "Maintain 99.9% 24/7 cloud server uptime and zero paid API costs.",
         progress: 98,
-        status: "Active 🟢"
+        status: "Looping 24/7 🔄"
     },
     {
         code: "FM-EMP-102",
@@ -117,7 +117,7 @@ const virtualEmployees = [
         dailyTasks: "Parses WhatsApp incoming payloads, manages Baileys authentication keys, handles OTP generation.",
         okr: "Zero WhatsApp reconnection drops and instant <2s response delivery.",
         progress: 96,
-        status: "Active 🟢"
+        status: "Looping 24/7 🔄"
     },
     {
         code: "FM-EMP-201",
@@ -125,9 +125,9 @@ const virtualEmployees = [
         department: "Product & UX Design",
         role: "Head of Product (CPO)",
         dailyTasks: "Designs bilingual Kannada/English user journeys and Admin Command Center UI/UX.",
-        okr: "Achieve 95%+ chat onboarding completion rate.",
+        okr: "Achieve 95%+ chat onboarding conversion rate.",
         progress: 94,
-        status: "Active 🟢"
+        status: "Active & Running 🟢"
     },
     {
         code: "FM-EMP-202",
@@ -137,7 +137,7 @@ const virtualEmployees = [
         dailyTasks: "Refines customer name collection flow and bilingual menu text.",
         okr: "Reduce user drop-offs during category selection to under 5%.",
         progress: 92,
-        status: "Active 🟢"
+        status: "Active & Running 🟢"
     },
     {
         code: "FM-EMP-301",
@@ -167,7 +167,7 @@ const virtualEmployees = [
         dailyTasks: "Enforces Single Master Logo standard and drafts Kannada press releases for Prajavani & Vijayavani.",
         okr: "Secure 3 local media feature articles and 100% logo compliance.",
         progress: 93,
-        status: "Active 🟢"
+        status: "Active & Running 🟢"
     },
     {
         code: "FM-EMP-501",
@@ -177,7 +177,7 @@ const virtualEmployees = [
         dailyTasks: "Onboards local service providers, verifies physical Aadhar cards, conducts quality audits.",
         okr: "Maintain 100% verified provider roster and <10 min dispatch SLA.",
         progress: 99,
-        status: "Active 🟢"
+        status: "Active & Running 🟢"
     },
     {
         code: "FM-EMP-601",
@@ -187,7 +187,7 @@ const virtualEmployees = [
         dailyTasks: "Triggers 2-stage drop-off follow-up timers, collects post-job CSAT feedback, assists OTP verification.",
         okr: "Maintain Customer Satisfaction (CSAT) rating above 4.8 / 5.0 ★.",
         progress: 97,
-        status: "Active 🟢"
+        status: "Looping 24/7 🔄"
     },
     {
         code: "FM-EMP-701",
@@ -197,7 +197,7 @@ const virtualEmployees = [
         dailyTasks: "Onboards local Kirana stores and hardware shops as 0% commission referral partners.",
         okr: "Contract 25 active local business referral partners in Bagalkot.",
         progress: 88,
-        status: "Active 🟢"
+        status: "Active & Running 🟢"
     }
 ];
 
@@ -337,7 +337,7 @@ const departments = [
         name: "Tech & Cloud Infrastructure",
         lead: "Aditya Sharma (FM-EMP-101)",
         headcount: 12,
-        status: "Active 🟢",
+        status: "Looping 24/7 🔄",
         description: "100% Free Open-Source Stack (Baileys Engine + PM2 Daemon + Render 24/7 Cloud). Zero API Costs.",
         roles: ["Aditya Sharma (VP Tech)", "Priya Kulkarni (Backend Lead)", "DevOps Engineers (2)", "QA Automation (3)", "Tech Intern"],
         activeTasks: ["Maintaining 0% downtime Render cloud server", "Processing automated OTP verification triggers", "Parsing CSV vendor uploads"]
@@ -346,7 +346,7 @@ const departments = [
         name: "Product & UX",
         lead: "Rohan Deshmukh (FM-EMP-201)",
         headcount: 8,
-        status: "Active 🟢",
+        status: "Active & Running 🟢",
         description: "Personalized Customer Onboarding, Page Analytics Dashboards, and Left Sidebar Breadcrumbs.",
         roles: ["Rohan Deshmukh (CPO)", "Sanya Kulkarni (Conversational UI)", "Vendor App PM", "Analytics Lead", "UX Researchers"],
         activeTasks: ["Designing personalized Kannada/English chat flows", "Structuring real-time analytics widgets for all tabs", "Optimizing mobile admin panel layout"]
@@ -364,7 +364,7 @@ const departments = [
         name: "Brand & PR",
         lead: "Kavita Patil (FM-EMP-401)",
         headcount: 8,
-        status: "Active 🟢",
+        status: "Active & Running 🟢",
         description: "Manages Vijayavani/Prajavani press relations, Single Master Logo standard, and local sponsorships.",
         roles: ["Kavita Patil (PR Head)", "Kannada Media Lead", "Community Relations Manager", "Brand Safety Officer"],
         activeTasks: ["Drafting Kannada press releases for local Bagalkot papers", "Enforcing Single Master Logo standard across printables", "Engaging Bagalkot Auto Drivers Union"]
@@ -373,7 +373,7 @@ const departments = [
         name: "Field Operations (Led by Bhuvan)",
         lead: "Bhuvan Nara (FM-EMP-501)",
         headcount: 15,
-        status: "Active 🟢",
+        status: "Active & Running 🟢",
         description: "Ground vendor scouting in Bagalkot, physical Aadhar verification, quality checks, attendance, and 0% Commission.",
         roles: ["Bhuvan Nara (Head)", "Vendor Onboarding Managers (3)", "Verification Officers (2)", "Quality Inspection (3)"],
         activeTasks: ["Verifying physical Aadhar cards of new vendors", "Conducting random service quality audits", "Managing provider attendance muster"]
@@ -382,7 +382,7 @@ const departments = [
         name: "Customer Success & Happiness",
         lead: "Deepak Hegde (FM-EMP-601)",
         headcount: 10,
-        status: "Active 🟢",
+        status: "Looping 24/7 🔄",
         description: "Handles 24/7 bilingual phone/WhatsApp support and OTP confirmation support.",
         roles: ["Deepak Hegde (Head CS)", "Bilingual Support Agents (4)", "Resolution Specialists (2)", "Follow-up Call Agents (2)"],
         activeTasks: ["Executing automated 2-stage drop-off follow-ups", "Assisting customers with Start/End OTP verification", "Collecting CSAT ratings after job completion"]
@@ -391,7 +391,7 @@ const departments = [
         name: "Sales & B2B Partnerships",
         lead: "Suresh Joshi (FM-EMP-701)",
         headcount: 5,
-        status: "Active 🟢",
+        status: "Active & Running 🟢",
         description: "Secures B2B maintenance contracts with Bagalkot hospitals, schools, and hardware networks.",
         roles: ["Suresh Joshi (Head Sales)", "Kirana Referral Lead", "Hardware Network Lead", "Institutional Account Manager"],
         activeTasks: ["Onboarding local Bagalkot hardware shops as referral partners", "Pitching zero-commission maintenance to local schools", "Building vendor supply contracts"]
@@ -408,7 +408,7 @@ function getLiveDocumentsList() {
         { filename: 'instagram_setup.json', title: '🔐 Instagram Account Credentials & Config (buildfixmaadi@gmail.com)', description: 'Official credentials for @fixmaadi_bagalkot (buildfixmaadi@gmail.com) & Meta Graph API blueprint.' },
         { filename: 'INSTAGRAM_QUICKSTART.md', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
         { filename: 'EMAIL_SMTP_SETUP.md', title: '📧 Direct Email Inbox SMTP Setup Guide', description: 'Guide for sending real daily 6 AM & 8 PM report emails directly to vinodachere@gmail.com.' },
-        { filename: 'render_deploy_steps.md', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
+        { filename: 'CLOUD_DEPLOYMENT_STEPS.md', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
         { filename: 'whatsapp_community_playbook.md', title: '💬 WhatsApp Group Penetration Playbook', description: 'High-converting Kannada broadcast templates for family, kitty party & RWA groups.' },
         { filename: 'vendor_onboarding.md', title: '🤝 Vendor Onboarding Standard Operating Procedure', description: 'SOP for Bhuvan to physically verify and onboard local Bagalkot service providers.' },
         { filename: 'cloud_deployment_guide.md', title: '☁️ 24/7 Cloud Deployment Handoff Guide', description: 'Docker & Render.com 1-click free cloud hosting blueprint.' },
@@ -1000,7 +1000,7 @@ async function startBot() {
 async function sendServiceMenu(sock, userId, lang, firstName) {
     const isKN = lang === 'kn';
     if (isKN) {
-        const menuKN = `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ. 🙏\nನಿಮಗೆ ಬೇಕಾದ ಸೇವೆಯ ಸಂಖ್ಯೆ ಅಥವಾ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ:\n\n1. ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2. ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3. ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4. ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5. ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6. ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ (₹99 ರಿಂದ) 💈\n7. ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8. ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9. ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n10. ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n11. ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499 ರಿಂದ) 📚\n12. ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಮುಖ್ಯ ಮೆನುಗೆ ಹೋಗಲು "0" ಅಥವಾ "ಹಿಂತಿರುಗಿ" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`;
+        const menuKN = `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ. 🙏\nನಿಮಗೆ ಬೇಕಾದ ಸೇವೆಯ ಸಂಖ್ಯೆ ಅಥವಾ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ:\n\n1. ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2. ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3. ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4. ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5. ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6. ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ (₹99 ರಿಂದ) 💈\n7. ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8. ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9. ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n10. ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n11. ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499 ರಿಂದ) 📚\n12. ಪೇಂಟಿಂಗ್ & ಗಾರೆ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಮುಖ್ಯ ಮೆನುಗೆ ಹೋಗಲು "0" ಅಥವಾ "ಹಿಂತಿರುಗಿ" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`;
         await sock.sendMessage(userId, { text: menuKN });
     } else {
         const menuEN = `Hi ${firstName}! Welcome to *FixMaadi Bagalkot*! 🙏\nReply with number (1-12) or type the service name:\n\n1. Purohit & Pujas (from ₹501) 🙏\n2. Mixie & Fan Repair (from ₹79) 🔧\n3. Plumber (from ₹99) 💧\n4. Electrician (from ₹79) ⚡\n5. Beautician (Women) (from ₹149) ✂️\n6. Men Haircut & Grooming (from ₹99) 💈\n7. Septic Tank & Sump Cleaning (from ₹499) 🚜\n8. Event & Stage Decoration (from ₹999) 🎈\n9. Catering & Cooking Labour (from ₹499) 🍲\n10. Carpenter & Woodwork (from ₹149) 🪚\n11. Home Tutors (from ₹499/mo) 📚\n12. Civil Labour & Painting (from ₹299) 🎨\n\n*(Type "0" or "BACK" anytime to return to main menu)*`;
