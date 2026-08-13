@@ -554,11 +554,25 @@ async function sendServiceMenu(sock, userId, lang, firstName) {
 }
 
 async function startBot() {
+    // PREVENT DUAL SOCKET CONFLICT BETWEEN LOCAL MAC & RENDER CLOUD
+    if (process.env.DISABLE_WHATSAPP_SOCKET === 'true') {
+        logMessage('⚠️ Local WhatsApp socket disabled to prevent dual-login conflict with Render cloud.');
+        botStatus = 'RUNNING_ON_RENDER_CLOUD_24/7';
+        return;
+    }
+
     logMessage('Starting FixMaadi Engine...');
     botStatus = 'Starting engine...';
     const authFolder = path.join(__dirname, 'baileys_auth_info');
     const { state, saveCreds } = await useMultiFileAuthState(authFolder);
-    const sock = makeWASocket({ auth: state, printQRInTerminal: false });
+    
+    const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        connectTimeoutMs: 60000,
+        keepAliveIntervalMs: 25000,
+        retryRequestDelayMs: 2000
+    });
     sockInstance = sock;
 
     sock.ev.on('creds.update', saveCreds);
@@ -569,9 +583,9 @@ async function startBot() {
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            botStatus = `Disconnected (code ${statusCode}). Reconnecting...`;
+            botStatus = `Disconnected (code ${statusCode}). Reconnecting in 3s...`;
             logMessage(botStatus);
-            if (shouldReconnect) { setTimeout(startBot, 2000); }
+            if (shouldReconnect) { setTimeout(startBot, 3000); }
         } else if (connection === 'open') {
             currentQR = '';
             botStatus = 'CONNECTED_AND_LIVE';
