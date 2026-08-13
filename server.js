@@ -158,6 +158,36 @@ function getLiveDocumentsList() {
     ];
 }
 
+const SERVICES_EN = {
+    '1': { name: 'Purohit & Pujas 🙏', price: 'from ₹501', keywords: ['purohit', 'puja', 'pooja', 'pandit', '1'] },
+    '2': { name: 'Mixie & Appliance Repair 🔧', price: 'from ₹79', keywords: ['mixie', 'appliance', 'repair', 'fan', '2'] },
+    '3': { name: 'Plumber 💧', price: 'from ₹99', keywords: ['plumber', 'pipe', 'tap', 'water', 'leak', '3'] },
+    '4': { name: 'Electrician ⚡', price: 'from ₹79', keywords: ['electrician', 'light', 'wire', 'mcb', 'fuse', '4'] },
+    '5': { name: 'Beautician (Women) ✂️', price: 'from ₹149', keywords: ['beautician', 'beauty', 'salon', 'facial', 'parlour', '5'] },
+    '6': { name: 'Men Haircut & Grooming 💈', price: 'from ₹99', keywords: ['haircut', 'barber', 'grooming', 'men', 'beard', '6'] },
+    '7': { name: 'Septic Tank & Sump Cleaning 🚜', price: 'from ₹499', keywords: ['septic', 'tank', 'sump', 'cleaning', 'drain', '7'] },
+    '8': { name: 'Event & Stage Decoration 🎈', price: 'from ₹999', keywords: ['event', 'stage', 'decoration', 'balloon', 'flower', '8'] },
+    '9': { name: 'Catering & Cooking Labour 🍲', price: 'from ₹499', keywords: ['catering', 'cook', 'cooking', 'food', 'chef', '9'] },
+    '10': { name: 'Carpenter & Woodwork 🪚', price: 'from ₹149', keywords: ['carpenter', 'wood', 'door', 'lock', 'table', '10'] },
+    '11': { name: 'Home Tutors 📚', price: 'from ₹499/mo', keywords: ['tutor', 'tuition', 'teacher', 'class', '11'] },
+    '12': { name: 'Civil Labour & Painting 🎨', price: 'from ₹299', keywords: ['paint', 'painting', 'civil', 'mason', 'wall', '12'] }
+};
+
+const SERVICES_KN = {
+    '1': { name: 'ಪುರೋಹಿತರು & ಪೂಜೆಗಳು 🙏', price: '₹501 ರಿಂದ', keywords: ['ಪುರೋಹಿತ', 'ಪೂಜೆ', 'ಪಂಡಿತ', '1'] },
+    '2': { name: 'ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ 🔧', price: '₹79 ರಿಂದ', keywords: ['ಮಿಕ್ಸಿ', 'ಫ್ಯಾನ್', 'ರಿಪೇರಿ', '2'] },
+    '3': { name: 'ಪ್ಲಂಬರ್ 💧', price: '₹99 ರಿಂದ', keywords: ['ಪ್ಲಂಬರ್', 'ನೀರ', 'ನಲ್ಲಿ', '3'] },
+    '4': { name: 'ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ ⚡', price: '₹79 ರಿಂದ', keywords: ['ಎಲೆಕ್ಟ್ರಿಷಿಯನ್', 'ಲೈಟ್', 'ವೈರ್', '4'] },
+    '5': { name: 'ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ ✂️', price: '₹149 ರಿಂದ', keywords: ['ಬ್ಯೂಟಿಷಿಯನ್', 'ಪಾರ್ಲರ್', 'ಫೇಶಿಯಲ್', '5'] },
+    '6': { name: 'ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ 💈', price: '₹99 ರಿಂದ', keywords: ['ಹೇರ್‌ಕಟ್', 'ಕ್ಷೌರ', 'ಬಾರ್ಬರ್', '6'] },
+    '7': { name: 'ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ 🚜', price: '₹499 ರಿಂದ', keywords: ['ಸೆಪ್ಟಿಕ್', 'ಟ್ಯಾಂಕ್', 'ಸಂಪ್', 'ಕ್ಲೀನಿಂಗ್', '7'] },
+    '8': { name: 'ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ 🎈', price: '₹999 ರಿಂದ', keywords: ['ಅಲಂಕಾರ', 'ವೇದಿಕೆ', 'ಫ್ಲವರ್', '8'] },
+    '9': { name: 'ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು 🍲', price: '₹499 ರಿಂದ', keywords: ['ಅಡುಗೆ', 'ಕ್ಯಾಟರಿಂಗ್', 'ಸಂಪ್', '9'] },
+    '10': { name: 'ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) 🪚', price: '₹149 ರಿಂದ', keywords: ['ಕಾರ್ಪೆಂಟರ್', 'ಮರಗೆಲಸ', 'ಬಾಗಿಲು', '10'] },
+    '11': { name: 'ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) 📚', price: '₹499/ತಿಂಗಳಿಗೆ', keywords: ['ಟ್ಯೂಷನ್', 'ಪಾಠ', 'ಶಿಕ್ಷಕರು', '11'] },
+    '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] }
+};
+
 let customerDatabase = {};
 let deletedVendorsLog = [];
 
@@ -184,7 +214,7 @@ let attendance = [
     { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
 ];
 
-// API ENDPOINTS (FULL COMPLETE LIST)
+// API ENDPOINTS
 app.get('/api/bookings', (req, res) => res.json(bookings));
 app.get('/api/vendors', (req, res) => res.json(vendors));
 app.get('/api/attendance', (req, res) => res.json(attendance));
@@ -435,10 +465,92 @@ app.get('/api/status-info', async (req, res) => {
     res.json({ botStatus, qrDataUrl, logs });
 });
 
+// CONVERSATIONAL STATE & TEXT EXTRACTOR
+const userStates = {};
+
 function extractText(msg) {
     if (!msg.message) return '';
     const m = msg.message;
-    return (m.conversation || m.extendedTextMessage?.text || m.ephemeralMessage?.message?.conversation || m.ephemeralMessage?.message?.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || '').trim();
+    return (
+        m.conversation ||
+        m.extendedTextMessage?.text ||
+        m.ephemeralMessage?.message?.conversation ||
+        m.ephemeralMessage?.message?.extendedTextMessage?.text ||
+        m.imageMessage?.caption ||
+        m.videoMessage?.caption ||
+        ''
+    ).trim();
+}
+
+function matchService(text, servicesDict) {
+    const clean = text.toLowerCase().trim();
+    for (const key in servicesDict) {
+        if (clean === key) return servicesDict[key];
+        for (const kw of servicesDict[key].keywords) {
+            if (clean.includes(kw)) return servicesDict[key];
+        }
+    }
+    return null;
+}
+
+function generate4DigitOtp() { return Math.floor(1000 + Math.random() * 9000).toString(); }
+
+function clearUserTimer(userId) {
+    if (userStates[userId] && userStates[userId].timer) {
+        clearTimeout(userStates[userId].timer);
+        userStates[userId].timer = null;
+    }
+}
+
+function scheduleFollowUp(sock, userId) {
+    clearUserTimer(userId);
+    const state = userStates[userId];
+    if (!state || state.step === 'NEW' || state.step === 'COMPLETED') return;
+
+    state.timer = setTimeout(async () => {
+        try {
+            const isKN = state.lang === 'kn';
+            const firstName = state.firstName || (isKN ? 'ಗ್ರಾಹಕರೇ' : 'Customer');
+
+            if (!userStates[userId]) return;
+
+            if (userStates[userId].followUpCount === 0) {
+                userStates[userId].followUpCount = 1;
+                logMessage(`⏰ Sending 1st Inactivity Follow-up to ${firstName}`);
+
+                const followUp1 = isKN
+                    ? `👋 ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ನೀವು ಇನ್ನೂ ನಿಮ್ಮ ಬುಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಿಲ್ಲ.\n\nನಿಮಗೆ ಸಹಾಯ ಬೇಕಿದ್ದರೆ, ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರಿಗೆ ಕರೆ ಮಾಡಿ, ಅಥವಾ ನಿಮ್ಮ ಆಯ್ಕೆಯನ್ನು ಕಳುಹಿಸಿ.\n*(ಹಿಂದಕ್ಕೆ ಹೋಗಲು "0" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
+                    : `👋 Hi ${firstName}! You haven't completed your FixMaadi booking yet.\n\nIf you need any assistance, call Bhuvan Nara at ${BHUVAN_PHONE} or reply to continue.\n*(Type "0" anytime to reset)*`;
+
+                await sock.sendMessage(userId, { text: followUp1 });
+                scheduleFollowUp(sock, userId);
+            }
+            else if (userStates[userId].followUpCount === 1) {
+                logMessage(`⛔ Terminating inactive session for ${firstName} after 2nd follow-up`);
+
+                const terminateMsg = isKN
+                    ? `⚠️ ಸಮಯ ಮೀರಿದ್ದರಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಸೆಷನ್ ಪೂರ್ಣಗೊಂಡಿದೆ.\n\nನೀವು ಮತ್ತೆ ಬುಕಿಂಗ್ ಮಾಡಲು ಬಯಸಿದರೆ, ದಯವಿಟ್ಟು "Hi" ಎಂದು ಟೈಪ್ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು ${firstName} ಅವರೇ! 🙏`
+                    : `⚠️ Your session has timed out due to inactivity, ${firstName}.\n\nIf you would like to start again anytime, simply reply with "Hi". Thank you! 🙏`;
+
+                await sock.sendMessage(userId, { text: terminateMsg });
+                clearUserTimer(userId);
+                delete userStates[userId];
+            }
+        } catch (err) {
+            logMessage(`Error processing follow-up: ${err.message}`);
+        }
+    }, INACTIVITY_TIMEOUT_MS);
+}
+
+async function sendServiceMenu(sock, userId, lang, firstName) {
+    const isKN = lang === 'kn';
+    if (isKN) {
+        const menuKN = `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ. 🙏\nನಿಮಗೆ ಬೇಕಾದ ಸೇವೆಯ ಸಂಖ್ಯೆ ಅಥವಾ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ:\n\n1. ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2. ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3. ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4. ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5. ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6. ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ (₹99 ರಿಂದ) 💈\n7. ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8. ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9. ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n10. ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n11. ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499 ರಿಂದ) 📚\n12. ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಮುಖ್ಯ ಮೆನುಗೆ ಹೋಗಲು "0" ಅಥವಾ "ಹಿಂತಿರುಗಿ" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`;
+        await sock.sendMessage(userId, { text: menuKN });
+    } else {
+        const menuEN = `Hi ${firstName}! Welcome to *FixMaadi Bagalkot*! 🙏\nReply with number (1-12) or type the service name:\n\n1. Purohit & Pujas (from ₹501) 🙏\n2. Mixie & Fan Repair (from ₹79) 🔧\n3. Plumber (from ₹99) 💧\n4. Electrician (from ₹79) ⚡\n5. Beautician (Women) (from ₹149) ✂️\n6. Men Haircut & Grooming (from ₹99) 💈\n7. Septic Tank & Sump Cleaning (from ₹499) 🚜\n8. Event & Stage Decoration (from ₹999) 🎈\n9. Catering & Cooking Labour (from ₹499) 🍲\n10. Carpenter & Woodwork (from ₹149) 🪚\n11. Home Tutors (from ₹499/mo) 📚\n12. Civil Labour & Painting (from ₹299) 🎨\n\n*(Type "0" or "BACK" anytime to return to main menu)*`;
+        await sock.sendMessage(userId, { text: menuEN });
+    }
 }
 
 async function startBot() {
@@ -470,15 +582,155 @@ async function startBot() {
     sock.ev.on('messages.upsert', async (m) => {
         try {
             if (!m.messages || m.messages.length === 0) return;
+
             for (const msg of m.messages) {
                 if (msg.key.fromMe) continue;
+                
                 const userId = msg.key.remoteJid;
                 if (!userId || userId.endsWith('@g.us') || userId === 'status@broadcast') continue;
+
                 const text = extractText(msg);
                 const senderPhone = '+' + userId.replace(/[^0-9]/g, '');
                 logMessage(`📩 Message from ${senderPhone}: "${text || '[Media]'}"`);
+
+                if (!text) continue;
+
+                const lowerText = text.toLowerCase();
+
+                if (lowerText === '0' || lowerText === 'back' || lowerText === 'menu' || lowerText.includes('ಹಿಂತಿರುಗಿ') || lowerText.includes('ಮೆನು')) {
+                    clearUserTimer(userId);
+                    delete userStates[userId];
+                    logMessage(`🔄 ${senderPhone} returned to Main Menu`);
+                }
+
+                if (!userStates[userId]) {
+                    userStates[userId] = { step: 'NEW', followUpCount: 0, timer: null };
+                } else {
+                    clearUserTimer(userId);
+                    userStates[userId].followUpCount = 0;
+                }
+
+                const currentState = userStates[userId];
+
+                if (currentState.step === 'NEW' || lowerText === 'hi' || lowerText === 'hello' || lowerText === 'start' || lowerText === 'namaskara' || lowerText === 'ನಮಸ್ಕಾರ') {
+                    if (customerDatabase[senderPhone]) {
+                        userStates[userId].fullName = customerDatabase[senderPhone].name;
+                        userStates[userId].firstName = customerDatabase[senderPhone].firstName;
+                    }
+
+                    const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply to choose language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada)\n2️⃣ English\n\n*(For help/queries, call Bhuvan Nara: ${BHUVAN_PHONE})*`;
+                    
+                    await sock.sendMessage(userId, { text: langPrompt });
+                    userStates[userId].step = 'AWAITING_LANG';
+                    logMessage(`📤 Sent Language Selection to ${senderPhone}`);
+                    scheduleFollowUp(sock, userId);
+                }
+                else if (currentState.step === 'AWAITING_LANG') {
+                    if (lowerText === '1' || lowerText.includes('kannada') || lowerText.includes('ಕನ್ನಡ')) {
+                        userStates[userId].lang = 'kn';
+                    } else if (lowerText === '2' || lowerText.includes('english')) {
+                        userStates[userId].lang = 'en';
+                    } else {
+                        await sock.sendMessage(userId, { text: `Please reply 1 for Kannada or 2 for English / ಕನ್ನಡಕ್ಕಾಗಿ 1 ಅಥವಾ ಇಂಗ್ಲಿಷ್‌ಗಾಗಿ 2 ಟೈಪ್ ಮಾಡಿ.` });
+                        scheduleFollowUp(sock, userId);
+                        return;
+                    }
+
+                    if (userStates[userId].firstName) {
+                        userStates[userId].step = 'AWAITING_SERVICE';
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName);
+                    } else {
+                        userStates[userId].step = 'AWAITING_NAME';
+                        const isKN = userStates[userId].lang === 'kn';
+                        const namePrompt = isKN 
+                            ? `ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಹೆಸರು ಮತ್ತು ಮನೆಹೆಸರು (Surname)* ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ರಮೇಶ್ ಪಾಟೀಲ್):`
+                            : `Please reply with your *First Name & Surname* (e.g., Ramesh Patil):`;
+                        await sock.sendMessage(userId, { text: namePrompt });
+                        scheduleFollowUp(sock, userId);
+                    }
+                }
+                else if (currentState.step === 'AWAITING_NAME') {
+                    const fullName = text.trim();
+                    const nameParts = fullName.split(' ');
+                    const firstName = nameParts[0];
+
+                    userStates[userId].fullName = fullName;
+                    userStates[userId].firstName = firstName;
+                    customerDatabase[senderPhone] = { name: fullName, firstName: firstName };
+
+                    userStates[userId].step = 'AWAITING_SERVICE';
+                    await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
+                }
+                else if (currentState.step === 'AWAITING_SERVICE') {
+                    const isKN = currentState.lang === 'kn';
+                    const firstName = currentState.firstName || 'Customer';
+                    const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
+                    const selected = matchService(text, servicesDict);
+
+                    if (selected) {
+                        userStates[userId].service = `${selected.name} (${selected.price})`;
+                        userStates[userId].step = 'AWAITING_LOCATION';
+                        
+                        const promptMsg = isKN 
+                            ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\nದಯವಿಟ್ಟು ನಿಮ್ಮ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ*ವನ್ನು ಕಳುಹಿಸಿ.\n\n*(ಹಿಂದಕ್ಕೆ ಹೋಗಲು "0" ಅಥವಾ "ಹಿಂತಿರುಗಿ" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
+                            : `Great choice, ${firstName}! You selected *${selected.name}*.\n\nPlease reply with your *Area/Address* (e.g., Navanagar Sector 4) and *Preferred Time* (e.g., Today 5 PM).\n\n*(Type "0" anytime to return to main menu)*`;
+                        
+                        await sock.sendMessage(userId, { text: promptMsg });
+                        logMessage(`📤 Sent Location Prompt to ${firstName} (${senderPhone})`);
+                        scheduleFollowUp(sock, userId);
+                    } else {
+                        const invalidMsg = isKN 
+                            ? `ದಯವಿಟ್ಟು 1 ರಿಂದ 12 ರವರೆಗಿನ ಸಂಖ್ಯೆ ಅಥವಾ ಸೇವೆಯ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ ${firstName} ಅವರೇ (ಉದಾ: 3 ಅಥವಾ ಪ್ಲಂಬರ್):`
+                            : `Please reply with a number (1-12) or service name, ${firstName} (e.g. 3 or Plumber):`;
+                        await sock.sendMessage(userId, { text: invalidMsg });
+                        scheduleFollowUp(sock, userId);
+                    }
+                }
+                else if (currentState.step === 'AWAITING_LOCATION') {
+                    const isKN = currentState.lang === 'kn';
+                    const firstName = currentState.firstName || 'Customer';
+                    const fullName = currentState.fullName || firstName;
+                    const locationAndTime = text;
+                    const service = userStates[userId].service;
+                    
+                    clearUserTimer(userId);
+                    userStates[userId].step = 'COMPLETED';
+
+                    const startOtp = generate4DigitOtp();
+                    const endOtp = generate4DigitOtp();
+
+                    const newBooking = {
+                        id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
+                        customerJid: userId,
+                        customerName: fullName,
+                        customerPhone: senderPhone,
+                        service: service,
+                        location: locationAndTime,
+                        status: 'Pending',
+                        assignedVendor: null,
+                        assignedVendorPhone: null,
+                        startOtp: startOtp,
+                        endOtp: endOtp,
+                        startOtpVerified: false,
+                        endOtpVerified: false,
+                        customerRating: null,
+                        reviewComment: null,
+                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    };
+                    bookings.unshift(newBooking);
+
+                    const confirmMsg = isKN
+                        ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ & ಸಮಯ: ${locationAndTime}\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು!`
+                        : `✅ *Booking Received, ${firstName}!*\n\n• Customer: ${fullName}\n• Service: ${service}\n• Location & Time: ${locationAndTime}\n\nField Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you in 10 minutes.\n\nThank you for choosing FixMaadi!`;
+
+                    await sock.sendMessage(userId, { text: confirmMsg });
+                    logMessage(`🎉 NEW BOOKING (${service}) from ${fullName} (${senderPhone})`);
+                    delete userStates[userId];
+                }
             }
-        } catch (err) { logMessage(`Error: ${err.message}`); }
+        } catch (err) {
+            logMessage(`Error processing message: ${err.message}`);
+        }
     });
 }
 
