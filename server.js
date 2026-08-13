@@ -202,8 +202,48 @@ let vendors = [
 ];
 
 let bookings = [
-    { id: 'BK-1001', customerJid: null, customerName: 'Shankar Patil', customerPhone: '+91 98440 99887', service: 'Plumber 💧 (from ₹99)', location: 'Navanagar Sector 4, House #112', status: 'Pending', assignedVendor: null, assignedVendorPhone: null, startOtp: '4829', endOtp: '9182', startOtpVerified: false, endOtpVerified: false, customerRating: null, reviewComment: null, timestamp: '10:15 AM' },
-    { id: 'BK-1002', customerJid: null, customerName: 'Vijaylaxmi Joshi', customerPhone: '+91 97311 88776', service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', location: 'Vidyagiri, 3rd Cross', status: 'Assigned', assignedVendor: 'Yellappa (Septic Tank Cleaning)', assignedVendorPhone: '+91 99805 77889', startOtp: '1432', endOtp: '8821', startOtpVerified: true, endOtpVerified: false, customerRating: 5, reviewComment: 'Excellent punctual service!', timestamp: '11:30 AM' },
+    { 
+        id: 'BK-1001', 
+        customerJid: null, 
+        customerName: 'Shankar Patil', 
+        customerPhone: '+91 98440 99887', 
+        service: 'Plumber 💧 (from ₹99)', 
+        location: 'Navanagar Sector 4, House #112', 
+        status: 'Pending', 
+        assignedVendor: null, 
+        assignedVendorPhone: null, 
+        startOtp: '4829', 
+        endOtp: '9182', 
+        startOtpVerified: false, 
+        endOtpVerified: false,
+        startTimestamp: null,
+        endTimestamp: null,
+        totalDurationSeconds: null,
+        customerRating: null, 
+        reviewComment: null, 
+        timestamp: '10:15 AM' 
+    },
+    { 
+        id: 'BK-1002', 
+        customerJid: null, 
+        customerName: 'Vijaylaxmi Joshi', 
+        customerPhone: '+91 97311 88776', 
+        service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', 
+        location: 'Vidyagiri, 3rd Cross', 
+        status: 'In-Progress', 
+        assignedVendor: 'Yellappa (Septic Tank Cleaning)', 
+        assignedVendorPhone: '+91 99805 77889', 
+        startOtp: '1432', 
+        endOtp: '8821', 
+        startOtpVerified: true, 
+        endOtpVerified: false, 
+        startTimestamp: Date.now() - (24 * 60 * 1000 + 12 * 1000), // Started 24 mins 12 secs ago
+        endTimestamp: null,
+        totalDurationSeconds: null,
+        customerRating: 5, 
+        reviewComment: 'Excellent punctual service!', 
+        timestamp: '11:30 AM' 
+    },
 ];
 
 let attendance = [
@@ -214,8 +254,16 @@ let attendance = [
     { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
 ];
 
-// API ENDPOINTS
-app.get('/api/bookings', (req, res) => res.json(bookings));
+// MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY (SENT TO CUSTOMER ONLY VIA WHATSAPP)
+app.get('/api/bookings', (req, res) => {
+    const maskedBookings = bookings.map(b => ({
+        ...b,
+        startOtpMasked: b.startOtpVerified ? '✅ Verified' : '🔐 Sent to Customer',
+        endOtpMasked: b.endOtpVerified ? '✅ Verified' : '🔐 Sent to Customer'
+    }));
+    res.json(maskedBookings);
+});
+
 app.get('/api/vendors', (req, res) => res.json(vendors));
 app.get('/api/attendance', (req, res) => res.json(attendance));
 app.get('/api/departments', (req, res) => res.json(departments));
@@ -224,6 +272,65 @@ app.get('/api/documents', (req, res) => res.json(getLiveDocumentsList()));
 app.get('/api/deleted-vendors', (req, res) => res.json(deletedVendorsLog));
 app.get('/api/email-digest-config', (req, res) => res.json(emailDigestConfig));
 app.get('/api/instagram-info', (req, res) => res.json(instagramAccountInfo));
+
+// VERIFY START OTP & START INDIVIDUAL WORK TIMER
+app.post('/api/verify-start-otp', async (req, res) => {
+    const { bookingId, otpInput } = req.body;
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    if (booking.startOtp === otpInput.trim()) {
+        booking.startOtpVerified = true;
+        booking.status = 'In-Progress';
+        booking.startTimestamp = Date.now();
+        logMessage(`🔓 Start OTP verified for Booking ${bookingId}! Work timer started for ${booking.assignedVendor}.`);
+
+        if (sockInstance && booking.customerJid) {
+            try {
+                const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
+                const workNotice = `▶️ *Service Started, ${firstName}!*\n\n${booking.assignedVendor} has entered your Start OTP and begun the work.\n\n⏱️ *Work Timer is now running live!*\n\n🔐 *Your Work Completion OTP is:* *${booking.endOtp}*\n\nPlease share this completion OTP with ${booking.assignedVendor} after the work is finished.`;
+                await sockInstance.sendMessage(booking.customerJid, { text: workNotice });
+            } catch (e) {}
+        }
+        return res.json({ success: true, message: 'Start OTP verified! Work timer started.', booking });
+    }
+    res.status(400).json({ error: 'Incorrect Start OTP. Please check with customer.' });
+});
+
+// VERIFY END OTP, STOP TIMER & CALCULATE TOTAL WORK DURATION
+app.post('/api/verify-end-otp', async (req, res) => {
+    const { bookingId, otpInput } = req.body;
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    if (booking.endOtp === otpInput.trim()) {
+        booking.endOtpVerified = true;
+        booking.status = 'Completed';
+        booking.endTimestamp = Date.now();
+
+        const startMs = booking.startTimestamp || (Date.now() - 30 * 60 * 1000);
+        const durationMs = booking.endTimestamp - startMs;
+        const totalSeconds = Math.floor(durationMs / 1000);
+        booking.totalDurationSeconds = totalSeconds;
+
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const durationStr = hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes} mins ${seconds} secs`;
+
+        logMessage(`🏁 End OTP verified for Booking ${bookingId}! Total Work Duration: ${durationStr}`);
+
+        if (sockInstance && booking.customerJid) {
+            try {
+                const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
+                const completeNotice = `🎉 *Service Completed, ${firstName}!*\n\n• Technician: ${booking.assignedVendor}\n• Total Duration: *${durationStr}*\n\nThank you for using FixMaadi Bagalkot! 0% Commission community platform. 🙏`;
+                await sockInstance.sendMessage(booking.customerJid, { text: completeNotice });
+            } catch (e) {}
+        }
+        return res.json({ success: true, message: 'End OTP verified! Work completed.', durationStr, booking });
+    }
+    res.status(400).json({ error: 'Incorrect End OTP. Please check with customer.' });
+});
 
 // FUNCTION TO DISPATCH LIVE VIRTUAL EMPLOYEE STATUS EMAIL VIA RESEND API
 async function sendLiveVirtualEmployeesEmail(typeLabel) {
@@ -465,96 +572,13 @@ app.get('/api/status-info', async (req, res) => {
     res.json({ botStatus, qrDataUrl, logs });
 });
 
-// CONVERSATIONAL STATE & TEXT EXTRACTOR
-const userStates = {};
-
 function extractText(msg) {
     if (!msg.message) return '';
     const m = msg.message;
-    return (
-        m.conversation ||
-        m.extendedTextMessage?.text ||
-        m.ephemeralMessage?.message?.conversation ||
-        m.ephemeralMessage?.message?.extendedTextMessage?.text ||
-        m.imageMessage?.caption ||
-        m.videoMessage?.caption ||
-        ''
-    ).trim();
-}
-
-function matchService(text, servicesDict) {
-    const clean = text.toLowerCase().trim();
-    for (const key in servicesDict) {
-        if (clean === key) return servicesDict[key];
-        for (const kw of servicesDict[key].keywords) {
-            if (clean.includes(kw)) return servicesDict[key];
-        }
-    }
-    return null;
-}
-
-function generate4DigitOtp() { return Math.floor(1000 + Math.random() * 9000).toString(); }
-
-function clearUserTimer(userId) {
-    if (userStates[userId] && userStates[userId].timer) {
-        clearTimeout(userStates[userId].timer);
-        userStates[userId].timer = null;
-    }
-}
-
-function scheduleFollowUp(sock, userId) {
-    clearUserTimer(userId);
-    const state = userStates[userId];
-    if (!state || state.step === 'NEW' || state.step === 'COMPLETED') return;
-
-    state.timer = setTimeout(async () => {
-        try {
-            const isKN = state.lang === 'kn';
-            const firstName = state.firstName || (isKN ? 'ಗ್ರಾಹಕರೇ' : 'Customer');
-
-            if (!userStates[userId]) return;
-
-            if (userStates[userId].followUpCount === 0) {
-                userStates[userId].followUpCount = 1;
-                logMessage(`⏰ Sending 1st Inactivity Follow-up to ${firstName}`);
-
-                const followUp1 = isKN
-                    ? `👋 ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ನೀವು ಇನ್ನೂ ನಿಮ್ಮ ಬುಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಿಲ್ಲ.\n\nನಿಮಗೆ ಸಹಾಯ ಬೇಕಿದ್ದರೆ, ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರಿಗೆ ಕರೆ ಮಾಡಿ, ಅಥವಾ ನಿಮ್ಮ ಆಯ್ಕೆಯನ್ನು ಕಳುಹಿಸಿ.\n*(ಹಿಂದಕ್ಕೆ ಹೋಗಲು "0" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
-                    : `👋 Hi ${firstName}! You haven't completed your FixMaadi booking yet.\n\nIf you need any assistance, call Bhuvan Nara at ${BHUVAN_PHONE} or reply to continue.\n*(Type "0" anytime to reset)*`;
-
-                await sock.sendMessage(userId, { text: followUp1 });
-                scheduleFollowUp(sock, userId);
-            }
-            else if (userStates[userId].followUpCount === 1) {
-                logMessage(`⛔ Terminating inactive session for ${firstName} after 2nd follow-up`);
-
-                const terminateMsg = isKN
-                    ? `⚠️ ಸಮಯ ಮೀರಿದ್ದರಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಸೆಷನ್ ಪೂರ್ಣಗೊಂಡಿದೆ.\n\nನೀವು ಮತ್ತೆ ಬುಕಿಂಗ್ ಮಾಡಲು ಬಯಸಿದರೆ, ದಯವಿಟ್ಟು "Hi" ಎಂದು ಟೈಪ್ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು ${firstName} ಅವರೇ! 🙏`
-                    : `⚠️ Your session has timed out due to inactivity, ${firstName}.\n\nIf you would like to start again anytime, simply reply with "Hi". Thank you! 🙏`;
-
-                await sock.sendMessage(userId, { text: terminateMsg });
-                clearUserTimer(userId);
-                delete userStates[userId];
-            }
-        } catch (err) {
-            logMessage(`Error processing follow-up: ${err.message}`);
-        }
-    }, INACTIVITY_TIMEOUT_MS);
-}
-
-async function sendServiceMenu(sock, userId, lang, firstName) {
-    const isKN = lang === 'kn';
-    if (isKN) {
-        const menuKN = `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ. 🙏\nನಿಮಗೆ ಬೇಕಾದ ಸೇವೆಯ ಸಂಖ್ಯೆ ಅಥವಾ ಹೆಸರನ್ನು ಟೈಪ್ ಮಾಡಿ:\n\n1. ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2. ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3. ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4. ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5. ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6. ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ (₹99 ರಿಂದ) 💈\n7. ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8. ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9. ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n10. ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n11. ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499 ರಿಂದ) 📚\n12. ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಮುಖ್ಯ ಮೆನುಗೆ ಹೋಗಲು "0" ಅಥವಾ "ಹಿಂತಿರುಗಿ" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`;
-        await sock.sendMessage(userId, { text: menuKN });
-    } else {
-        const menuEN = `Hi ${firstName}! Welcome to *FixMaadi Bagalkot*! 🙏\nReply with number (1-12) or type the service name:\n\n1. Purohit & Pujas (from ₹501) 🙏\n2. Mixie & Fan Repair (from ₹79) 🔧\n3. Plumber (from ₹99) 💧\n4. Electrician (from ₹79) ⚡\n5. Beautician (Women) (from ₹149) ✂️\n6. Men Haircut & Grooming (from ₹99) 💈\n7. Septic Tank & Sump Cleaning (from ₹499) 🚜\n8. Event & Stage Decoration (from ₹999) 🎈\n9. Catering & Cooking Labour (from ₹499) 🍲\n10. Carpenter & Woodwork (from ₹149) 🪚\n11. Home Tutors (from ₹499/mo) 📚\n12. Civil Labour & Painting (from ₹299) 🎨\n\n*(Type "0" or "BACK" anytime to return to main menu)*`;
-        await sock.sendMessage(userId, { text: menuEN });
-    }
+    return (m.conversation || m.extendedTextMessage?.text || m.ephemeralMessage?.message?.conversation || m.ephemeralMessage?.message?.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || '').trim();
 }
 
 async function startBot() {
-    // PREVENT DUAL SOCKET CONFLICT BETWEEN LOCAL MAC & RENDER CLOUD
     if (process.env.DISABLE_WHATSAPP_SOCKET === 'true') {
         logMessage('⚠️ Local WhatsApp socket disabled to prevent dual-login conflict with Render cloud.');
         botStatus = 'RUNNING_ON_RENDER_CLOUD_24/7';
@@ -727,6 +751,9 @@ async function startBot() {
                         endOtp: endOtp,
                         startOtpVerified: false,
                         endOtpVerified: false,
+                        startTimestamp: null,
+                        endTimestamp: null,
+                        totalDurationSeconds: null,
                         customerRating: null,
                         reviewComment: null,
                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

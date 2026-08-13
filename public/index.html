@@ -78,11 +78,15 @@
         .status-Completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .status-Cancelled { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
+        .timer-badge { background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 0.88rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; }
+
         select, button, input[type="text"], input[type="number"], input[type="file"] { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; outline: none; transition: all 0.2s; }
         select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,82,186,0.12); }
 
         .btn-action { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; }
         .btn-action:hover { background: var(--primary-dark); }
+        .btn-success { background: #10b981; color: white; border: none; font-weight: 600; cursor: pointer; }
+        .btn-success:hover { background: #059669; }
         .btn-star { background: #f59e0b; color: white; border: none; font-weight: 600; }
         .btn-star:hover { background: #d97706; }
         .btn-danger { background: #ef4444; color: white; border: none; font-weight: 600; }
@@ -186,16 +190,16 @@
                             <div class="stat-sub">✅ Customer Verified</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-lbl">Active In-Progress</div>
+                            <div class="stat-lbl">Active Work Timers</div>
                             <div class="stat-val" id="stat-inprogress-bookings" style="color: #8b5cf6;">0</div>
-                            <div class="stat-sub">▶️ Service Timer Running</div>
+                            <div class="stat-sub">▶️ Individual Timers Running</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-title">
-                        <span>📋 All Customer Booking Records</span>
+                        <span>📋 All Customer Booking Records & Provider Work Timers</span>
                     </div>
 
                     <!-- SEARCH & FILTER TOOLBAR -->
@@ -349,6 +353,42 @@
         </div>
     </div>
 
+    <!-- START OTP VERIFICATION MODAL -->
+    <div class="modal-overlay" id="start-otp-modal">
+        <div class="modal">
+            <h3 style="margin-bottom: 12px; color: var(--primary);">🔓 Enter Start Service OTP</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">Provider received 4-digit Start OTP from customer at job location for booking <strong id="start-otp-booking-id"></strong></p>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Type 4-Digit Start OTP</label>
+                <input type="text" id="start-otp-input" placeholder="e.g. 4829" maxlength="4" style="font-size: 1.4rem; letter-spacing: 4px; text-align: center; font-weight: 700;" />
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn-secondary" onclick="closeStartOtpModal()">Cancel</button>
+                <button class="btn-action" onclick="submitStartOtp()">▶️ Verify & Start Work Timer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- END OTP VERIFICATION MODAL -->
+    <div class="modal-overlay" id="end-otp-modal">
+        <div class="modal">
+            <h3 style="margin-bottom: 12px; color: #10b981;">🏁 Enter Work Completion OTP</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">Provider received 4-digit Completion OTP from customer after finishing job <strong id="end-otp-booking-id"></strong></p>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Type 4-Digit End OTP</label>
+                <input type="text" id="end-otp-input" placeholder="e.g. 9182" maxlength="4" style="font-size: 1.4rem; letter-spacing: 4px; text-align: center; font-weight: 700;" />
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn-secondary" onclick="closeEndOtpModal()">Cancel</button>
+                <button class="btn-success" onclick="submitEndOtp()">⏹️ Stop Timer & Complete Service</button>
+            </div>
+        </div>
+    </div>
+
     <!-- PROVIDER RATING MODAL -->
     <div class="modal-overlay" id="rating-modal">
         <div class="modal">
@@ -413,6 +453,7 @@
         let selectedRatingScore = 5;
         let activeRatingBookingId = null;
         let activeDeleteVendorId = null;
+        let activeOtpBookingId = null;
 
         function switchNav(tabId, title, e) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -461,6 +502,24 @@
             }
         }
 
+        function formatTimer(startTimestamp) {
+            if (!startTimestamp) return '--:--:--';
+            const elapsedMs = Math.max(0, Date.now() - startTimestamp);
+            const totalSecs = Math.floor(elapsedMs / 1000);
+            const h = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSecs % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function formatDuration(totalSeconds) {
+            if (!totalSeconds) return '0 mins';
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes} mins ${seconds} secs`;
+        }
+
         function updateStats(bookings, vendors, attendance) {
             document.getElementById('stat-vendors').innerText = vendors.length;
             const pending = bookings.filter(b => b.status === 'Pending').length;
@@ -468,7 +527,7 @@
 
             document.getElementById('stat-total-bookings').innerText = bookings.length;
             document.getElementById('stat-completed-bookings').innerText = bookings.filter(b => b.status === 'Completed').length;
-            document.getElementById('stat-inprogress-bookings').innerText = bookings.filter(b => b.status === 'In-Progress' || b.status === 'Assigned').length;
+            document.getElementById('stat-inprogress-bookings').innerText = bookings.filter(b => b.status === 'In-Progress').length;
 
             document.getElementById('stat-att-present').innerText = attendance.filter(a => a.status === 'Present').length;
             document.getElementById('stat-att-service').innerText = attendance.filter(a => a.status === 'On Service').length;
@@ -517,9 +576,27 @@
                 return;
             }
 
-            let html = '<table><thead><tr><th>Booking ID</th><th>Customer</th><th>Service</th><th>Location</th><th>Technician</th><th>Start OTP</th><th>End OTP</th><th>Rating</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Booking ID</th><th>Customer</th><th>Service</th><th>Location</th><th>Technician</th><th>Work Timer / Duration</th><th>Status</th><th>OTP Verification / Action</th></tr></thead><tbody>';
             bookings.forEach(b => {
-                const ratingBadge = b.customerRating ? `<span style="color:#f59e0b; font-weight:700;">${b.customerRating}★</span>` : `<button class="btn-star" style="padding:4px 8px; font-size:11px;" onclick="openRatingModal('${b.id}')">⭐ Rate</button>`;
+                let timerCell = '<span style="color:var(--text-muted);">--</span>';
+                if (b.status === 'In-Progress') {
+                    timerCell = `<span class="timer-badge" id="timer-val-${b.id}">⏱️ ${formatTimer(b.startTimestamp)}</span>`;
+                } else if (b.status === 'Completed') {
+                    timerCell = `<span style="font-weight:700; color:#10b981;">⏱️ ${formatDuration(b.totalDurationSeconds)}</span>`;
+                }
+
+                let actionCell = '';
+                if (b.status === 'Assigned') {
+                    actionCell = `<button class="btn-action" onclick="openStartOtpModal('${b.id}')">🔓 Enter Start OTP</button>`;
+                } else if (b.status === 'In-Progress') {
+                    actionCell = `<button class="btn-success" onclick="openEndOtpModal('${b.id}')">🏁 Enter End OTP & Complete</button>`;
+                } else if (b.status === 'Completed') {
+                    const ratingBadge = b.customerRating ? `<span style="color:#f59e0b; font-weight:700;">${b.customerRating}★ Score</span>` : `<button class="btn-star" style="padding:4px 8px; font-size:11px;" onclick="openRatingModal('${b.id}')">⭐ Rate</button>`;
+                    actionCell = ratingBadge;
+                } else {
+                    actionCell = `<span style="color:var(--text-muted); font-size:11px;">${b.startOtpMasked || '🔐 Sent to Customer'}</span>`;
+                }
+
                 html += `
                     <tr>
                         <td><strong>${b.id}</strong></td>
@@ -527,19 +604,27 @@
                         <td>${b.service}</td>
                         <td>${b.location}</td>
                         <td>${b.assignedVendor ? b.assignedVendor : '<span style="color:var(--text-muted);">Unassigned</span>'}</td>
-                        <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700;">${b.startOtp}</code></td>
-                        <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700;">${b.endOtp}</code></td>
-                        <td>${ratingBadge}</td>
+                        <td>${timerCell}</td>
                         <td><span class="status-tag status-${b.status}">${b.status}</span></td>
-                        <td>
-                            <button class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="openRatingModal('${b.id}')">⭐ Rate</button>
-                        </td>
+                        <td>${actionCell}</td>
                     </tr>
                 `;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
         }
+
+        // Realtime 1-Second Ticking Timer Loop for Active Work Timers
+        setInterval(() => {
+            globalBookings.forEach(b => {
+                if (b.status === 'In-Progress' && b.startTimestamp) {
+                    const timerElem = document.getElementById(`timer-val-${b.id}`);
+                    if (timerElem) {
+                        timerElem.innerText = `⏱️ ${formatTimer(b.startTimestamp)}`;
+                    }
+                }
+            });
+        }, 1000);
 
         function filterBookings() {
             const query = document.getElementById('booking-search').value.toLowerCase().trim();
@@ -690,7 +775,7 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert(`✅ Technician ${vendorName} assigned! WhatsApp notification sent to customer.`);
+                alert(`✅ Technician ${vendorName} assigned! Start OTP sent to customer on WhatsApp.`);
                 loadData();
             } else {
                 alert('Error: ' + data.error);
@@ -708,6 +793,64 @@
             if (data.success) {
                 alert(`❌ Booking ${bookingId} cancelled. Customer notified on WhatsApp.`);
                 loadData();
+            }
+        }
+
+        // START OTP MODAL LOGIC
+        function openStartOtpModal(bookingId) {
+            activeOtpBookingId = bookingId;
+            document.getElementById('start-otp-booking-id').innerText = bookingId;
+            document.getElementById('start-otp-input').value = '';
+            document.getElementById('start-otp-modal').style.display = 'flex';
+        }
+        function closeStartOtpModal() {
+            document.getElementById('start-otp-modal').style.display = 'none';
+        }
+        async function submitStartOtp() {
+            const otpInput = document.getElementById('start-otp-input').value;
+            if (!otpInput || otpInput.length !== 4) return alert('Please enter valid 4-digit Start OTP!');
+
+            const res = await fetch('/api/verify-start-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId: activeOtpBookingId, otpInput })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`▶️ Start OTP Verified! Individual work timer is now running live.`);
+                closeStartOtpModal();
+                loadData();
+            } else {
+                alert('⚠️ Error: ' + data.error);
+            }
+        }
+
+        // END OTP MODAL LOGIC
+        function openEndOtpModal(bookingId) {
+            activeOtpBookingId = bookingId;
+            document.getElementById('end-otp-booking-id').innerText = bookingId;
+            document.getElementById('end-otp-input').value = '';
+            document.getElementById('end-otp-modal').style.display = 'flex';
+        }
+        function closeEndOtpModal() {
+            document.getElementById('end-otp-modal').style.display = 'none';
+        }
+        async function submitEndOtp() {
+            const otpInput = document.getElementById('end-otp-input').value;
+            if (!otpInput || otpInput.length !== 4) return alert('Please enter valid 4-digit End OTP!');
+
+            const res = await fetch('/api/verify-end-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId: activeOtpBookingId, otpInput })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`🏁 End OTP Verified! Work Timer Stopped. Total Duration: ${data.durationStr}`);
+                closeEndOtpModal();
+                loadData();
+            } else {
+                alert('⚠️ Error: ' + data.error);
             }
         }
 
