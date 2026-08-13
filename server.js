@@ -2,6 +2,7 @@ const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whis
 const express = require('express');
 const QRCode = require('qrcode');
 const { Resend } = require('resend');
+const { GoogleGenAI } = require('@google/genai');
 const https = require('https');
 const http = require('http');
 const path = require('path');
@@ -30,6 +31,9 @@ const ARTIFACT_DIR = path.join(__dirname, '../../brain/a554415f-1f6b-469d-8b83-b
 // RESEND API CLIENT INTEGRATION VIA SECURE ENV VARIABLE
 const resendApiKey = process.env.RESEND_API_KEY || 're_aTd26' + 'GwH_E53qFt1wbZndww1YmvmWbK6z';
 const resend = new Resend(resendApiKey);
+
+// GEMINI AI INTEGRATION FOR SMOOTH CONVERSATIONAL FLOW
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 // 24/7 RENDER KEEP-ALIVE AUTO PINGER (PREVENTS SLEEPING / COLD STARTS)
 setInterval(() => {
