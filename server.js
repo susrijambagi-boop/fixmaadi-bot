@@ -41,6 +41,7 @@ function logAgentTask(agentCode, agentName, taskDescription) {
 const BHUVAN_PHONE = '+91 8123909829';
 const INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
 const ARTIFACT_DIR = path.join(__dirname, '../../brain/a554415f-1f6b-469d-8b83-bb4664b7054b');
+const DB_FILE = path.join(__dirname, 'database.json');
 
 // RESEND API CLIENT INTEGRATION VIA SECURE ENV VARIABLE
 const resendApiKey = process.env.RESEND_API_KEY || 're_aTd26' + 'GwH_E53qFt1wbZndww1YmvmWbK6z';
@@ -207,44 +208,34 @@ const SERVICES_KN = {
     '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] }
 };
 
-// PERSISTENT CUSTOMER DATABASE WITH PHONE NUMBER NORMALIZATION
-let customerDatabase = {
+// INITIAL DEFAULTS FOR DISK DATABASE SEEDING
+let defaultCustomerDatabase = {
     '9844099887': { name: 'Shankar Patil', firstName: 'Shankar', lang: 'kn', lastLocation: 'Navanagar Sector 4, House #112' },
     '9731188776': { name: 'Vijaylaxmi Joshi', firstName: 'Vijaylaxmi', lang: 'en', lastLocation: 'Vidyagiri, 3rd Cross' }
 };
 
-function get10DigitPhone(phoneStr) {
-    const digits = (phoneStr || '').replace(/[^0-9]/g, '');
-    return digits.length >= 10 ? digits.slice(-10) : digits;
-}
-
-function findCustomer(phoneStr) {
-    const key = get10DigitPhone(phoneStr);
-    if (!key) return null;
-    return customerDatabase[key] || null;
-}
-
-function saveCustomer(phoneStr, data) {
-    const key = get10DigitPhone(phoneStr);
-    if (!key) return;
-    const existing = customerDatabase[key] || {};
-    customerDatabase[key] = { ...existing, ...data };
-    logMessage(`💾 Saved customer persistence memory for key ${key}: ${JSON.stringify(customerDatabase[key])}`);
-}
-
-let deletedVendorsLog = [];
-
-let vendors = [
-    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, ratingCount: 12, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, ratingCount: 18, status: 'Available', delays: 1, leavesCount: 0 },
-    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, ratingCount: 8, status: 'Available', delays: 3, leavesCount: 4 },
-    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, ratingCount: 15, status: 'Available', delays: 0, leavesCount: 2 },
-    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, ratingCount: 10, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, ratingCount: 14, status: 'Available', delays: 2, leavesCount: 3 },
-    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, ratingCount: 22, status: 'Available', delays: 0, leavesCount: 0 },
-];
-
-let bookings = [
+let defaultBookings = [
+    { 
+        id: 'BK-1003', 
+        customerJid: null, 
+        customerName: 'Hemant Patil', 
+        customerPhone: '+91 81239 09829', 
+        service: 'Electrician ⚡ (from ₹79)', 
+        location: 'Sector 61 Navanagar', 
+        status: 'Pending', 
+        assignedVendor: null, 
+        assignedVendorPhone: null, 
+        startOtp: '5921', 
+        endOtp: '3819', 
+        startOtpVerified: false, 
+        endOtpVerified: false, 
+        startTimestamp: null, 
+        endTimestamp: null, 
+        totalDurationSeconds: null, 
+        customerRating: null, 
+        reviewComment: null, 
+        timestamp: '03:50 PM' 
+    },
     { 
         id: 'BK-1001', 
         customerJid: null, 
@@ -258,10 +249,10 @@ let bookings = [
         startOtp: '4829', 
         endOtp: '9182', 
         startOtpVerified: false, 
-        endOtpVerified: false,
-        startTimestamp: null,
-        endTimestamp: null,
-        totalDurationSeconds: null,
+        endOtpVerified: false, 
+        startTimestamp: null, 
+        endTimestamp: null, 
+        totalDurationSeconds: null, 
         customerRating: null, 
         reviewComment: null, 
         timestamp: '10:15 AM' 
@@ -281,21 +272,106 @@ let bookings = [
         startOtpVerified: true, 
         endOtpVerified: false, 
         startTimestamp: Date.now() - (24 * 60 * 1000 + 12 * 1000), 
-        endTimestamp: null,
-        totalDurationSeconds: null,
+        endTimestamp: null, 
+        totalDurationSeconds: null, 
         customerRating: 5, 
         reviewComment: 'Excellent punctual service!', 
         timestamp: '11:30 AM' 
-    },
+    }
 ];
 
-let attendance = [
+let defaultVendors = [
+    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, ratingCount: 12, status: 'Available', delays: 0, leavesCount: 1 },
+    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, ratingCount: 18, status: 'Available', delays: 1, leavesCount: 0 },
+    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, ratingCount: 8, status: 'Available', delays: 3, leavesCount: 4 },
+    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, ratingCount: 15, status: 'Available', delays: 0, leavesCount: 2 },
+    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, ratingCount: 10, status: 'Available', delays: 0, leavesCount: 1 },
+    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, ratingCount: 14, status: 'Available', delays: 2, leavesCount: 3 },
+    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, ratingCount: 22, status: 'Available', delays: 0, leavesCount: 0 }
+];
+
+let defaultAttendance = [
     { id: 'ATT-101', date: new Date().toISOString().split('T')[0], vendorName: 'Ramesh Kumbar (Plumber)', category: 'Plumber 💧', phone: '+91 94481 22334', loginTime: '08:00 AM', logoutTime: '06:30 PM', status: 'Present' },
     { id: 'ATT-102', date: new Date().toISOString().split('T')[0], vendorName: 'Anant Bhat (Purohit)', category: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', loginTime: '08:15 AM', logoutTime: '05:00 PM', status: 'Present' },
     { id: 'ATT-103', date: new Date().toISOString().split('T')[0], vendorName: 'Suresh Patil (Electrician)', category: 'Electrician ⚡', phone: '+91 98802 33445', loginTime: '09:45 AM', logoutTime: '--', status: 'On Service' },
     { id: 'ATT-104', date: new Date().toISOString().split('T')[0], vendorName: 'Lakshmi Hegde (Beautician)', category: 'Beautician (Women) ✂️', phone: '+91 97413 44556', loginTime: '09:00 AM', logoutTime: '--', status: 'Present' },
-    { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
+    { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' }
 ];
+
+let bookings = [];
+let customerDatabase = {};
+let vendors = [];
+let attendance = [];
+let userStates = {};
+let deletedVendorsLog = [];
+
+// PERMANENT DISK DATABASE ENGINE (PREVENTS ANY DATA LOSS ON RESTART)
+function loadDatabaseFromDisk() {
+    try {
+        if (fs.existsSync(DB_FILE)) {
+            const raw = fs.readFileSync(DB_FILE, 'utf8');
+            const parsed = JSON.parse(raw);
+            bookings = parsed.bookings || defaultBookings;
+            customerDatabase = parsed.customerDatabase || defaultCustomerDatabase;
+            vendors = parsed.vendors || defaultVendors;
+            attendance = parsed.attendance || defaultAttendance;
+            userStates = parsed.userStates || {};
+            deletedVendorsLog = parsed.deletedVendorsLog || [];
+            logMessage(`💾 PERMANENT DB ENGINE: Loaded ${bookings.length} Bookings, ${Object.keys(customerDatabase).length} Customers, and ${Object.keys(userStates).length} Active Sessions from disk!`);
+            return;
+        }
+    } catch (e) {
+        logMessage(`⚠️ Error loading disk database: ${e.message}`);
+    }
+
+    bookings = defaultBookings;
+    customerDatabase = defaultCustomerDatabase;
+    vendors = defaultVendors;
+    attendance = defaultAttendance;
+    userStates = {};
+    deletedVendorsLog = [];
+    saveDatabaseToDisk();
+}
+
+function saveDatabaseToDisk() {
+    try {
+        const payload = {
+            bookings,
+            customerDatabase,
+            vendors,
+            attendance,
+            userStates,
+            deletedVendorsLog,
+            lastSaved: new Date().toISOString()
+        };
+        fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf8');
+    } catch (e) {
+        logMessage(`⚠️ Error saving disk database: ${e.message}`);
+    }
+}
+
+// LOAD DATABASE AT INITIALIZATION
+loadDatabaseFromDisk();
+
+function get10DigitPhone(phoneStr) {
+    const digits = (phoneStr || '').replace(/[^0-9]/g, '');
+    return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+function findCustomer(phoneStr) {
+    const key = get10DigitPhone(phoneStr);
+    if (!key) return null;
+    return customerDatabase[key] || null;
+}
+
+function saveCustomer(phoneStr, data) {
+    const key = get10DigitPhone(phoneStr);
+    if (!key) return;
+    const existing = customerDatabase[key] || {};
+    customerDatabase[key] = { ...existing, ...data };
+    saveDatabaseToDisk();
+    logMessage(`💾 Saved persistent customer profile: ${key} -> ${JSON.stringify(customerDatabase[key])}`);
+}
 
 // MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY
 app.get('/api/bookings', (req, res) => {
@@ -345,6 +421,8 @@ app.post('/api/verify-start-otp', async (req, res) => {
         booking.startOtpVerified = true;
         booking.status = 'In-Progress';
         booking.startTimestamp = Date.now();
+        saveDatabaseToDisk();
+
         logMessage(`🔓 Start OTP verified for Booking ${bookingId}! Work timer started for ${booking.assignedVendor}.`);
         logAgentTask("FM-EMP-501", "Bhuvan Nara", `Verified Start OTP (${otpInput}) for Booking ${bookingId}. Started live work timer.`);
 
@@ -375,6 +453,7 @@ app.post('/api/verify-end-otp', async (req, res) => {
         const durationMs = booking.endTimestamp - startMs;
         const totalSeconds = Math.floor(durationMs / 1000);
         booking.totalDurationSeconds = totalSeconds;
+        saveDatabaseToDisk();
 
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -465,6 +544,7 @@ app.post('/api/rate-provider', async (req, res) => {
             logMessage(`⭐ Logged ${score}★ rating for ${vendor.name}. Updated avg rating: ${vendor.rating}★ (${vendor.ratingCount} reviews)`);
         }
     }
+    saveDatabaseToDisk();
 
     if (sockInstance && booking.customerJid) {
         try {
@@ -497,6 +577,7 @@ app.post('/api/assign', async (req, res) => {
     booking.assignedVendor = vendor.name;
     booking.assignedVendorPhone = vendor.phone;
     booking.status = 'Assigned';
+    saveDatabaseToDisk();
 
     logMessage(`🎯 Assigned ${vendor.name} (${vendor.phone}) to Booking ${bookingId}`);
 
@@ -523,6 +604,7 @@ app.post('/api/status', async (req, res) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (booking) {
         booking.status = status;
+        saveDatabaseToDisk();
         logMessage(`📌 Booking ${bookingId} status changed to ${status}`);
 
         if (sockInstance && booking.customerJid) {
@@ -546,6 +628,7 @@ app.post('/api/vendors', (req, res) => {
     if (!name || !service || !phone) return res.status(400).json({ error: 'Name, Service, and Phone are required' });
     const newVendor = { id: 'V' + Math.floor(100 + Math.random() * 900), name, service, phone, area: area || 'Bagalkot', availableTime: availableTime || '8:00 AM - 8:00 PM', rating: parseFloat(rating) || 4.8, ratingCount: 1, status: status || 'Available', delays: 0, leavesCount: 0 };
     vendors.unshift(newVendor);
+    saveDatabaseToDisk();
     logMessage(`👤 Added new service provider: ${name} (${service})`);
     res.json({ success: true, vendor: newVendor });
 });
@@ -565,6 +648,7 @@ app.put('/api/vendors/:id', (req, res) => {
         if (status) vendor.status = status;
         if (delays !== undefined) vendor.delays = parseInt(delays);
         if (leavesCount !== undefined) vendor.leavesCount = parseInt(leavesCount);
+        saveDatabaseToDisk();
         logMessage(`✏️ Updated provider details for ${vendor.name}`);
         return res.json({ success: true, vendor });
     }
@@ -592,6 +676,7 @@ app.delete('/api/vendors/:id', (req, res) => {
             deletedAt: new Date().toLocaleString()
         };
         deletedVendorsLog.unshift(logEntry);
+        saveDatabaseToDisk();
         logMessage(`🗑️ Deleted Provider ${deleted.name}. Reason: ${reasonCategory} (${customReason || 'None'})`);
         return res.json({ success: true, deleted, logEntry });
     }
@@ -603,6 +688,7 @@ app.post('/api/attendance', (req, res) => {
     const { vendorName, category, phone, status, loginTime, logoutTime } = req.body;
     const newRecord = { id: 'ATT-' + Math.floor(100 + Math.random() * 900), date: new Date().toISOString().split('T')[0], vendorName, category: category || 'General', phone: phone || '+91 90000 00000', loginTime: loginTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), logoutTime: logoutTime || '--', status: status || 'Present' };
     attendance.unshift(newRecord);
+    saveDatabaseToDisk();
     logMessage(`📅 Marked attendance for ${vendorName}: ${status}`);
     res.json({ success: true, record: newRecord });
 });
@@ -615,6 +701,7 @@ app.put('/api/attendance/:id', (req, res) => {
         if (loginTime) record.loginTime = loginTime;
         if (logoutTime) record.logoutTime = logoutTime;
         if (status) record.status = status;
+        saveDatabaseToDisk();
         logMessage(`✏️ Updated attendance for ${record.vendorName}`);
         return res.json({ success: true, record });
     }
@@ -638,8 +725,6 @@ app.get('/api/status-info', async (req, res) => {
 });
 
 // CONVERSATIONAL STATE & TEXT EXTRACTOR
-const userStates = {};
-
 function extractText(msg) {
     if (!msg.message) return '';
     const m = msg.message;
@@ -717,6 +802,7 @@ function scheduleFollowUp(sock, userId) {
                 await sock.sendMessage(userId, { text: terminateMsg });
                 clearUserTimer(userId);
                 delete userStates[userId];
+                saveDatabaseToDisk();
             }
         } catch (err) {
             logMessage(`Error processing follow-up: ${err.message}`);
@@ -794,6 +880,7 @@ async function startBot() {
                 if (lowerText === '0' || lowerText === 'back' || lowerText === 'menu' || lowerText.includes('ಹಿಂತಿರುಗಿ') || lowerText.includes('ಮೆನು')) {
                     clearUserTimer(userId);
                     delete userStates[userId];
+                    saveDatabaseToDisk();
                     logMessage(`🔄 ${senderPhone} returned to Main Menu`);
                 }
 
@@ -822,6 +909,7 @@ async function startBot() {
 
                         await sock.sendMessage(userId, { text: repeatPrompt });
                         userStates[userId].step = 'AWAITING_REPEAT_CONFIRM';
+                        saveDatabaseToDisk();
                         logMessage(`📤 Sent Repeat Customer Personal Greeting to ${userStates[userId].firstName} (${senderPhone})`);
                         scheduleFollowUp(sock, userId);
                     } else {
@@ -829,6 +917,7 @@ async function startBot() {
                         
                         await sock.sendMessage(userId, { text: langPrompt });
                         userStates[userId].step = 'AWAITING_LANG';
+                        saveDatabaseToDisk();
                         logMessage(`📤 Sent New Customer Language Selection to ${senderPhone}`);
                         scheduleFollowUp(sock, userId);
                     }
@@ -837,18 +926,20 @@ async function startBot() {
                     if (lowerText === '1' || lowerText.includes('yes') || lowerText.includes('ಹೌದು') || lowerText.includes('1️⃣')) {
                         logMessage(`✅ Repeat Customer ${currentState.firstName} confirmed identity`);
                         userStates[userId].step = 'AWAITING_SERVICE';
+                        saveDatabaseToDisk();
                         await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName);
                     } else {
                         logMessage(`🔄 Customer requested new name/language flow`);
                         const langPrompt = `Please select your language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"`;
                         await sock.sendMessage(userId, { text: langPrompt });
                         userStates[userId].step = 'AWAITING_LANG';
+                        saveDatabaseToDisk();
                     }
                 }
                 else if (currentState.step === 'AWAITING_LANG') {
                     if (lowerText === '1' || lowerText.includes('kannada') || lowerText.includes('ಕನ್ನಡ') || lowerText === 'lang_kn' || lowerText.includes('1️⃣')) {
                         userStates[userId].lang = 'kn';
-                    } else if (lowerText === '2' || lowerText.includes('english') || lowerText === 'lang_en' || lowerText.includes('2️⃣')) {
+                    } else if (lowerText === '2' || lowerText.includes('english') || lowerText === 'lang_en' || lowerText === 'lang_en' || lowerText.includes('2️⃣')) {
                         userStates[userId].lang = 'en';
                     } else {
                         await sock.sendMessage(userId, { text: `Please reply with "1" for Kannada or "2" for English / ಕನ್ನಡಕ್ಕಾಗಿ "1" ಅಥವಾ ಇಂಗ್ಲಿಷ್‌ಗಾಗಿ "2" ಎಂದು ಕಳುಹಿಸಿ.` });
@@ -858,9 +949,11 @@ async function startBot() {
 
                     if (userStates[userId].firstName) {
                         userStates[userId].step = 'AWAITING_SERVICE';
+                        saveDatabaseToDisk();
                         await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName);
                     } else {
                         userStates[userId].step = 'AWAITING_NAME';
+                        saveDatabaseToDisk();
                         const isKN = userStates[userId].lang === 'kn';
                         const namePrompt = isKN 
                             ? `ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಹೆಸರು ಮತ್ತು ಮನೆಹೆಸರು (Surname)* ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ರಮೇಶ್ ಪಾಟೀಲ್):`
@@ -879,6 +972,7 @@ async function startBot() {
                     saveCustomer(senderPhone, { name: fullName, firstName: firstName, lang: userStates[userId].lang || 'kn' });
 
                     userStates[userId].step = 'AWAITING_SERVICE';
+                    saveDatabaseToDisk();
                     await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
                 }
                 else if (currentState.step === 'AWAITING_SERVICE') {
@@ -896,6 +990,7 @@ async function startBot() {
                         if (savedLocation) {
                             userStates[userId].suggestedLocation = savedLocation;
                             userStates[userId].step = 'AWAITING_LOCATION_CONFIRM';
+                            saveDatabaseToDisk();
 
                             const locPrompt = isKN
                                 ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\n📍 *ನಿಮ್ಮ ಹಿಂದಿನ ವಿಳಾಸ ಬಳಸಬೇಕೇ?*\n"${savedLocation}"\n\n1️⃣ ಹೌದು, ಇದೇ ವಿಳಾಸ ಬಳಸಿ - Reply "1"\n2️⃣ ಹೊಸ ವಿಳಾಸ ಮತ್ತು ಸಮಯ ಟೈಪ್ ಮಾಡಿ - Reply "2"`
@@ -906,6 +1001,7 @@ async function startBot() {
                             scheduleFollowUp(sock, userId);
                         } else {
                             userStates[userId].step = 'AWAITING_LOCATION';
+                            saveDatabaseToDisk();
                             const promptMsg = isKN 
                                 ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\nದಯವಿಟ್ಟು ನಿಮ್ಮ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ*ವನ್ನು ಕಳುಹಿಸಿ.`
                                 : `Great choice, ${firstName}! You selected *${selected.name}*.\n\nPlease reply with your *Area/Address* (e.g., Navanagar Sector 4) and *Preferred Time* (e.g., Today 5 PM).`;
@@ -935,6 +1031,7 @@ async function startBot() {
                         logMessage(`⚡ Fast-tracked booking using saved address for ${firstName}: "${finalLocation}"`);
                     } else {
                         userStates[userId].step = 'AWAITING_LOCATION';
+                        saveDatabaseToDisk();
                         const promptMsg = isKN 
                             ? `ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಹೊಸ ಏರಿಯಾ/ವಿಳಾಸ* ಮತ್ತು *ಸಮಯ*ವನ್ನು ಟೈಪ್ ಮಾಡಿ:`
                             : `Please type your *New Area/Address* and *Preferred Time*:`;
@@ -979,6 +1076,8 @@ async function startBot() {
                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     };
                     bookings.unshift(newBooking);
+                    delete userStates[userId];
+                    saveDatabaseToDisk();
 
                     const confirmMsg = isKN
                         ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ! (ಅತಿ ವೇಗದ 1-ಟ್ಯಾಪ್ ಕಾಯ್ದಿರಿಸುವಿಕೆ)*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ: ${finalLocation}\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು!`
@@ -988,7 +1087,6 @@ async function startBot() {
                     logMessage(`🎉 FAST-TRACK REPEAT BOOKING (${service}) from ${fullName} (${senderPhone})`);
                     logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Fast-tracked Booking ${newBooking.id} for repeat customer ${fullName}`);
                     logAgentTask("FM-EMP-501", "Bhuvan Nara", `Alerted Field Ops to assign provider for Booking ${newBooking.id}`);
-                    delete userStates[userId];
                 }
                 else if (currentState.step === 'AWAITING_LOCATION') {
                     const isKN = currentState.lang === 'kn';
@@ -1033,6 +1131,8 @@ async function startBot() {
                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     };
                     bookings.unshift(newBooking);
+                    delete userStates[userId];
+                    saveDatabaseToDisk();
 
                     const confirmMsg = isKN
                         ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ & ಸಮಯ: ${locationAndTime}\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು!`
@@ -1042,7 +1142,6 @@ async function startBot() {
                     logMessage(`🎉 NEW BOOKING (${service}) from ${fullName} (${senderPhone})`);
                     logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Created Booking ${newBooking.id} for ${fullName} (${service})`);
                     logAgentTask("FM-EMP-501", "Bhuvan Nara", `Alerted Field Ops to assign provider for Booking ${newBooking.id}`);
-                    delete userStates[userId];
                 }
             }
         } catch (err) {
