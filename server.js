@@ -579,9 +579,9 @@ function extractText(msg) {
 }
 
 async function startBot() {
-    if (process.env.DISABLE_WHATSAPP_SOCKET === 'true') {
-        logMessage('⚠️ Local WhatsApp socket disabled to prevent dual-login conflict with Render cloud.');
-        botStatus = 'RUNNING_ON_RENDER_CLOUD_24/7';
+    if (process.env.DISABLE_WHATSAPP_SOCKET === 'true' || process.env.RENDER || process.env.RENDER_EXTERNAL_URL) {
+        logMessage('ℹ️ Render Cloud instance running in Web Command Center mode. WhatsApp Bot socket active on Primary Host.');
+        botStatus = 'COMMAND_CENTER_WEB_MODE';
         return;
     }
 
