@@ -216,18 +216,18 @@ app.post('/api/trigger-email-digest', async (req, res) => {
 
 let customerDatabase = {};
 let vendors = [
-    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, status: 'Available', delays: 1, leavesCount: 0 },
-    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, status: 'Available', delays: 3, leavesCount: 4 },
-    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, status: 'Available', delays: 0, leavesCount: 2 },
-    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, status: 'Available', delays: 2, leavesCount: 3 },
-    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, status: 'Available', delays: 0, leavesCount: 0 },
+    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, ratingCount: 12, status: 'Available', delays: 0, leavesCount: 1 },
+    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, ratingCount: 18, status: 'Available', delays: 1, leavesCount: 0 },
+    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, ratingCount: 8, status: 'Available', delays: 3, leavesCount: 4 },
+    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, ratingCount: 15, status: 'Available', delays: 0, leavesCount: 2 },
+    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, ratingCount: 10, status: 'Available', delays: 0, leavesCount: 1 },
+    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, ratingCount: 14, status: 'Available', delays: 2, leavesCount: 3 },
+    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, ratingCount: 22, status: 'Available', delays: 0, leavesCount: 0 },
 ];
 
 let bookings = [
-    { id: 'BK-1001', customerJid: null, customerName: 'Shankar Patil', customerPhone: '+91 98440 99887', service: 'Plumber 💧 (from ₹99)', location: 'Navanagar Sector 4, House #112', status: 'Pending', assignedVendor: null, assignedVendorPhone: null, startOtp: '4829', endOtp: '9182', startOtpVerified: false, endOtpVerified: false, timestamp: '10:15 AM' },
-    { id: 'BK-1002', customerJid: null, customerName: 'Vijaylaxmi Joshi', customerPhone: '+91 97311 88776', service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', location: 'Vidyagiri, 3rd Cross', status: 'Assigned', assignedVendor: 'Yellappa (Septic Tank Cleaning)', assignedVendorPhone: '+91 99805 77889', startOtp: '1432', endOtp: '8821', startOtpVerified: true, endOtpVerified: false, timestamp: '11:30 AM' },
+    { id: 'BK-1001', customerJid: null, customerName: 'Shankar Patil', customerPhone: '+91 98440 99887', service: 'Plumber 💧 (from ₹99)', location: 'Navanagar Sector 4, House #112', status: 'Pending', assignedVendor: null, assignedVendorPhone: null, startOtp: '4829', endOtp: '9182', startOtpVerified: false, endOtpVerified: false, customerRating: null, reviewComment: null, timestamp: '10:15 AM' },
+    { id: 'BK-1002', customerJid: null, customerName: 'Vijaylaxmi Joshi', customerPhone: '+91 97311 88776', service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', location: 'Vidyagiri, 3rd Cross', status: 'Assigned', assignedVendor: 'Yellappa (Septic Tank Cleaning)', assignedVendorPhone: '+91 99805 77889', startOtp: '1432', endOtp: '8821', startOtpVerified: true, endOtpVerified: false, customerRating: 5, reviewComment: 'Excellent punctual service!', timestamp: '11:30 AM' },
 ];
 
 let attendance = [
@@ -238,11 +238,108 @@ let attendance = [
     { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
 ];
 
+// RATE PROVIDER & SAVE REVIEW API
+app.post('/api/rate-provider', async (req, res) => {
+    const { bookingId, ratingScore, reviewComment } = req.body;
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    const score = parseFloat(ratingScore);
+    if (isNaN(score) || score < 1 || score > 5) return res.status(400).json({ error: 'Rating score must be between 1 and 5' });
+
+    booking.customerRating = score;
+    booking.reviewComment = reviewComment || 'Great service!';
+
+    if (booking.assignedVendor) {
+        const vendor = vendors.find(v => v.name === booking.assignedVendor);
+        if (vendor) {
+            const currentCount = vendor.ratingCount || 10;
+            const currentTotal = vendor.rating * currentCount;
+            vendor.ratingCount = currentCount + 1;
+            vendor.rating = parseFloat(((currentTotal + score) / vendor.ratingCount).toFixed(1));
+            logMessage(`⭐ Logged ${score}★ rating for ${vendor.name}. Updated avg rating: ${vendor.rating}★ (${vendor.ratingCount} reviews)`);
+        }
+    }
+
+    if (sockInstance && booking.customerJid) {
+        try {
+            const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
+            const thankMsg = `⭐ *Thank you for your rating, ${firstName}!*\n\nYou rated ${booking.assignedVendor || 'technician'}: *${score} / 5.0 Stars* 🙏\nYour feedback helps us maintain top quality in Bagalkot!`;
+            await sockInstance.sendMessage(booking.customerJid, { text: thankMsg });
+        } catch (e) {}
+    }
+
+    res.json({ success: true, booking });
+});
+
+// ASSIGN / RE-ASSIGN PROVIDER WITH AUTOMATED WHATSAPP NOTIFICATION
+app.post('/api/assign', async (req, res) => {
+    const { bookingId, vendorName } = req.body;
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    const isReassign = booking.status === 'Assigned' || booking.status === 'In-Progress';
+
+    let vendor = vendors.find(v => v.name === vendorName);
+    if (!vendor && vendorName === 'AUTO_ASSIGN') {
+        const serviceClean = booking.service.toLowerCase();
+        const matched = vendors.filter(v => v.status === 'Available');
+        vendor = matched.find(v => serviceClean.includes(v.service.toLowerCase().split(' ')[0])) || matched[0];
+    }
+
+    if (!vendor) return res.status(400).json({ error: 'No available vendor found for assignment' });
+
+    booking.assignedVendor = vendor.name;
+    booking.assignedVendorPhone = vendor.phone;
+    booking.status = 'Assigned';
+
+    logMessage(`🎯 Assigned ${vendor.name} (${vendor.phone}) to Booking ${bookingId}`);
+
+    if (sockInstance && booking.customerJid) {
+        try {
+            const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
+            const assignNotice = isReassign 
+                ? `🔄 *Technician Re-Assigned, ${firstName}!*\n\n• New Technician: ${vendor.name}\n• Phone: ${vendor.phone}\n• Area: ${vendor.area}\n• Expected Arrival: Within 30 Minutes\n\n🔐 *Your Start Service OTP:* *${booking.startOtp}*`
+                : `✅ *Provider Assigned, ${firstName}!*\n\n• Technician: ${vendor.name}\n• Phone: ${vendor.phone}\n• Area: ${vendor.area}\n• Expected Arrival: Within 30 Minutes\n\n🔐 *Your Start Service OTP:* *${booking.startOtp}*\n\nPlease share this 4-digit OTP with ${vendor.name} when he arrives at your home to start the service timer.`;
+            
+            await sockInstance.sendMessage(booking.customerJid, { text: assignNotice });
+            logMessage(`📲 Sent WhatsApp Vendor ${isReassign ? 'Re-Assignment' : 'Assignment'} & Start OTP (${booking.startOtp}) to ${firstName}`);
+        } catch (e) {
+            logMessage(`WhatsApp notification error: ${e.message}`);
+        }
+    }
+
+    return res.json({ success: true, booking, assignedVendor: vendor.name });
+});
+
+// STATUS UPDATE & AUTOMATED WHATSAPP NOTIFICATION FOR CANCELLATION / IN-PROGRESS
+app.post('/api/status', async (req, res) => {
+    const { bookingId, status } = req.body;
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+        booking.status = status;
+        logMessage(`📌 Booking ${bookingId} status changed to ${status}`);
+
+        if (sockInstance && booking.customerJid) {
+            try {
+                const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
+                if (status === 'Cancelled') {
+                    const cancelMsg = `❌ *Booking Update, ${firstName}:*\n\nYour booking *${booking.id}* (${booking.service}) has been marked as *Cancelled*.\n\nIf you need assistance or want to re-book, please call Field Operations Manager Bhuvan Nara at *${BHUVAN_PHONE}*.`;
+                    await sockInstance.sendMessage(booking.customerJid, { text: cancelMsg });
+                    logMessage(`📲 Sent Cancellation WhatsApp notification to ${firstName}`);
+                }
+            } catch (e) {}
+        }
+        return res.json({ success: true, booking });
+    }
+    res.status(404).json({ error: 'Booking not found' });
+});
+
 // ADD NEW VENDOR
 app.post('/api/vendors', (req, res) => {
     const { name, service, phone, area, availableTime, rating, status } = req.body;
     if (!name || !service || !phone) return res.status(400).json({ error: 'Name, Service, and Phone are required' });
-    const newVendor = { id: 'V' + Math.floor(100 + Math.random() * 900), name, service, phone, area: area || 'Bagalkot', availableTime: availableTime || '8:00 AM - 8:00 PM', rating: parseFloat(rating) || 4.8, status: status || 'Available', delays: 0, leavesCount: 0 };
+    const newVendor = { id: 'V' + Math.floor(100 + Math.random() * 900), name, service, phone, area: area || 'Bagalkot', availableTime: availableTime || '8:00 AM - 8:00 PM', rating: parseFloat(rating) || 4.8, ratingCount: 1, status: status || 'Available', delays: 0, leavesCount: 0 };
     vendors.unshift(newVendor);
     logMessage(`👤 Added new service provider: ${name} (${service})`);
     res.json({ success: true, vendor: newVendor });

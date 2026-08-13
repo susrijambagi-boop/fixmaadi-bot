@@ -28,76 +28,80 @@
         /* LEFT SIDEBAR NAVIGATION MENU */
         .sidebar { width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text); padding: 24px 16px; display: flex; flex-direction: column; gap: 24px; min-height: 100vh; border-right: 1px solid #1e293b; flex-shrink: 0; }
         .sidebar-brand { display: flex; align-items: center; gap: 12px; padding: 0 8px; }
-        .sidebar-logo { height: 38px; width: auto; border-radius: 6px; }
-        .sidebar-title { font-size: 1.15rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
+        .sidebar-logo { height: 40px; width: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .sidebar-title { font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
 
         .sidebar-nav { display: flex; flex-direction: column; gap: 6px; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; font-weight: 600; font-size: 0.88rem; color: var(--sidebar-text); cursor: pointer; transition: all 0.2s; text-decoration: none; }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
-        .nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 4px 12px rgba(15,82,186,0.3); }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; font-weight: 600; font-size: 0.88rem; color: var(--sidebar-text); cursor: pointer; transition: all 0.2s ease; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #ffffff; transform: translateX(3px); }
+        .nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 4px 14px rgba(15,82,186,0.35); }
 
         /* MAIN CONTENT AREA & BREADCRUMBS */
         .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
-        header { background: var(--surface); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        header { background: var(--surface); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.02); }
         .breadcrumb { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
         .breadcrumb-active { color: var(--text); font-weight: 700; }
-        .badge-live { background: #eff6ff; color: #1e40af; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid #bfdbfe; }
+        .badge-live { background: #eff6ff; color: #1e40af; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid #bfdbfe; display: flex; align-items: center; gap: 6px; }
+        .pulse-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 1.8s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-        .container { padding: 32px; max-width: 1300px; }
+        .container { padding: 32px; max-width: 1350px; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ANALYTICS DASHBOARD CARDS */
         .analytics-section { margin-bottom: 24px; }
         .analytics-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 24px; }
-        .stat-card { background: var(--surface); padding: 20px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .stat-val { font-size: 1.75rem; font-weight: 800; color: var(--primary); margin-top: 4px; }
+        .stat-card { background: var(--surface); padding: 20px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.04); }
+        .stat-val { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-top: 4px; }
         .stat-lbl { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-sub { font-size: 0.78rem; color: var(--success); margin-top: 4px; font-weight: 600; }
 
-        .grid-2 { display: grid; grid-template-columns: 2.2fr 1fr; gap: 24px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: var(--surface); padding: 24px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); margin-bottom: 24px; }
+        .card-title { font-size: 1.08rem; font-weight: 700; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 
-        .card { background: var(--surface); padding: 24px; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); margin-bottom: 24px; }
-        .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        /* SEARCH & FILTER TOOLBAR */
+        .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; background: #f1f5f9; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); align-items: center; }
+        .search-input { flex-grow: 1; min-width: 220px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); background: white; font-size: 0.88rem; }
 
         table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 8px; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.88rem; vertical-align: middle; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 0.88rem; vertical-align: middle; }
         th { background: #f8fafc; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
 
-        .status-tag { padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
-        .status-Pending { background: #fef3c7; color: #b45309; }
-        .status-Assigned { background: #dbeafe; color: #1d4ed8; }
-        .status-In-Progress { background: #f3e8ff; color: #6b21a8; }
-        .status-Completed { background: #dcfce7; color: #15803d; }
-        .status-Present { background: #dcfce7; color: #15803d; }
-        .status-On-Service { background: #dbeafe; color: #1d4ed8; }
-        .status-Absent { background: #fee2e2; color: #b91c1c; }
+        .status-tag { padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-block; }
+        .status-Pending { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .status-Assigned { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .status-In-Progress { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+        .status-Completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .status-Cancelled { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-        select, button, input[type="text"], input[type="file"] { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; outline: none; transition: all 0.2s; }
-        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,82,186,0.1); }
+        select, button, input[type="text"], input[type="number"], input[type="file"] { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; outline: none; transition: all 0.2s; }
+        select:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15,82,186,0.12); }
 
-        .btn-action { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-action { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; padding: 8px 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; }
         .btn-action:hover { background: var(--primary-dark); }
-        .btn-auto { background: #8b5cf6; color: white; border: none; font-weight: 600; }
+        .btn-star { background: #f59e0b; color: white; border: none; font-weight: 600; }
+        .btn-star:hover { background: #d97706; }
         .btn-danger { background: #ef4444; color: white; border: none; font-weight: 600; }
         .btn-danger:hover { background: #dc2626; }
-        .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); font-weight: 600; }
-        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-secondary { background: #ffffff; color: var(--text); border: 1px solid var(--border); font-weight: 600; }
+        .btn-secondary:hover { background: #f1f5f9; }
 
         .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
 
         .logs-box { background: #0f172a; color: #38bdf8; padding: 18px; border-radius: 12px; font-family: monospace; font-size: 12px; height: 320px; overflow-y: auto; line-height: 1.6; }
-        .doc-item { padding: 16px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; }
+        .doc-item { padding: 16px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: transform 0.15s; }
+        .doc-item:hover { transform: translateX(4px); border-color: var(--primary); }
 
-        .progress-bar { background: #e2e8f0; border-radius: 10px; height: 8px; width: 100px; overflow: hidden; display: inline-block; vertical-align: middle; }
-        .progress-fill { background: var(--primary); height: 100%; }
-
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: white; padding: 28px; border-radius: 16px; width: 520px; max-width: 90%; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: white; padding: 28px; border-radius: 16px; width: 520px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .star-rating { display: flex; gap: 8px; font-size: 1.6rem; cursor: pointer; color: #cbd5e1; margin: 10px 0; }
+        .star-rating .selected { color: #f59e0b; }
     </style>
 </head>
 <body>
@@ -125,7 +129,7 @@
             <div class="breadcrumb">
                 <span>FixMaadi Admin</span> / <span class="breadcrumb-active" id="breadcrumb-title">Provider Dispatch</span>
             </div>
-            <div class="badge-live">Pilot: Bagalkot | WhatsApp: <span id="status-badge">Loading...</span></div>
+            <div class="badge-live"><span class="pulse-dot"></span> Pilot: Bagalkot | Engine Status: <span id="status-badge">CONNECTED</span></div>
         </header>
 
         <div class="container">
@@ -150,787 +154,580 @@
                             <div class="stat-sub">⚠️ Action Needed</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-lbl">Zero-Commission Savings</div>
-                            <div class="stat-val" style="color: #8b5cf6;">₹14,850</div>
-                            <div class="stat-sub">💚 Saved for Local Providers</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-2">
-                    <div>
-                        <div class="card">
-                            <div class="card-title">
-                                <span>Live Dispatch Activity Feed</span>
-                                <button class="btn-action" onclick="fetchData()">🔄 Refresh</button>
-                            </div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Booking ID</th>
-                                        <th>Service Requested</th>
-                                        <th>Address & Time</th>
-                                        <th>Status</th>
-                                        <th>Assigned Provider</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dispatch-table-body">
-                                    <tr><td colspan="5">Loading dispatch feed...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="card">
-                            <div class="card-title">Provider Working Hours</div>
-                            <ul id="vendors-dispatch-short" style="list-style: none;"></ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: DEDICATED CUSTOMER BOOKINGS & PERSONALIZED ONBOARDING -->
-            <div id="tab-bookings" class="tab-content">
-                <div class="analytics-section">
-                    <div class="analytics-title">📊 Customer Ingestion & Booking Performance Analytics</div>
-                    <div class="grid-stats">
-                        <div class="stat-card">
-                            <div class="stat-lbl">Total Bookings Today</div>
-                            <div class="stat-val" id="stat-bookings">0</div>
-                            <div class="stat-sub">📈 +18% vs Yesterday</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Booking Conversion Rate</div>
-                            <div class="stat-val" style="color: #10b981;">94.2%</div>
-                            <div class="stat-sub">💬 Interactive WA Chatbot</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Customer Satisfaction (CSAT)</div>
-                            <div class="stat-val" style="color: #f59e0b;">4.9 / 5★</div>
-                            <div class="stat-sub">⭐ 98% Positive Feedback</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Top Requested Category</div>
-                            <div class="stat-val" style="font-size: 1.25rem; color: var(--primary);">Plumbing & Septic</div>
-                            <div class="stat-sub">🚜 High Demand in Navanagar</div>
+                            <div class="stat-lbl">Avg Provider Rating</div>
+                            <div class="stat-val" style="color: #f59e0b;">4.8 ★</div>
+                            <div class="stat-sub">⭐ Verified Customer Score</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-title">
-                        <span>Customer Ingestion & Dual-OTP Verification</span>
-                        <button class="btn-action" onclick="fetchData()">🔄 Refresh Bookings</button>
+                        <span>⚡ Rapid Provider Dispatch Console</span>
+                        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">Assign trusted local technician to customer booking</span>
                     </div>
-                    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px;">
-                        First-time customers are automatically asked for their <strong>First Name & Surname</strong>. All WhatsApp greetings are personalized (e.g. <em>"Hi Shankar!"</em>).
-                    </p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Booking ID</th>
-                                <th>Customer Name & Phone</th>
-                                <th>Service Category</th>
-                                <th>Address & Time</th>
-                                <th>Status</th>
-                                <th>Assigned Provider</th>
-                                <th>Start OTP (Arrival)</th>
-                                <th>End OTP (Completion)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bookings-table-full">
-                            <tr><td colspan="8">Loading customer bookings...</td></tr>
-                        </tbody>
-                    </table>
+                    <div id="dispatch-list">Loading pending dispatch requests...</div>
+                </div>
+            </div>
+
+            <!-- TAB 2: CUSTOMER BOOKINGS (WITH SEARCH & RATING SYSTEM) -->
+            <div id="tab-bookings" class="tab-content">
+                <div class="analytics-section">
+                    <div class="analytics-title">📊 Customer Booking Analytics & History</div>
+                    <div class="grid-stats">
+                        <div class="stat-card">
+                            <div class="stat-lbl">Total Customer Bookings</div>
+                            <div class="stat-val" id="stat-total-bookings">0</div>
+                            <div class="stat-sub">📈 100% 0% Commission</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-lbl">Completed Services</div>
+                            <div class="stat-val" id="stat-completed-bookings" style="color: #10b981;">0</div>
+                            <div class="stat-sub">✅ Customer Verified</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-lbl">Active In-Progress</div>
+                            <div class="stat-val" id="stat-inprogress-bookings" style="color: #8b5cf6;">0</div>
+                            <div class="stat-sub">▶️ Service Timer Running</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>📋 All Customer Booking Records</span>
+                    </div>
+
+                    <!-- SEARCH & FILTER TOOLBAR -->
+                    <div class="toolbar">
+                        <input type="text" id="booking-search" class="search-input" placeholder="🔍 Search by Customer Name, Phone, Area, or Service..." oninput="filterBookings()" />
+                        <select id="booking-status-filter" onchange="filterBookings()">
+                            <option value="ALL">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Assigned">Assigned</option>
+                            <option value="In-Progress">In-Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div id="bookings-table-container">Loading booking history...</div>
                 </div>
             </div>
 
             <!-- TAB 3: SERVICE PROVIDERS -->
             <div id="tab-vendors" class="tab-content">
-                <div class="analytics-section">
-                    <div class="analytics-title">📊 Service Provider Network Analytics</div>
-                    <div class="grid-stats">
-                        <div class="stat-card">
-                            <div class="stat-lbl">Total Registered Providers</div>
-                            <div class="stat-val" id="stat-vendors-tab3">0</div>
-                            <div class="stat-sub">🤝 100% Verified Local Staff</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Vendor Retention Rate</div>
-                            <div class="stat-val" style="color: #10b981;">98.0%</div>
-                            <div class="stat-sub">💚 0% Commission Loyalty</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Category Coverage</div>
-                            <div class="stat-val" style="color: var(--primary);">12 / 12</div>
-                            <div class="stat-sub">✅ All Services Available</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Avg Provider Rating</div>
-                            <div class="stat-val" style="color: #f59e0b;">4.83 ★</div>
-                            <div class="stat-sub">⭐ High Service Quality</div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="card">
-                    <div class="card-title">➕ Add New Service Provider</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Provider Name</label>
-                            <input type="text" id="add-v-name" placeholder="e.g. Ramesh Kumbar" />
-                        </div>
-                        <div class="form-group">
-                            <label>Service Category</label>
-                            <select id="add-v-service">
-                                <option>Purohit & Pujas 🙏</option>
-                                <option>Mixie & Appliance Repair 🔧</option>
-                                <option>Plumber 💧</option>
-                                <option>Electrician ⚡</option>
-                                <option>Beautician (Women) ✂️</option>
-                                <option>Men Haircut & Grooming 💈</option>
-                                <option>Septic Tank & Sump Cleaning 🚜</option>
-                                <option>Event & Stage Decoration 🎈</option>
-                                <option>Catering & Cooking Labour 🍲</option>
-                                <option>Carpenter & Woodwork 🪚</option>
-                                <option>Home Tutors 📚</option>
-                                <option>Civil Labour & Painting 🎨</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone Number</label>
-                            <input type="text" id="add-v-phone" placeholder="+91 94481 22334" />
-                        </div>
-                        <div class="form-group">
-                            <label>Area / Sector</label>
-                            <input type="text" id="add-v-area" placeholder="Navanagar Sector 4" />
-                        </div>
-                        <div class="form-group">
-                            <label>Working Hours</label>
-                            <input type="text" id="add-v-time" placeholder="8:00 AM - 8:00 PM" />
-                        </div>
+                    <div class="card-title">
+                        <span>➕ Add New Local Service Provider Manually</span>
                     </div>
-                    <button class="btn-action" onclick="addVendor()">Save Provider</button>
+                    <form id="add-vendor-form" onsubmit="handleAddVendor(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Provider Name & Phone</label>
+                                <input type="text" id="v-name" placeholder="Ramesh Kumbar (+91 94481...)" required />
+                            </div>
+                            <div class="form-group">
+                                <label>Service Category</label>
+                                <select id="v-service" required>
+                                    <option value="Purohit & Pujas 🙏">Purohit & Pujas 🙏</option>
+                                    <option value="Mixie & Appliance Repair 🔧">Mixie & Appliance Repair 🔧</option>
+                                    <option value="Plumber 💧">Plumber 💧</option>
+                                    <option value="Electrician ⚡">Electrician ⚡</option>
+                                    <option value="Beautician (Women) ✂️">Beautician (Women) ✂️</option>
+                                    <option value="Men Haircut & Grooming 💈">Men Haircut & Grooming 💈</option>
+                                    <option value="Septic Tank & Sump Cleaning 🚜">Septic Tank & Sump Cleaning 🚜</option>
+                                    <option value="Event & Stage Decoration 🎈">Event & Stage Decoration 🎈</option>
+                                    <option value="Catering & Cooking Labour 🍲">Catering & Cooking Labour 🍲</option>
+                                    <option value="Carpenter & Woodwork 🪚">Carpenter & Woodwork 🪚</option>
+                                    <option value="Home Tutors 📚">Home Tutors 📚</option>
+                                    <option value="Civil Labour & Painting 🎨">Civil Labour & Painting 🎨</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="text" id="v-phone" placeholder="+91 94481 22334" required />
+                            </div>
+                            <div class="form-group">
+                                <label>Bagalkot Area</label>
+                                <input type="text" id="v-area" placeholder="Navanagar / Vidyagiri" required />
+                            </div>
+                            <div class="form-group">
+                                <label>Available Time Slot</label>
+                                <input type="text" id="v-time" placeholder="8:00 AM - 8:00 PM" required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-action">👤 Save Provider to Directory</button>
+                    </form>
                 </div>
 
                 <div class="card">
                     <div class="card-title">
-                        <span>Bulk Upload Providers (CSV / Excel)</span>
-                        <a href="/bagalkot_vendors_template.csv" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;" download>📥 Download CSV Template</a>
+                        <span>👥 Verified Local Service Providers Roster</span>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="handleCsvUpload(event)" />
+                            <button class="btn-secondary" onclick="document.getElementById('csv-file-input').click()">📥 Bulk CSV Upload</button>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 12px; align-items: center; background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid var(--border);">
-                        <input type="file" id="csv-file-input" accept=".csv, .xlsx, .xls" />
-                        <button class="btn-action" onclick="uploadCSV()">🚀 Upload Vendor List</button>
-                    </div>
-                    <div id="upload-status" style="margin-top: 8px; font-weight: bold; font-size: 0.88rem;"></div>
+                    <div id="vendors-table-container">Loading roster...</div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">Active Bagalkot Service Provider Roster (<span id="vendor-count">0</span>)</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Provider Name</th>
-                                <th>Category</th>
-                                <th>Phone</th>
-                                <th>Area</th>
-                                <th>Available Working Hours</th>
-                                <th>Rating</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vendors-table-full">
-                            <tr><td colspan="9">Loading provider roster...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="card-title">
+                        <span>🗑️ Deleted Providers Audit Log</span>
+                    </div>
+                    <div id="deleted-vendors-container">Loading deletion audit log...</div>
                 </div>
             </div>
 
-            <!-- TAB 4: ATTENDANCE MUSTER -->
+            <!-- TAB 4: ATTENDANCE & ANALYTICS -->
             <div id="tab-attendance" class="tab-content">
                 <div class="analytics-section">
-                    <div class="analytics-title">📊 Provider Attendance & Punctuality Analytics</div>
+                    <div class="analytics-title">📊 Attendance Muster Analytics</div>
                     <div class="grid-stats">
                         <div class="stat-card">
-                            <div class="stat-lbl">Who's Logged In Today</div>
-                            <div class="stat-val" id="stat-whos-in" style="color: #10b981;">0</div>
-                            <div class="stat-sub">🟢 On Duty & Ready</div>
+                            <div class="stat-lbl">Present Today</div>
+                            <div class="stat-val" id="stat-att-present" style="color: #10b981;">0</div>
+                            <div class="stat-sub">🟢 Verified On Duty</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-lbl">Who's Absent / Off-Duty</div>
-                            <div class="stat-val" id="stat-whos-out" style="color: #ef4444;">0</div>
-                            <div class="stat-sub">🔴 Off Duty Today</div>
+                            <div class="stat-lbl">On Active Job</div>
+                            <div class="stat-val" id="stat-att-service" style="color: #1d4ed8;">0</div>
+                            <div class="stat-sub">▶️ Customer Location</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-lbl">Frequent Leave Alerts</div>
-                            <div class="stat-val" id="stat-leaves-alert" style="color: #d97706;">0</div>
-                            <div class="stat-sub">⚠️ &gt;2 Absences Flagged</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Low Rating Watch (&lt;4.5★)</div>
-                            <div class="stat-val" id="stat-rating-alert" style="color: #b91c1c;">0</div>
-                            <div class="stat-sub">🚨 Quality Review Needed</div>
+                            <div class="stat-lbl">Absent Today</div>
+                            <div class="stat-val" id="stat-att-absent" style="color: #ef4444;">0</div>
+                            <div class="stat-sub">⚠️ Unplanned Leave</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- PERFORMANCE ALERTS BANNER -->
-                <div id="performance-alerts-container"></div>
-
-                <div class="grid-2">
-                    <div>
-                        <div class="card">
-                            <div class="card-title">
-                                <span>Attendance Muster Log</span>
-                                <a href="/api/download-attendance" class="btn-action" download>📥 Download Muster CSV</a>
-                            </div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Provider Name</th>
-                                        <th>Category</th>
-                                        <th>Phone</th>
-                                        <th>Login Time</th>
-                                        <th>Logout Time</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="attendance-table-body">
-                                    <tr><td colspan="7">Loading attendance log...</td></tr>
-                                </tbody>
-                            </table>
+                <div class="card">
+                    <div class="card-title">
+                        <span>📅 Daily Attendance Muster (Bhuvan Control)</span>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-action" onclick="openAddAttendanceModal()">➕ Log Attendance</button>
+                            <a href="/api/download-attendance" class="btn-secondary">📥 Export CSV Muster</a>
                         </div>
                     </div>
-
-                    <div>
-                        <div class="card">
-                            <div class="card-title">Monthly Attendance Calendar</div>
-                            <div class="calendar-grid">
-                                <div class="cal-day-head">Sun</div>
-                                <div class="cal-day-head">Mon</div>
-                                <div class="cal-day-head">Tue</div>
-                                <div class="cal-day-head">Wed</div>
-                                <div class="cal-day-head">Thu</div>
-                                <div class="cal-day-head">Fri</div>
-                                <div class="cal-day-head">Sat</div>
-                                <div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div><div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div>
-                                <div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day active">12<br/><small style="font-size:0.65rem;">Today</small></div><div class="cal-day">13</div><div class="cal-day">14</div>
-                                <div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div><div class="cal-day">21</div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Who's In (Present Today)</div>
-                            <ul id="whos-in-list" style="list-style: none;"></ul>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Who's Out (Absent Today)</div>
-                            <ul id="whos-out-list" style="list-style: none;"></ul>
-                        </div>
-                    </div>
+                    <div id="attendance-table-container">Loading attendance muster...</div>
                 </div>
             </div>
 
-            <!-- TAB 5: VIRTUAL TEAM HQ & NAMED AI ROSTER & EMAIL DIGEST -->
+            <!-- TAB 5: VIRTUAL TEAM HQ -->
             <div id="tab-virtual-org" class="tab-content">
-                <div class="analytics-section">
-                    <div class="analytics-title">📊 Virtual AI Staff Master Analytics & Digest Status</div>
-                    <div class="grid-stats">
-                        <div class="stat-card">
-                            <div class="stat-lbl">Virtual Staff Execution Velocity</div>
-                            <div class="stat-val" style="color: #10b981;">99.1%</div>
-                            <div class="stat-sub">🚀 Instant 24/7 Execution</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Automated Email Schedule</div>
-                            <div class="stat-val" style="color: var(--primary); font-size: 1.25rem;">06:00 AM & 08:00 PM</div>
-                            <div class="stat-sub">📧 Sent to vinodchinnannavar@gmail.com</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Monthly Team Payroll Cost</div>
-                            <div class="stat-val" style="color: #8b5cf6;">$0 / month</div>
-                            <div class="stat-sub">💚 100% Free Autonomous AI</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-lbl">Instagram Automation (@fixmaadi_bagalkot)</div>
-                            <div class="stat-val" style="color: #f59e0b; font-size: 1.2rem;">Scheduled 8:30 AM</div>
-                            <div class="stat-sub">📸 Meta Graph API Connected</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- EMAIL DIGEST CONTROL CARD -->
-                <div class="card" style="background: #eff6ff; border: 1px solid #bfdbfe;">
-                    <div class="card-title" style="color: #1e40af;">
-                        <span>📧 Daily Automated Email Digest Configuration</span>
-                        <button class="btn-action" onclick="triggerEmailDigest('Evening Digest (8 PM)')">🚀 Trigger Test Mail Digest Now</button>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; font-size: 0.88rem;">
-                        <div><strong>Recipient Email:</strong> vinodchinnannavar@gmail.com</div>
-                        <div><strong>🌅 Morning Work Plan Mail:</strong> Every day at 06:00 AM IST</div>
-                        <div><strong>🌆 Evening Analytics Digest:</strong> Every day at 08:00 PM IST</div>
-                        <div><strong>Status:</strong> Active Automated Crons 🟢</div>
-                    </div>
-                </div>
-
-                <!-- NAMED AI EMPLOYEES MASTER ANALYTICS TABLE -->
                 <div class="card">
-                    <div class="card-title">📊 Named AI Employees Master Analytics & OKR Progress Dashboard</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Emp Code</th>
-                                <th>Employee Name</th>
-                                <th>Department & Role</th>
-                                <th>Daily Job Responsibilities</th>
-                                <th>Quarterly OKR</th>
-                                <th>OKR Progress</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ai-employees-table-body">
-                            <tr><td colspan="7">Loading named AI staff roster...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- AUTONOMOUS MARKETING ENGINE FEED CARD -->
-                <div class="card" style="border: 2px solid var(--purple); background: #faf5ff;">
-                    <div class="card-title" style="color: #6b21a8;">
-                        <span>🔄 100% Autonomous Marketing AI Engine (@fixmaadi_bagalkot)</span>
-                        <span style="font-size: 0.8rem; background: #f3e8ff; color: #6b21a8; padding: 4px 10px; border-radius: 12px;" id="mkt-status">Looping 24/7 🟢</span>
+                    <div class="card-title">
+                        <span>🏢 70+ Virtual AI Team HQ & Department Leads</span>
+                        <button class="btn-action" onclick="triggerEmailReport()">📧 Send Instant Digest Email</button>
                     </div>
-                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
-                        Scans Bagalkot holiday calendars, generates minimalist Kannada/English creatives, posts to <strong>@fixmaadi_bagalkot</strong> at optimal hours (8:30 AM / 7:15 PM), measures conversions, and automatically refines campaign strategy in a continuous loop without any manual intervention!
-                    </p>
-
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; background: white; padding: 16px; border-radius: 10px; border: 1px solid #e9d5ff;">
-                        <div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">INSTAGRAM HANDLE</div>
-                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--purple);" id="mkt-insta">@fixmaadi_bagalkot</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">CALENDAR HOLIDAY SCANNER</div>
-                            <div style="font-weight: 700; font-size: 0.9rem;" id="mkt-holiday">Vara Mahalakshmi & Independence Day</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">NEXT AUTOMATED POST</div>
-                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary);" id="mkt-next">08:30 AM Tomorrow</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">CONVERSION EFFICIENCY</div>
-                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--success);" id="mkt-score">94.8% Auto-Optimized</div>
-                        </div>
-                    </div>
-
-                    <h4 style="font-size: 0.9rem; margin-bottom: 10px;">Recent Autonomous Marketing Post Feed & Optimization Loops:</h4>
-                    <div id="mkt-posts-list">Loading autonomous marketing feed...</div>
+                    <div id="employees-grid" class="form-row">Loading virtual employee roster...</div>
                 </div>
-
-                <div class="grid-3" id="departments-container"></div>
             </div>
 
             <!-- TAB 6: DOCUMENT REPOSITORY -->
             <div id="tab-repository" class="tab-content">
                 <div class="card">
-                    <div class="card-title">FixMaadi Project File & Asset Repository</div>
-                    <p style="color: var(--text-muted); margin-bottom: 20px;">
-                        All operational documents, architectural blueprints, playbooks, marketing calendars, and official single logo assets are archived here and available for download.
-                    </p>
-                    <div id="repo-docs-list">Loading repository files...</div>
+                    <div class="card-title">
+                        <span>📁 FixMaadi Document Repository (Windows/Mac Native Downloads)</span>
+                    </div>
+                    <div id="repository-list">Loading documents...</div>
                 </div>
             </div>
 
-            <!-- TAB 7: WHATSAPP CONNECTION -->
+            <!-- TAB 7: WHATSAPP LINKAGE -->
             <div id="tab-bot-status" class="tab-content">
                 <div class="card">
-                    <div class="card-title">WhatsApp Bot Linkage Status</div>
-                    <div class="qr-box" id="qr-container" style="text-align:center; padding:20px;">
-                        <p style="color: #666;">Loading QR Code status...</p>
+                    <div class="card-title">
+                        <span>📱 WhatsApp QR Code & Socket Status</span>
                     </div>
-                    <div class="logs-box" id="logs-box">
-                        Loading live logs...
-                    </div>
+                    <div id="qr-container" style="text-align: center; margin: 20px 0;"></div>
+                    <div class="logs-box" id="system-logs">Loading system logs...</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- EDIT VENDOR MODAL -->
-    <div class="modal-overlay" id="edit-modal">
+    <!-- PROVIDER RATING MODAL -->
+    <div class="modal-overlay" id="rating-modal">
         <div class="modal">
-            <h3 style="margin-bottom: 16px;">Edit Provider Details</h3>
-            <input type="hidden" id="edit-v-id" />
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label>Provider Name</label>
-                <input type="text" id="edit-v-name" />
+            <h3 style="margin-bottom: 12px; color: var(--primary);">⭐ Log Customer Rating Score</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">Record verified rating for completed booking <strong id="rate-booking-id"></strong></p>
+            
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label>Select Rating (1 to 5 Stars)</label>
+                <div class="star-rating" id="star-box">
+                    <span onclick="setStar(1)">★</span>
+                    <span onclick="setStar(2)">★</span>
+                    <span onclick="setStar(3)">★</span>
+                    <span onclick="setStar(4)">★</span>
+                    <span onclick="setStar(5)">★</span>
+                </div>
             </div>
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label>Phone Number</label>
-                <input type="text" id="edit-v-phone" />
-            </div>
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label>Area / Sector</label>
-                <input type="text" id="edit-v-area" />
-            </div>
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label>Available Working Hours</label>
-                <input type="text" id="edit-v-time" />
-            </div>
+
             <div class="form-group" style="margin-bottom: 20px;">
-                <label>Status</label>
-                <select id="edit-v-status">
-                    <option>Available</option>
-                    <option>Busy</option>
-                    <option>Off-Duty</option>
-                </select>
+                <label>Customer Review Comment (Optional)</label>
+                <input type="text" id="rate-comment" placeholder="e.g. Excellent punctual plumbing work!" />
             </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
-                <button class="btn-action" onclick="saveVendorEdit()">Save Changes</button>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn-secondary" onclick="closeRatingModal()">Cancel</button>
+                <button class="btn-star" onclick="submitRating()">⭐ Save Customer Rating</button>
             </div>
         </div>
     </div>
 
-    <!-- GATED DELETE PROVIDER MODAL WITH REASONS -->
+    <!-- DELETION MODAL -->
     <div class="modal-overlay" id="delete-modal">
         <div class="modal">
-            <h3 style="margin-bottom: 12px; color: #b91c1c;">⚠️ Delete Service Provider</h3>
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
-                Are you sure you want to remove <strong id="delete-vendor-name-display"></strong>? You must specify a reason for offboarding.
-            </p>
-            <input type="hidden" id="delete-v-id" />
-            
+            <h3 style="margin-bottom: 12px; color: var(--danger);">🗑️ Delete Provider Confirmation</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">Are you sure you want to delete <strong id="delete-vendor-name"></strong>?</p>
+
             <div class="form-group" style="margin-bottom: 14px;">
-                <label>Reason for Deletion</label>
-                <select id="delete-reason-category" onchange="toggleCustomReason()">
-                    <option value="">-- Select Deletion Reason --</option>
-                    <option>Behavior / Customer Complaint</option>
-                    <option>Repeated Work Delay / Unpunctual</option>
-                    <option>Quality Below Standards / Poor Rating</option>
-                    <option>Vendor Requested Offboarding</option>
-                    <option>Inactive / Non-Responsive</option>
-                    <option value="OTHER">Other (Specify below)</option>
+                <label>Select Reason for Deletion</label>
+                <select id="delete-reason-select" onchange="toggleCustomReason(this.value)">
+                    <option value="Customer Quality Complaints">Customer Quality Complaints</option>
+                    <option value="Repeated Work Delays / No-Show">Repeated Work Delays / No-Show</option>
+                    <option value="Unprofessional Behavior">Unprofessional Behavior</option>
+                    <option value="Moved Away / Out of Bagalkot">Moved Away / Out of Bagalkot</option>
+                    <option value="Other">Other Reason (Specify below)</option>
                 </select>
             </div>
 
             <div class="form-group" id="custom-reason-group" style="display: none; margin-bottom: 20px;">
-                <label>Specific Custom Reason / Details</label>
-                <input type="text" id="delete-custom-reason" placeholder="Type specific details..." />
+                <label>Specify Custom Reason</label>
+                <input type="text" id="delete-custom-reason" placeholder="Type specific reason..." />
             </div>
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <button class="btn-action btn-danger" onclick="confirmDeleteVendor()">Confirm Offboarding & Delete</button>
+                <button class="btn-danger" onclick="submitDeleteVendor()">🗑️ Confirm Delete</button>
             </div>
         </div>
     </div>
 
     <script>
-        let cachedVendors = [];
-        let cachedAttendance = [];
+        let globalBookings = [];
+        let globalVendors = [];
+        let selectedRatingScore = 5;
+        let activeRatingBookingId = null;
+        let activeDeleteVendorId = null;
 
-        function switchNav(name, title, evt) {
-            document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        function switchNav(tabId, title, e) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (e) e.currentTarget.classList.add('active');
             
-            document.getElementById('tab-' + name).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
             document.getElementById('breadcrumb-title').innerText = title;
-            if (evt) evt.currentTarget.classList.add('active');
         }
 
-        async function initPage() {
-            loadVendors();
-            loadMarketingLoop();
-            loadAIEmployees();
+        async function loadData() {
+            try {
+                const [bRes, vRes, aRes, dRes, docRes, delRes] = await Promise.all([
+                    fetch('/api/bookings'),
+                    fetch('/api/vendors'),
+                    fetch('/api/attendance'),
+                    fetch('/api/virtual-employees'),
+                    fetch('/api/documents'),
+                    fetch('/api/deleted-vendors')
+                ]);
 
-            // Load departments
-            const dRes = await fetch('/api/departments');
-            const depts = await dRes.json();
-            const container = document.getElementById('departments-container');
-            container.innerHTML = depts.map(dept => `
-                <div class="card">
-                    <div class="card-title">
-                        <span>${dept.name}</span>
-                        <span style="font-size: 0.8rem; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px;">${dept.headcount} Virtual Staff</span>
-                    </div>
-                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 8px;"><strong>Lead:</strong> ${dept.lead}</p>
-                    <p style="font-size: 0.85rem; margin-bottom: 12px;">${dept.description}</p>
-                    <div style="font-size: 0.8rem; background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border);">
-                        <strong>⚡ Live Autonomous Tasks Handled:</strong>
-                        <ul style="margin-left: 16px; margin-top: 4px; color: var(--primary);">
-                            ${(dept.activeTasks || []).map(t => `<li>${t}</li>`).join('')}
-                        </ul>
-                    </div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">
-                        <strong>Structure:</strong> ${dept.roles.join(', ')}
-                    </div>
-                </div>
-            `).join('');
+                globalBookings = await bRes.json();
+                globalVendors = await vRes.json();
+                const attendance = await aRes.json();
+                const employees = await dRes.json();
+                const documents = await docRes.json();
+                const deletedLogs = await delRes.json();
 
-            loadRepository();
-            loadAttendance();
-            fetchData();
-            setInterval(fetchData, 4000);
-        }
-
-        async function loadAIEmployees() {
-            const res = await fetch('/api/virtual-employees');
-            const employees = await res.json();
-            const tbody = document.getElementById('ai-employees-table-body');
-
-            tbody.innerHTML = employees.map(emp => `
-                <tr>
-                    <td><strong>${emp.code}</strong></td>
-                    <td><strong>${emp.name}</strong></td>
-                    <td>${emp.role}<br/><span style="font-size:0.78rem; color:var(--text-muted);">${emp.department}</span></td>
-                    <td style="font-size:0.82rem;">${emp.dailyTasks}</td>
-                    <td style="font-size:0.82rem; color:var(--primary); font-weight:600;">${emp.okr}</td>
-                    <td>
-                        <div class="progress-bar"><div class="progress-fill" style="width: ${emp.progress}%;"></div></div>
-                        <span style="font-size:0.78rem; font-weight:bold; margin-left:4px;">${emp.progress}%</span>
-                    </td>
-                    <td><span class="status-tag status-Completed">${emp.status}</span></td>
-                </tr>
-            `).join('');
-        }
-
-        async function triggerEmailDigest(type) {
-            const res = await fetch('/api/trigger-email-digest', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type })
-            });
-            const data = await res.json();
-            alert('✅ ' + data.message);
-        }
-
-        async function loadMarketingLoop() {
-            const res = await fetch('/api/marketing-loop');
-            const mkt = await res.json();
-
-            document.getElementById('mkt-status').innerText = mkt.status;
-            document.getElementById('mkt-insta').innerText = mkt.instagramAccount;
-            document.getElementById('mkt-holiday').innerText = mkt.lastHolidayScanned;
-            document.getElementById('mkt-next').innerText = mkt.nextScheduledPost;
-            document.getElementById('mkt-score').innerText = mkt.autoStrategyScore;
-
-            const list = document.getElementById('mkt-posts-list');
-            list.innerHTML = mkt.recentAutonomousPosts.map(p => `
-                <div style="background: white; padding: 14px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.88rem;">
-                        <span>${p.topic}</span>
-                        <span style="color: var(--primary); font-size: 0.78rem;">${p.date} • ${p.optimalTime}</span>
-                    </div>
-                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-                        Language: <strong>${p.language}</strong> • Impressions: <strong>${p.impressions}</strong> • Bookings Driven: <strong>${p.conversions}</strong>
-                    </div>
-                    <div style="font-size: 0.8rem; background: #eff6ff; color: #1e40af; padding: 6px 10px; border-radius: 6px; margin-top: 6px;">
-                        💡 <strong>Autonomous Insight & Strategy Loop:</strong> ${p.insight}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function loadVendors() {
-            const vRes = await fetch('/api/vendors');
-            cachedVendors = await vRes.json();
-            document.getElementById('vendor-count').innerText = cachedVendors.length;
-            document.getElementById('stat-vendors').innerText = cachedVendors.length;
-            document.getElementById('stat-vendors-tab3').innerText = cachedVendors.length;
-
-            const attSelect = document.getElementById('att-v-name');
-            attSelect.innerHTML = cachedVendors.map(v => `<option value="${v.name}">${v.name} (${v.service})</option>`).join('');
-
-            const listShort = document.getElementById('vendors-dispatch-short');
-            listShort.innerHTML = cachedVendors.slice(0, 6).map(v => `
-                <li style="padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.88rem;">${v.name}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${v.service} • ${v.area}</div>
-                        <div style="font-size: 0.78rem; color: var(--primary); font-weight: 500;">⏰ ${v.availableTime}</div>
-                    </div>
-                    <span style="font-size: 0.78rem; background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 12px;">★ ${v.rating}</span>
-                </li>
-            `).join('');
-
-            const tableFull = document.getElementById('vendors-table-full');
-            tableFull.innerHTML = cachedVendors.map(v => `
-                <tr>
-                    <td><strong>${v.id}</strong></td>
-                    <td><strong>${v.name}</strong></td>
-                    <td>${v.service}</td>
-                    <td>${v.phone}</td>
-                    <td>${v.area}</td>
-                    <td>⏰ ${v.availableTime}</td>
-                    <td>★ ${v.rating}</td>
-                    <td><span class="status-tag status-Completed">${v.status}</span></td>
-                    <td>
-                        <button class="btn-secondary" onclick="openEditModal('${v.id}')">Edit</button>
-                        <button class="btn-action btn-danger" style="padding: 6px 10px; font-size:0.78rem;" onclick="openDeleteModal('${v.id}', '${v.name}')">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            renderPerformanceAnalytics();
-        }
-
-        async function loadAttendance() {
-            const res = await fetch('/api/attendance');
-            cachedAttendance = await res.json();
-
-            const whosIn = cachedAttendance.filter(r => r.status === 'Present' || r.status === 'On Service');
-            const whosOut = cachedAttendance.filter(r => r.status === 'Absent');
-
-            document.getElementById('stat-whos-in').innerText = whosIn.length;
-            document.getElementById('stat-whos-out').innerText = whosOut.length;
-
-            const tbody = document.getElementById('attendance-table-body');
-            tbody.innerHTML = cachedAttendance.map(a => `
-                <tr>
-                    <td>${a.date}</td>
-                    <td><strong>${a.vendorName}</strong></td>
-                    <td>${a.category}</td>
-                    <td>${a.phone}</td>
-                    <td>${a.loginTime}</td>
-                    <td>${a.logoutTime}</td>
-                    <td><span class="status-tag status-${a.status.replace(' ', '-')}">${a.status}</span></td>
-                </tr>
-            `).join('');
-
-            const whosInList = document.getElementById('whos-in-list');
-            whosInList.innerHTML = whosIn.map(a => `
-                <li style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;">
-                    <strong>${a.vendorName}</strong> (${a.category})<br/>
-                    <span style="color: var(--success); font-size: 0.78rem;">🟢 Logged In at ${a.loginTime}</span>
-                </li>
-            `).join('');
-
-            const whosOutList = document.getElementById('whos-out-list');
-            whosOutList.innerHTML = whosOut.map(a => `
-                <li style="padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;">
-                    <strong>${a.vendorName}</strong> (${a.category})<br/>
-                    <span style="color: var(--danger); font-size: 0.78rem;">🔴 Absent Today</span>
-                </li>
-            `).join('');
-        }
-
-        function renderPerformanceAnalytics() {
-            const leaveAlerts = cachedVendors.filter(v => (v.leavesCount || 0) >= 3);
-            const delayAlerts = cachedVendors.filter(v => (v.delays || 0) >= 2);
-            const ratingAlerts = cachedVendors.filter(v => v.rating < 4.5);
-
-            document.getElementById('stat-leaves-alert').innerText = leaveAlerts.length;
-            document.getElementById('stat-rating-alert').innerText = ratingAlerts.length;
-
-            const banner = document.getElementById('performance-alerts-container');
-            let html = '';
-
-            if (leaveAlerts.length > 0) {
-                html += `<div class="alert-box alert-warning">⚠️ <strong>Frequent Leaves Alert:</strong> ${leaveAlerts.map(v => v.name + ' (' + v.leavesCount + ' leaves)').join(', ')} taken frequent leaves.</div>`;
+                renderDispatch(globalBookings, globalVendors);
+                renderBookingsTable(globalBookings);
+                renderVendorsTable(globalVendors);
+                renderAttendanceTable(attendance);
+                renderEmployeesGrid(employees);
+                renderDocuments(documents);
+                renderDeletedLogs(deletedLogs);
+                updateStats(globalBookings, globalVendors, attendance);
+            } catch (err) {
+                console.error("Data load error:", err);
             }
-            if (delayAlerts.length > 0) {
-                html += `<div class="alert-box alert-warning">⏰ <strong>Work Delay Alert:</strong> ${delayAlerts.map(v => v.name + ' (' + v.delays + ' delays)').join(', ')} flagged for unpunctuality/delays.</div>`;
-            }
-            if (ratingAlerts.length > 0) {
-                html += `<div class="alert-box alert-danger">🚨 <strong>Low Rating Watch:</strong> ${ratingAlerts.map(v => v.name + ' (' + v.rating + '★)').join(', ')} rating is decreasing below 4.5★ threshold.</div>`;
-            }
-            banner.innerHTML = html;
         }
 
-        async function markAttendance() {
-            const vendorName = document.getElementById('att-v-name').value;
-            const status = document.getElementById('att-v-status').value;
-            const loginTime = document.getElementById('att-v-login').value;
-            const logoutTime = document.getElementById('att-v-logout').value;
-            const vendor = cachedVendors.find(v => v.name === vendorName);
+        function updateStats(bookings, vendors, attendance) {
+            document.getElementById('stat-vendors').innerText = vendors.length;
+            const pending = bookings.filter(b => b.status === 'Pending').length;
+            document.getElementById('stat-pending').innerText = pending;
 
-            await fetch('/api/attendance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vendorName,
-                    category: vendor ? vendor.service : 'General',
-                    phone: vendor ? vendor.phone : '',
-                    status,
-                    loginTime,
-                    logoutTime
-                })
-            });
-            loadAttendance();
+            document.getElementById('stat-total-bookings').innerText = bookings.length;
+            document.getElementById('stat-completed-bookings').innerText = bookings.filter(b => b.status === 'Completed').length;
+            document.getElementById('stat-inprogress-bookings').innerText = bookings.filter(b => b.status === 'In-Progress' || b.status === 'Assigned').length;
+
+            document.getElementById('stat-att-present').innerText = attendance.filter(a => a.status === 'Present').length;
+            document.getElementById('stat-att-service').innerText = attendance.filter(a => a.status === 'On Service').length;
+            document.getElementById('stat-att-absent').innerText = attendance.filter(a => a.status === 'Absent').length;
         }
 
-        async function addVendor() {
-            const name = document.getElementById('add-v-name').value;
-            const service = document.getElementById('add-v-service').value;
-            const phone = document.getElementById('add-v-phone').value;
-            const area = document.getElementById('add-v-area').value;
-            const availableTime = document.getElementById('add-v-time').value;
+        function renderDispatch(bookings, vendors) {
+            const container = document.getElementById('dispatch-list');
+            const pending = bookings.filter(b => b.status === 'Pending' || b.status === 'Assigned');
 
-            if (!name || !phone) {
-                alert('Please enter Provider Name and Phone');
+            if (pending.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 12px 0;">🎉 All customer booking requests are fully assigned!</p>';
                 return;
             }
 
-            await fetch('/api/vendors', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, service, phone, area, availableTime })
+            let html = '<table><thead><tr><th>Booking ID</th><th>Customer Name & Phone</th><th>Service Requested</th><th>Area & Address</th><th>Assigned Technician</th><th>Actions</th></tr></thead><tbody>';
+            pending.forEach(b => {
+                const matchedOptions = vendors.map(v => `<option value="${v.name}" ${b.assignedVendor === v.name ? 'selected' : ''}>${v.name} (${v.area} - ${v.rating}★)</option>`).join('');
+                html += `
+                    <tr>
+                        <td><strong>${b.id}</strong><br><span style="font-size:11px; color:var(--text-muted);">${b.timestamp}</span></td>
+                        <td><strong>${b.customerName || 'Customer'}</strong><br>${b.customerPhone}</td>
+                        <td><span style="font-weight:600; color:var(--primary);">${b.service}</span></td>
+                        <td>${b.location}</td>
+                        <td>
+                            <select id="assign-select-${b.id}">
+                                <option value="">Select Technician...</option>
+                                ${matchedOptions}
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-action" onclick="assignVendor('${b.id}')">🎯 Assign / Update</button>
+                            <button class="btn-danger" style="margin-left:4px;" onclick="cancelBooking('${b.id}')">❌ Cancel</button>
+                        </td>
+                    </tr>
+                `;
             });
-
-            document.getElementById('add-v-name').value = '';
-            document.getElementById('add-v-phone').value = '';
-            document.getElementById('add-v-area').value = '';
-            document.getElementById('add-v-time').value = '';
-            loadVendors();
+            html += 'tbody></table>';
+            container.innerHTML = html;
         }
 
-        function openEditModal(id) {
-            const v = cachedVendors.find(v => v.id === id);
-            if (v) {
-                document.getElementById('edit-v-id').value = v.id;
-                document.getElementById('edit-v-name').value = v.name;
-                document.getElementById('edit-v-phone').value = v.phone;
-                document.getElementById('edit-v-area').value = v.area;
-                document.getElementById('edit-v-time').value = v.availableTime;
-                document.getElementById('edit-v-status').value = v.status;
-                document.getElementById('edit-modal').style.display = 'flex';
+        function renderBookingsTable(bookings) {
+            const container = document.getElementById('bookings-table-container');
+            if (bookings.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 12px 0;">No bookings match your search query.</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Booking ID</th><th>Customer</th><th>Service</th><th>Location</th><th>Technician</th><th>Start OTP</th><th>End OTP</th><th>Rating</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+            bookings.forEach(b => {
+                const ratingBadge = b.customerRating ? `<span style="color:#f59e0b; font-weight:700;">${b.customerRating}★</span>` : `<button class="btn-star" style="padding:4px 8px; font-size:11px;" onclick="openRatingModal('${b.id}')">⭐ Rate</button>`;
+                html += `
+                    <tr>
+                        <td><strong>${b.id}</strong></td>
+                        <td><strong>${b.customerName || 'Customer'}</strong><br><span style="font-size:11px; color:var(--text-muted);">${b.customerPhone}</span></td>
+                        <td>${b.service}</td>
+                        <td>${b.location}</td>
+                        <td>${b.assignedVendor ? b.assignedVendor : '<span style="color:var(--text-muted);">Unassigned</span>'}</td>
+                        <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700;">${b.startOtp}</code></td>
+                        <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700;">${b.endOtp}</code></td>
+                        <td>${ratingBadge}</td>
+                        <td><span class="status-tag status-${b.status}">${b.status}</span></td>
+                        <td>
+                            <button class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="openRatingModal('${b.id}')">⭐ Rate</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function filterBookings() {
+            const query = document.getElementById('booking-search').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('booking-status-filter').value;
+
+            const filtered = globalBookings.filter(b => {
+                const matchesQuery = (b.customerName || '').toLowerCase().includes(query) ||
+                                     (b.customerPhone || '').toLowerCase().includes(query) ||
+                                     (b.service || '').toLowerCase().includes(query) ||
+                                     (b.location || '').toLowerCase().includes(query);
+                const matchesStatus = statusFilter === 'ALL' || b.status === statusFilter;
+                return matchesQuery && matchesStatus;
+            });
+
+            renderBookingsTable(filtered);
+        }
+
+        function renderVendorsTable(vendors) {
+            const container = document.getElementById('vendors-table-container');
+            let html = '<table><thead><tr><th>ID</th><th>Provider Name</th><th>Category</th><th>Phone</th><th>Area</th><th>Available Hours</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+            vendors.forEach(v => {
+                html += `
+                    <tr>
+                        <td><strong>${v.id}</strong></td>
+                        <td><strong>${v.name}</strong></td>
+                        <td>${v.service}</td>
+                        <td>${v.phone}</td>
+                        <td>${v.area}</td>
+                        <td>${v.availableTime}</td>
+                        <td><span style="color:#f59e0b; font-weight:700;">${v.rating} ★</span></td>
+                        <td><span class="status-tag status-${v.status}">${v.status}</span></td>
+                        <td>
+                            <button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="openDeleteModal('${v.id}', '${v.name}')">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderAttendanceTable(attendance) {
+            const container = document.getElementById('attendance-table-container');
+            let html = '<table><thead><tr><th>ID</th><th>Date</th><th>Vendor Name</th><th>Category</th><th>Phone</th><th>Login Time</th><th>Logout Time</th><th>Status</th></tr></thead><tbody>';
+            attendance.forEach(a => {
+                html += `
+                    <tr>
+                        <td><strong>${a.id}</strong></td>
+                        <td>${a.date}</td>
+                        <td><strong>${a.vendorName}</strong></td>
+                        <td>${a.category}</td>
+                        <td>${a.phone}</td>
+                        <td>${a.loginTime}</td>
+                        <td>${a.logoutTime}</td>
+                        <td><span class="status-tag status-${a.status}">${a.status}</span></td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderEmployeesGrid(employees) {
+            const container = document.getElementById('employees-grid');
+            let html = '';
+            employees.forEach(e => {
+                html += `
+                    <div style="background:#ffffff; padding:18px; border-radius:12px; border:1px solid var(--border);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <strong style="color:var(--primary);">${e.code}</strong>
+                            <span class="status-tag status-Completed">${e.status}</span>
+                        </div>
+                        <h4 style="font-size:1rem; font-weight:700; margin-bottom:4px;">${e.name}</h4>
+                        <p style="font-size:0.82rem; color:var(--text-muted); font-weight:600; margin-bottom:8px;">${e.role}</p>
+                        <p style="font-size:0.8rem; margin-bottom:10px;">${e.dailyTasks}</p>
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">OKR: ${e.okr}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderDocuments(docs) {
+            const container = document.getElementById('repository-list');
+            let html = '';
+            docs.forEach(d => {
+                html += `
+                    <div class="doc-item">
+                        <div>
+                            <strong style="font-size:0.95rem;">${d.title}</strong>
+                            <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">${d.description}</p>
+                        </div>
+                        <a href="/api/download?file=${d.filename}" class="btn-action">📥 Download File</a>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderDeletedLogs(logs) {
+            const container = document.getElementById('deleted-vendors-container');
+            if (logs.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 12px 0;">No deleted providers logged.</p>';
+                return;
+            }
+            let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Service</th><th>Reason Category</th><th>Custom Reason</th><th>Deleted By</th><th>Timestamp</th></tr></thead><tbody>';
+            logs.forEach(l => {
+                html += `
+                    <tr>
+                        <td><strong>${l.id}</strong></td>
+                        <td>${l.name}</td>
+                        <td>${l.service}</td>
+                        <td><span style="color:#b91c1c; font-weight:700;">${l.reasonCategory}</span></td>
+                        <td>${l.customReason || '--'}</td>
+                        <td>${l.deletedBy}</td>
+                        <td>${l.deletedAt}</td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        async function assignVendor(bookingId) {
+            const vendorName = document.getElementById('assign-select-' + bookingId).value;
+            if (!vendorName) return alert('Please select a technician first!');
+
+            const res = await fetch('/api/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId, vendorName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Technician ${vendorName} assigned! WhatsApp notification sent to customer.`);
+                loadData();
+            } else {
+                alert('Error: ' + data.error);
             }
         }
 
-        function closeEditModal() {
-            document.getElementById('edit-modal').style.display = 'none';
-        }
-
-        async function saveVendorEdit() {
-            const id = document.getElementById('edit-v-id').value;
-            const name = document.getElementById('edit-v-name').value;
-            const phone = document.getElementById('edit-v-phone').value;
-            const area = document.getElementById('edit-v-area').value;
-            const availableTime = document.getElementById('edit-v-time').value;
-            const status = document.getElementById('edit-v-status').value;
-
-            await fetch('/api/vendors/' + id, {
-                method: 'PUT',
+        async function cancelBooking(bookingId) {
+            if (!confirm(`Are you sure you want to cancel booking ${bookingId}?`)) return;
+            const res = await fetch('/api/status', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, phone, area, availableTime, status })
+                body: JSON.stringify({ bookingId, status: 'Cancelled' })
             });
-
-            closeEditModal();
-            loadVendors();
+            const data = await res.json();
+            if (data.success) {
+                alert(`❌ Booking ${bookingId} cancelled. Customer notified on WhatsApp.`);
+                loadData();
+            }
         }
 
-        function openDeleteModal(id, name) {
-            document.getElementById('delete-v-id').value = id;
-            document.getElementById('delete-vendor-name-display').innerText = name;
-            document.getElementById('delete-reason-category').value = '';
-            document.getElementById('delete-custom-reason').value = '';
-            document.getElementById('custom-reason-group').style.display = 'none';
+        function openRatingModal(bookingId) {
+            activeRatingBookingId = bookingId;
+            document.getElementById('rate-booking-id').innerText = bookingId;
+            setStar(5);
+            document.getElementById('rating-modal').style.display = 'flex';
+        }
+
+        function closeRatingModal() {
+            document.getElementById('rating-modal').style.display = 'none';
+        }
+
+        function setStar(score) {
+            selectedRatingScore = score;
+            const stars = document.querySelectorAll('#star-box span');
+            stars.forEach((s, idx) => {
+                if (idx < score) s.classList.add('selected');
+                else s.classList.remove('selected');
+            });
+        }
+
+        async function submitRating() {
+            const comment = document.getElementById('rate-comment').value;
+            const res = await fetch('/api/rate-provider', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookingId: activeRatingBookingId, ratingScore: selectedRatingScore, reviewComment: comment })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`⭐ Rating ${selectedRatingScore}★ saved! Provider average updated.`);
+                closeRatingModal();
+                loadData();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        }
+
+        function openDeleteModal(vendorId, vendorName) {
+            activeDeleteVendorId = vendorId;
+            document.getElementById('delete-vendor-name').innerText = vendorName;
             document.getElementById('delete-modal').style.display = 'flex';
         }
 
@@ -938,212 +735,52 @@
             document.getElementById('delete-modal').style.display = 'none';
         }
 
-        function toggleCustomReason() {
-            const cat = document.getElementById('delete-reason-category').value;
-            document.getElementById('custom-reason-group').style.display = (cat === 'OTHER') ? 'flex' : 'none';
+        function toggleCustomReason(val) {
+            document.getElementById('custom-reason-group').style.display = val === 'Other' ? 'flex' : 'none';
         }
 
-        async function confirmDeleteVendor() {
-            const id = document.getElementById('delete-v-id').value;
-            const catSelect = document.getElementById('delete-reason-category').value;
-            const customText = document.getElementById('delete-custom-reason').value;
+        async function submitDeleteVendor() {
+            const reasonCategory = document.getElementById('delete-reason-select').value;
+            const customReason = document.getElementById('delete-custom-reason').value;
 
-            if (!catSelect) {
-                alert('Please select a reason for offboarding');
-                return;
-            }
-
-            const reasonCategory = (catSelect === 'OTHER') ? (customText || 'Other Specific Reason') : catSelect;
-
-            const res = await fetch('/api/vendors/' + id, {
+            const res = await fetch('/api/vendors/' + activeDeleteVendorId, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reasonCategory, customReason: customText, deletedBy: 'Bhuvan Nara' })
+                body: JSON.stringify({ reasonCategory, customReason, deletedBy: 'Bhuvan Nara' })
             });
-
             const data = await res.json();
             if (data.success) {
-                alert(`Provider successfully offboarded. Logged reason: ${reasonCategory}`);
+                alert(`🗑️ Provider deleted cleanly and logged to audit table.`);
                 closeDeleteModal();
-                loadVendors();
+                loadData();
             } else {
-                alert('Error deleting provider: ' + data.error);
+                alert('Error: ' + data.error);
             }
         }
 
-        async function loadRepository() {
-            const res = await fetch('/api/documents');
-            const docs = await res.json();
-            const container = document.getElementById('repo-docs-list');
-            container.innerHTML = docs.map(d => `
-                <div class="doc-item">
-                    <div>
-                        <div style="font-weight: 700; font-size: 0.95rem;">${d.title}</div>
-                        <div style="font-size: 0.84rem; color: var(--text-muted);">${d.description} • (${d.filename})</div>
-                    </div>
-                    <a href="/api/download?file=${encodeURIComponent(d.filename)}" class="btn-action" download>📥 Download</a>
-                </div>
-            `).join('');
+        async function triggerEmailReport() {
+            const res = await fetch('/api/trigger-email-digest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'Instant Executive Report' })
+            });
+            const data = await res.json();
+            alert(data.message);
         }
 
-        async function uploadCSV() {
-            const fileInput = document.getElementById('csv-file-input');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Please select a CSV file');
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const text = e.target.result;
-                const res = await fetch('/api/upload-vendors-csv', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ csvText: text })
-                });
+        // Live Poll Status
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/status-info');
                 const data = await res.json();
-                if (data.success) {
-                    document.getElementById('upload-status').style.color = '#10b981';
-                    document.getElementById('upload-status').innerText = `✅ Successfully uploaded ${data.count} vendors!`;
-                    loadVendors();
-                } else {
-                    document.getElementById('upload-status').style.color = '#ef4444';
-                    document.getElementById('upload-status').innerText = `❌ Error: ${data.error}`;
+                document.getElementById('status-badge').innerText = data.botStatus;
+                if (data.logs) {
+                    document.getElementById('system-logs').innerText = data.logs.join('\n');
                 }
-            };
-            reader.readAsText(file);
-        }
+            } catch (e) {}
+        }, 3000);
 
-        async function fetchData() {
-            const res = await fetch('/api/bookings');
-            const bookings = await res.json();
-
-            document.getElementById('stat-bookings').innerText = bookings.length;
-            document.getElementById('stat-pending').innerText = bookings.filter(b => b.status === 'Pending').length;
-
-            const statusRes = await fetch('/api/status-info');
-            const statusInfo = await statusRes.json();
-
-            document.getElementById('status-badge').innerText = statusInfo.botStatus;
-            
-            const qrContainer = document.getElementById('qr-container');
-            if (statusInfo.qrDataUrl) {
-                qrContainer.innerHTML = `
-                    <img src="${statusInfo.qrDataUrl}" width="260" height="260" />
-                    <p style="margin-top: 10px; font-weight: bold;">Scan with WhatsApp on your phone (Linked Devices)</p>
-                `;
-            } else if (statusInfo.botStatus === 'CONNECTED_AND_LIVE') {
-                qrContainer.innerHTML = `
-                    <div style="background: #dcfce7; color: #166534; padding: 16px; border-radius: 10px; display: inline-block;">
-                        <h3>✅ WHATSAPP BOT IS LIVE & ONLINE</h3>
-                        <p>Send "Hi" to your linked WhatsApp number to test the booking flow.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('logs-box').innerHTML = statusInfo.logs.slice().reverse().join('<br/>');
-
-            // TAB 1: Dispatch Table
-            const dispatchBody = document.getElementById('dispatch-table-body');
-            dispatchBody.innerHTML = bookings.map(b => `
-                <tr>
-                    <td><strong>${b.id}</strong></td>
-                    <td>${b.service}</td>
-                    <td>${b.location}</td>
-                    <td><span class="status-tag status-${b.status.replace(' ', '-')}">${b.status}</span></td>
-                    <td>${b.assignedVendor ? `<strong>${b.assignedVendor}</strong>` : '<span style="color:#b45309;">Unassigned</span>'}</td>
-                </tr>
-            `).join('');
-
-            // TAB 2: Bookings Table with Customer Name & Phone
-            const bookingsBody = document.getElementById('bookings-table-full');
-            bookingsBody.innerHTML = bookings.map(b => `
-                <tr>
-                    <td><strong>${b.id}</strong></td>
-                    <td>
-                        <strong>${b.customerName || 'Customer'}</strong><br/>
-                        <span style="font-size:0.78rem; color:var(--text-muted);">${b.customerPhone}</span>
-                    </td>
-                    <td><strong>${b.service}</strong></td>
-                    <td>${b.location}</td>
-                    <td><span class="status-tag status-${b.status.replace(' ', '-')}">${b.status}</span></td>
-                    <td>
-                        ${b.status === 'Pending' ? `
-                            <div style="display:flex; gap:6px; flex-direction:column;">
-                                <button class="btn-action btn-auto" onclick="assignVendor('${b.id}', 'AUTO_ASSIGN')">✨ Auto-Assign Best</button>
-                                <select id="select-${b.id}">
-                                    ${cachedVendors.map(v => `<option value="${v.name}">${v.name} (${v.area})</option>`).join('')}
-                                </select>
-                                <button class="btn-action" onclick="assignVendor('${b.id}', document.getElementById('select-${b.id}').value)">Assign Selected</button>
-                            </div>
-                        ` : `
-                            <strong>${b.assignedVendor}</strong><br/>
-                            <span style="font-size:0.78rem; color:var(--text-muted);">${b.assignedVendorPhone || ''}</span>
-                        `}
-                    </td>
-                    <td>
-                        ${b.startOtpVerified ? `<span style="color:#10b981; font-weight:700;">✅ Verified (${b.startOtp})</span>` : `
-                            <div style="display:flex; gap:6px;">
-                                <input type="text" id="start-otp-${b.id}" placeholder="OTP" style="width:75px;" value="${b.startOtp}" />
-                                <button class="btn-action" onclick="verifyStartOtp('${b.id}')">Start</button>
-                            </div>
-                        `}
-                    </td>
-                    <td>
-                        ${b.endOtpVerified ? `<span style="color:#10b981; font-weight:700;">✅ Verified (${b.endOtp})</span>` : `
-                            <div style="display:flex; gap:6px;">
-                                <input type="text" id="end-otp-${b.id}" placeholder="OTP" style="width:75px;" value="${b.endOtp}" />
-                                <button class="btn-action" onclick="verifyEndOtp('${b.id}')">Finish</button>
-                            </div>
-                        `}
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function assignVendor(bookingId, vendorName) {
-            await fetch('/api/assign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookingId, vendorName })
-            });
-            fetchData();
-        }
-
-        async function verifyStartOtp(bookingId) {
-            const otpInput = document.getElementById('start-otp-' + bookingId).value;
-            const res = await fetch('/api/verify-start-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookingId, otpInput })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert(data.message);
-                fetchData();
-            } else {
-                alert(data.error);
-            }
-        }
-
-        async function verifyEndOtp(bookingId) {
-            const otpInput = document.getElementById('end-otp-' + bookingId).value;
-            const res = await fetch('/api/verify-end-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookingId, otpInput })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert(data.message);
-                fetchData();
-            } else {
-                alert(data.error);
-            }
-        }
-
-        initPage();
+        loadData();
     </script>
 </body>
 </html>
