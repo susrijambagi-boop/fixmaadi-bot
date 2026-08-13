@@ -170,7 +170,7 @@
                 </div>
             </div>
 
-            <!-- TAB 2: CUSTOMER BOOKINGS (WITH SEARCH & RATING SYSTEM) -->
+            <!-- TAB 2: CUSTOMER BOOKINGS -->
             <div id="tab-bookings" class="tab-content">
                 <div class="analytics-section">
                     <div class="analytics-title">📊 Customer Booking Analytics & History</div>
@@ -423,23 +423,30 @@
             document.getElementById('breadcrumb-title').innerText = title;
         }
 
+        async function fetchSafe(url, fallback = []) {
+            try {
+                const res = await fetch(url);
+                if (res.ok) return await res.json();
+                return fallback;
+            } catch (e) {
+                console.warn("Fetch failed for " + url, e);
+                return fallback;
+            }
+        }
+
         async function loadData() {
             try {
-                const [bRes, vRes, aRes, dRes, docRes, delRes] = await Promise.all([
-                    fetch('/api/bookings'),
-                    fetch('/api/vendors'),
-                    fetch('/api/attendance'),
-                    fetch('/api/virtual-employees'),
-                    fetch('/api/documents'),
-                    fetch('/api/deleted-vendors')
+                const [bookings, vendors, attendance, employees, documents, deletedLogs] = await Promise.all([
+                    fetchSafe('/api/bookings', []),
+                    fetchSafe('/api/vendors', []),
+                    fetchSafe('/api/attendance', []),
+                    fetchSafe('/api/virtual-employees', []),
+                    fetchSafe('/api/documents', []),
+                    fetchSafe('/api/deleted-vendors', [])
                 ]);
 
-                globalBookings = await bRes.json();
-                globalVendors = await vRes.json();
-                const attendance = await aRes.json();
-                const employees = await dRes.json();
-                const documents = await docRes.json();
-                const deletedLogs = await delRes.json();
+                globalBookings = bookings;
+                globalVendors = vendors;
 
                 renderDispatch(globalBookings, globalVendors);
                 renderBookingsTable(globalBookings);
@@ -473,7 +480,7 @@
             const pending = bookings.filter(b => b.status === 'Pending' || b.status === 'Assigned');
 
             if (pending.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); padding: 12px 0;">🎉 All customer booking requests are fully assigned!</p>';
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0; text-align: center;">🎉 All customer booking requests are fully assigned!</p>';
                 return;
             }
 
@@ -499,14 +506,14 @@
                     </tr>
                 `;
             });
-            html += 'tbody></table>';
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
         function renderBookingsTable(bookings) {
             const container = document.getElementById('bookings-table-container');
             if (bookings.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); padding: 12px 0;">No bookings match your search query.</p>';
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0; text-align: center;">No customer bookings found.</p>';
                 return;
             }
 
@@ -552,6 +559,10 @@
 
         function renderVendorsTable(vendors) {
             const container = document.getElementById('vendors-table-container');
+            if (vendors.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0; text-align: center;">No service providers loaded.</p>';
+                return;
+            }
             let html = '<table><thead><tr><th>ID</th><th>Provider Name</th><th>Category</th><th>Phone</th><th>Area</th><th>Available Hours</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
             vendors.forEach(v => {
                 html += `
@@ -576,6 +587,10 @@
 
         function renderAttendanceTable(attendance) {
             const container = document.getElementById('attendance-table-container');
+            if (attendance.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0; text-align: center;">No attendance records found.</p>';
+                return;
+            }
             let html = '<table><thead><tr><th>ID</th><th>Date</th><th>Vendor Name</th><th>Category</th><th>Phone</th><th>Login Time</th><th>Logout Time</th><th>Status</th></tr></thead><tbody>';
             attendance.forEach(a => {
                 html += `
@@ -597,6 +612,10 @@
 
         function renderEmployeesGrid(employees) {
             const container = document.getElementById('employees-grid');
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0;">No staff entries.</p>';
+                return;
+            }
             let html = '';
             employees.forEach(e => {
                 html += `
@@ -617,6 +636,10 @@
 
         function renderDocuments(docs) {
             const container = document.getElementById('repository-list');
+            if (docs.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0;">No documents in repository.</p>';
+                return;
+            }
             let html = '';
             docs.forEach(d => {
                 html += `

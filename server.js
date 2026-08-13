@@ -158,13 +158,40 @@ function getLiveDocumentsList() {
     ];
 }
 
-// API ENDPOINTS
+let customerDatabase = {};
+let deletedVendorsLog = [];
+
+let vendors = [
+    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, ratingCount: 12, status: 'Available', delays: 0, leavesCount: 1 },
+    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, ratingCount: 18, status: 'Available', delays: 1, leavesCount: 0 },
+    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, ratingCount: 8, status: 'Available', delays: 3, leavesCount: 4 },
+    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, ratingCount: 15, status: 'Available', delays: 0, leavesCount: 2 },
+    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, ratingCount: 10, status: 'Available', delays: 0, leavesCount: 1 },
+    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, ratingCount: 14, status: 'Available', delays: 2, leavesCount: 3 },
+    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, ratingCount: 22, status: 'Available', delays: 0, leavesCount: 0 },
+];
+
+let bookings = [
+    { id: 'BK-1001', customerJid: null, customerName: 'Shankar Patil', customerPhone: '+91 98440 99887', service: 'Plumber 💧 (from ₹99)', location: 'Navanagar Sector 4, House #112', status: 'Pending', assignedVendor: null, assignedVendorPhone: null, startOtp: '4829', endOtp: '9182', startOtpVerified: false, endOtpVerified: false, customerRating: null, reviewComment: null, timestamp: '10:15 AM' },
+    { id: 'BK-1002', customerJid: null, customerName: 'Vijaylaxmi Joshi', customerPhone: '+91 97311 88776', service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', location: 'Vidyagiri, 3rd Cross', status: 'Assigned', assignedVendor: 'Yellappa (Septic Tank Cleaning)', assignedVendorPhone: '+91 99805 77889', startOtp: '1432', endOtp: '8821', startOtpVerified: true, endOtpVerified: false, customerRating: 5, reviewComment: 'Excellent punctual service!', timestamp: '11:30 AM' },
+];
+
+let attendance = [
+    { id: 'ATT-101', date: new Date().toISOString().split('T')[0], vendorName: 'Ramesh Kumbar (Plumber)', category: 'Plumber 💧', phone: '+91 94481 22334', loginTime: '08:00 AM', logoutTime: '06:30 PM', status: 'Present' },
+    { id: 'ATT-102', date: new Date().toISOString().split('T')[0], vendorName: 'Anant Bhat (Purohit)', category: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', loginTime: '08:15 AM', logoutTime: '05:00 PM', status: 'Present' },
+    { id: 'ATT-103', date: new Date().toISOString().split('T')[0], vendorName: 'Suresh Patil (Electrician)', category: 'Electrician ⚡', phone: '+91 98802 33445', loginTime: '09:45 AM', logoutTime: '--', status: 'On Service' },
+    { id: 'ATT-104', date: new Date().toISOString().split('T')[0], vendorName: 'Lakshmi Hegde (Beautician)', category: 'Beautician (Women) ✂️', phone: '+91 97413 44556', loginTime: '09:00 AM', logoutTime: '--', status: 'Present' },
+    { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
+];
+
+// API ENDPOINTS (FULL COMPLETE LIST)
 app.get('/api/bookings', (req, res) => res.json(bookings));
 app.get('/api/vendors', (req, res) => res.json(vendors));
 app.get('/api/attendance', (req, res) => res.json(attendance));
 app.get('/api/departments', (req, res) => res.json(departments));
 app.get('/api/virtual-employees', (req, res) => res.json(virtualEmployees));
 app.get('/api/documents', (req, res) => res.json(getLiveDocumentsList()));
+app.get('/api/deleted-vendors', (req, res) => res.json(deletedVendorsLog));
 app.get('/api/email-digest-config', (req, res) => res.json(emailDigestConfig));
 app.get('/api/instagram-info', (req, res) => res.json(instagramAccountInfo));
 
@@ -214,30 +241,6 @@ app.post('/api/trigger-email-digest', async (req, res) => {
     });
 });
 
-let customerDatabase = {};
-let vendors = [
-    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, ratingCount: 12, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, ratingCount: 18, status: 'Available', delays: 1, leavesCount: 0 },
-    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, ratingCount: 8, status: 'Available', delays: 3, leavesCount: 4 },
-    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, ratingCount: 15, status: 'Available', delays: 0, leavesCount: 2 },
-    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, ratingCount: 10, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, ratingCount: 14, status: 'Available', delays: 2, leavesCount: 3 },
-    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, ratingCount: 22, status: 'Available', delays: 0, leavesCount: 0 },
-];
-
-let bookings = [
-    { id: 'BK-1001', customerJid: null, customerName: 'Shankar Patil', customerPhone: '+91 98440 99887', service: 'Plumber 💧 (from ₹99)', location: 'Navanagar Sector 4, House #112', status: 'Pending', assignedVendor: null, assignedVendorPhone: null, startOtp: '4829', endOtp: '9182', startOtpVerified: false, endOtpVerified: false, customerRating: null, reviewComment: null, timestamp: '10:15 AM' },
-    { id: 'BK-1002', customerJid: null, customerName: 'Vijaylaxmi Joshi', customerPhone: '+91 97311 88776', service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', location: 'Vidyagiri, 3rd Cross', status: 'Assigned', assignedVendor: 'Yellappa (Septic Tank Cleaning)', assignedVendorPhone: '+91 99805 77889', startOtp: '1432', endOtp: '8821', startOtpVerified: true, endOtpVerified: false, customerRating: 5, reviewComment: 'Excellent punctual service!', timestamp: '11:30 AM' },
-];
-
-let attendance = [
-    { id: 'ATT-101', date: new Date().toISOString().split('T')[0], vendorName: 'Ramesh Kumbar (Plumber)', category: 'Plumber 💧', phone: '+91 94481 22334', loginTime: '08:00 AM', logoutTime: '06:30 PM', status: 'Present' },
-    { id: 'ATT-102', date: new Date().toISOString().split('T')[0], vendorName: 'Anant Bhat (Purohit)', category: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', loginTime: '08:15 AM', logoutTime: '05:00 PM', status: 'Present' },
-    { id: 'ATT-103', date: new Date().toISOString().split('T')[0], vendorName: 'Suresh Patil (Electrician)', category: 'Electrician ⚡', phone: '+91 98802 33445', loginTime: '09:45 AM', logoutTime: '--', status: 'On Service' },
-    { id: 'ATT-104', date: new Date().toISOString().split('T')[0], vendorName: 'Lakshmi Hegde (Beautician)', category: 'Beautician (Women) ✂️', phone: '+91 97413 44556', loginTime: '09:00 AM', logoutTime: '--', status: 'Present' },
-    { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' },
-];
-
 // RATE PROVIDER & SAVE REVIEW API
 app.post('/api/rate-provider', async (req, res) => {
     const { bookingId, ratingScore, reviewComment } = req.body;
@@ -272,7 +275,7 @@ app.post('/api/rate-provider', async (req, res) => {
     res.json({ success: true, booking });
 });
 
-// ASSIGN / RE-ASSIGN PROVIDER WITH AUTOMATED WHATSAPP NOTIFICATION
+// ASSIGN / RE-ASSIGN PROVIDER
 app.post('/api/assign', async (req, res) => {
     const { bookingId, vendorName } = req.body;
     const booking = bookings.find(b => b.id === bookingId);
@@ -312,7 +315,7 @@ app.post('/api/assign', async (req, res) => {
     return res.json({ success: true, booking, assignedVendor: vendor.name });
 });
 
-// STATUS UPDATE & AUTOMATED WHATSAPP NOTIFICATION FOR CANCELLATION / IN-PROGRESS
+// STATUS UPDATE & AUTOMATED WHATSAPP NOTIFICATION
 app.post('/api/status', async (req, res) => {
     const { bookingId, status } = req.body;
     const booking = bookings.find(b => b.id === bookingId);
@@ -366,6 +369,33 @@ app.put('/api/vendors/:id', (req, res) => {
     res.status(404).json({ error: 'Vendor not found' });
 });
 
+// GATED PROVIDER DELETION WITH REASON
+app.delete('/api/vendors/:id', (req, res) => {
+    const id = req.params.id;
+    const { reasonCategory, customReason, deletedBy } = req.body;
+    if (!reasonCategory) return res.status(400).json({ error: 'Deletion reason is required' });
+
+    const index = vendors.findIndex(v => v.id === id);
+    if (index !== -1) {
+        const deleted = vendors.splice(index, 1)[0];
+        const logEntry = {
+            id: deleted.id,
+            name: deleted.name,
+            service: deleted.service,
+            phone: deleted.phone,
+            area: deleted.area,
+            reasonCategory: reasonCategory,
+            customReason: customReason || '',
+            deletedBy: deletedBy || 'Bhuvan Nara',
+            deletedAt: new Date().toLocaleString()
+        };
+        deletedVendorsLog.unshift(logEntry);
+        logMessage(`🗑️ Deleted Provider ${deleted.name}. Reason: ${reasonCategory} (${customReason || 'None'})`);
+        return res.json({ success: true, deleted, logEntry });
+    }
+    res.status(404).json({ error: 'Vendor not found' });
+});
+
 // ATTENDANCE LOGGING
 app.post('/api/attendance', (req, res) => {
     const { vendorName, category, phone, status, loginTime, logoutTime } = req.body;
@@ -405,15 +435,11 @@ app.get('/api/status-info', async (req, res) => {
     res.json({ botStatus, qrDataUrl, logs });
 });
 
-const userStates = {};
-
 function extractText(msg) {
     if (!msg.message) return '';
     const m = msg.message;
     return (m.conversation || m.extendedTextMessage?.text || m.ephemeralMessage?.message?.conversation || m.ephemeralMessage?.message?.extendedTextMessage?.text || m.imageMessage?.caption || m.videoMessage?.caption || '').trim();
 }
-
-function generate4DigitOtp() { return Math.floor(1000 + Math.random() * 9000).toString(); }
 
 async function startBot() {
     logMessage('Starting FixMaadi Engine...');
