@@ -207,11 +207,31 @@ const SERVICES_KN = {
     '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] }
 };
 
-// PERSISTENT CUSTOMER DATABASE WITH REPEAT LOCATION MEMORY
+// PERSISTENT CUSTOMER DATABASE WITH PHONE NUMBER NORMALIZATION
 let customerDatabase = {
-    '+919844099887': { name: 'Shankar Patil', firstName: 'Shankar', lang: 'kn', lastLocation: 'Navanagar Sector 4, House #112' },
-    '+919731188776': { name: 'Vijaylaxmi Joshi', firstName: 'Vijaylaxmi', lang: 'en', lastLocation: 'Vidyagiri, 3rd Cross' }
+    '9844099887': { name: 'Shankar Patil', firstName: 'Shankar', lang: 'kn', lastLocation: 'Navanagar Sector 4, House #112' },
+    '9731188776': { name: 'Vijaylaxmi Joshi', firstName: 'Vijaylaxmi', lang: 'en', lastLocation: 'Vidyagiri, 3rd Cross' }
 };
+
+function get10DigitPhone(phoneStr) {
+    const digits = (phoneStr || '').replace(/[^0-9]/g, '');
+    return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
+function findCustomer(phoneStr) {
+    const key = get10DigitPhone(phoneStr);
+    if (!key) return null;
+    return customerDatabase[key] || null;
+}
+
+function saveCustomer(phoneStr, data) {
+    const key = get10DigitPhone(phoneStr);
+    if (!key) return;
+    const existing = customerDatabase[key] || {};
+    customerDatabase[key] = { ...existing, ...data };
+    logMessage(`💾 Saved customer persistence memory for key ${key}: ${JSON.stringify(customerDatabase[key])}`);
+}
+
 let deletedVendorsLog = [];
 
 let vendors = [
@@ -785,24 +805,24 @@ async function startBot() {
                 }
 
                 const currentState = userStates[userId];
-                const knownCustomer = customerDatabase[senderPhone];
+                const knownCustomer = findCustomer(senderPhone);
 
                 // REPEAT CUSTOMER RECOGNITION FLOW
                 if (currentState.step === 'NEW' || lowerText === 'hi' || lowerText === 'hello' || lowerText === 'start' || lowerText === 'namaskara' || lowerText === 'ನಮಸ್ಕಾರ') {
-                    if (knownCustomer) {
+                    if (knownCustomer && knownCustomer.name) {
                         userStates[userId].fullName = knownCustomer.name;
-                        userStates[userId].firstName = knownCustomer.firstName;
+                        userStates[userId].firstName = knownCustomer.firstName || knownCustomer.name.split(' ')[0];
                         userStates[userId].lang = knownCustomer.lang || 'kn';
                         userStates[userId].lastLocation = knownCustomer.lastLocation;
 
                         const isKN = userStates[userId].lang === 'kn';
                         const repeatPrompt = isKN
-                            ? `ನಮಸ್ಕಾರ ${knownCustomer.firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ${knownCustomer.firstName} ಆಗಿ ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಹೊಸ ಹೆಸರು / ಭಾಷೆ ಬದಲಾಯಿಸಿ - Reply "2"`
-                            : `Namaskara ${knownCustomer.firstName}! Welcome back to *FixMaadi Bagalkot* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${knownCustomer.firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
+                            ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ${userStates[userId].firstName} ಆಗಿ ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಹೊಸ ಹೆಸರು / ಭಾಷೆ ಬದಲಾಯಿಸಿ - Reply "2"`
+                            : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi Bagalkot* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${userStates[userId].firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
 
                         await sock.sendMessage(userId, { text: repeatPrompt });
                         userStates[userId].step = 'AWAITING_REPEAT_CONFIRM';
-                        logMessage(`📤 Sent Repeat Customer Personal Greeting to ${knownCustomer.firstName} (${senderPhone})`);
+                        logMessage(`📤 Sent Repeat Customer Personal Greeting to ${userStates[userId].firstName} (${senderPhone})`);
                         scheduleFollowUp(sock, userId);
                     } else {
                         const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call Bhuvan Nara: ${BHUVAN_PHONE})*`;
@@ -856,7 +876,7 @@ async function startBot() {
 
                     userStates[userId].fullName = fullName;
                     userStates[userId].firstName = firstName;
-                    customerDatabase[senderPhone] = { name: fullName, firstName: firstName, lang: userStates[userId].lang || 'kn' };
+                    saveCustomer(senderPhone, { name: fullName, firstName: firstName, lang: userStates[userId].lang || 'kn' });
 
                     userStates[userId].step = 'AWAITING_SERVICE';
                     await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
@@ -930,12 +950,12 @@ async function startBot() {
                     const endOtp = generate4DigitOtp();
 
                     // SAVE CUSTOMER & LAST LOCATION TO PERSISTENT DATABASE
-                    customerDatabase[senderPhone] = {
+                    saveCustomer(senderPhone, {
                         name: fullName,
                         firstName: firstName,
                         lang: currentState.lang || 'kn',
                         lastLocation: finalLocation
-                    };
+                    });
 
                     const newBooking = {
                         id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
@@ -984,12 +1004,12 @@ async function startBot() {
                     const endOtp = generate4DigitOtp();
 
                     // SAVE CUSTOMER & LAST LOCATION TO PERSISTENT DATABASE
-                    customerDatabase[senderPhone] = {
+                    saveCustomer(senderPhone, {
                         name: fullName,
                         firstName: firstName,
                         lang: currentState.lang || 'kn',
                         lastLocation: locationAndTime
-                    };
+                    });
 
                     const newBooking = {
                         id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
