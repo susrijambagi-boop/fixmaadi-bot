@@ -42,7 +42,12 @@
         .breadcrumb { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
         .breadcrumb-active { color: var(--text); font-weight: 700; }
         .badge-live { background: #eff6ff; color: #1e40af; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid #bfdbfe; display: flex; align-items: center; gap: 6px; }
+        .badge-connected { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .badge-connecting { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+        .badge-not-connected { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
         .pulse-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 1.8s infinite; }
+        .badge-connecting .pulse-dot { background: #f59e0b; }
+        .badge-not-connected .pulse-dot { background: #ef4444; animation: none; }
         @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
         .container { padding: 32px; max-width: 1350px; }
@@ -134,7 +139,7 @@
             <div class="breadcrumb">
                 <span>FixMaadi Admin</span> / <span class="breadcrumb-active" id="breadcrumb-title">Provider Dispatch</span>
             </div>
-            <div class="badge-live"><span class="pulse-dot"></span> Pilot: Bagalkot | Engine Status: <span id="status-badge">CONNECTED</span></div>
+            <div class="badge-live" id="status-badge-wrap"><span class="pulse-dot"></span> Pilot: Bagalkot | Engine Status: <span id="status-badge">Not Connected</span></div>
         </header>
 
         <div class="container">
@@ -1014,7 +1019,21 @@
             try {
                 const res = await fetch('/api/status-info');
                 const data = await res.json();
-                document.getElementById('status-badge').innerText = data.botStatus;
+
+                const raw = data.botStatus || '';
+                let label = 'Not Connected', cssClass = 'badge-not-connected';
+                if (raw === 'CONNECTED_AND_LIVE') {
+                    label = 'Connected'; cssClass = 'badge-connected';
+                } else if (raw === 'WAITING_FOR_QR_SCAN' || raw.startsWith('Disconnected') || raw === 'Starting engine...') {
+                    label = 'Connecting…'; cssClass = 'badge-connecting';
+                }
+                document.getElementById('status-badge').innerText = label;
+                const badgeWrap = document.getElementById('status-badge-wrap');
+                if (badgeWrap) {
+                    badgeWrap.classList.remove('badge-connected', 'badge-connecting', 'badge-not-connected');
+                    badgeWrap.classList.add(cssClass);
+                }
+
                 if (data.logs) {
                     document.getElementById('system-logs').innerText = data.logs.join('\n');
                 }
