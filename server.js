@@ -699,6 +699,114 @@ function isValidLocationInput(text) {
     return /[a-zA-Z0-9ಀ-೿]/.test(clean);
 }
 
+function isValidIndianMobile(text) {
+    const digits = text.replace(/[^0-9]/g, '').replace(/^91/, '');
+    return /^[6-9][0-9]{9}$/.test(digits);
+}
+
+function normalizeIndianMobile(text) {
+    const digits = text.replace(/[^0-9]/g, '').replace(/^91/, '');
+    return '+91 ' + digits;
+}
+
+function getVisitChargeNote(isKN) {
+    return isKN
+        ? `💰 *ದಯವಿಟ್ಟು ಗಮನಿಸಿ:* ನಮ್ಮ ಕೆಲಸಗಾರರ ಭೇಟಿಗೆ ₹49 ಭೇಟಿ ಶುಲ್ಕವಿದೆ. ನೀವು ಸೇವೆಯನ್ನು ಮುಂದುವರಿಸಿದರೆ, ಈ ₹49 ನಿಮ್ಮ ಅಂತಿಮ ಬಿಲ್‌ನಿಂದ ಸಂಪೂರ್ಣವಾಗಿ ಕಡಿತಗೊಳ್ಳುತ್ತದೆ. ಸೇವೆ ಬೇಡವಾದರೆ, ₹49 ಕೇವಲ ಭೇಟಿ ಶುಲ್ಕವಾಗಿ ಉಳಿಯುತ್ತದೆ. ನಾವು 0% ಕಮಿಷನ್ ವೇದಿಕೆಯಾಗಿರುವುದರಿಂದ, ಈ ನ್ಯಾಯಯುತ ಶುಲ್ಕವು ನಮ್ಮ ಕೆಲಸಗಾರರಿಗೆ ಸರಿಯಾದ ಸಂಬಳ ನೀಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ 🙏`
+        : `💰 *Please note:* there's a small ₹49 visit charge for our technician to visit you. If you go ahead with the service, this ₹49 is fully adjusted against your final bill — you only pay the balance. If you decide not to proceed after the visit, ₹49 remains just the visit charge. We're a 0% commission platform, and this fair charge helps us pay our technicians properly for their time and travel 🙏`;
+}
+
+function getPhoneConfirmPrompt(isKN, senderPhone) {
+    return isKN
+        ? `📞 ನೀವು *${senderPhone}* ನಿಂದ ಸಂದೇಶ ಕಳುಹಿಸುತ್ತಿದ್ದೀರಿ. ನಮ್ಮ ಕೆಲಸಗಾರರು ನಿಮಗೆ ಕರೆ ಮಾಡಲು ಇದೇ ಸಂಖ್ಯೆ ಬಳಸಬಹುದೇ?\n\n1️⃣ ಹೌದು, ಇದೇ ಸಂಖ್ಯೆ ಬಳಸಿ\n2️⃣ ಇಲ್ಲ, ಬೇರೆ ಸಂಖ್ಯೆ ಕೊಡುತ್ತೇನೆ`
+        : `📞 We see you're messaging from *${senderPhone}*. Is this also the best number for our technician to call you on?\n\n1️⃣ Yes, use this number\n2️⃣ No, I'll give a different number`;
+}
+
+function getMapLocationPrompt(isKN) {
+    return isKN
+        ? `📍 ಕೊನೆಯದಾಗಿ, ನಿಖರತೆಗಾಗಿ ನಿಮ್ಮ *ನಿಖರವಾದ Google Maps ಸ್ಥಳ*ವನ್ನು ಹಂಚಿಕೊಳ್ಳಬಹುದು (📎 ಅಟ್ಯಾಚ್‌ಮೆಂಟ್ ಐಕಾನ್ → Location → Send Your Current Location ಒತ್ತಿ). ಇದು ನಮ್ಮ ಕೆಲಸಗಾರರಿಗೆ ನಿಮ್ಮನ್ನು ನಿಖರವಾಗಿ ಪತ್ತೆಹಚ್ಚಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ!\n\nಬಿಟ್ಟುಬಿಡಲು ಬಯಸಿದರೆ, ದಯವಿಟ್ಟು *"skip"* ಎಂದು ಟೈಪ್ ಮಾಡಿ.`
+        : `📍 One last thing — for extra accuracy, you're welcome to share your *exact Google Maps location* (tap the 📎 attachment icon → Location → Send Your Current Location). This helps our technician find you precisely!\n\nIf you'd rather skip this, just reply *"skip"* and we'll go ahead with the address you gave 🙏`;
+}
+
+// Sends either the saved-address fast-track prompt or the fresh address prompt,
+// always including the visit charge note, and moves state accordingly.
+async function promptForLocation(sock, userId, isKN, firstName, savedLocation) {
+    const visitNote = getVisitChargeNote(isKN);
+    if (savedLocation) {
+        userStates[userId].suggestedLocation = savedLocation;
+        userStates[userId].step = 'AWAITING_LOCATION_CONFIRM';
+        saveDatabaseToDisk();
+        const locPrompt = isKN
+            ? `📍 *ನಿಮ್ಮ ಹಿಂದಿನ ವಿಳಾಸ ಬಳಸಬೇಕೇ?*\n"${savedLocation}"\n\n1️⃣ ಹೌದು, ಇದೇ ವಿಳಾಸ ಬಳಸಿ\n2️⃣ ಹೊಸ ವಿಳಾಸ ಮತ್ತು ಸಮಯ ಟೈಪ್ ಮಾಡಿ\n\n${visitNote}`
+            : `📍 *Use your previous address?*\n"${savedLocation}"\n\n1️⃣ Yes, use previous address\n2️⃣ Type new address & time\n\n${visitNote}`;
+        await sock.sendMessage(userId, { text: locPrompt });
+        scheduleFollowUp(sock, userId);
+    } else {
+        userStates[userId].step = 'AWAITING_LOCATION';
+        saveDatabaseToDisk();
+        const promptMsg = isKN
+            ? `ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ*ವನ್ನು ಕಳುಹಿಸಿ.\n\n${visitNote}`
+            : `Please reply with your *Area/Address* (e.g., Navanagar Sector 4) and *Preferred Time* (e.g., Today 5 PM).\n\n${visitNote}`;
+        await sock.sendMessage(userId, { text: promptMsg });
+        scheduleFollowUp(sock, userId);
+    }
+}
+
+// Shared by both the fast-track and fresh-address paths so booking creation
+// (OTPs, disk save, confirmation message) lives in exactly one place.
+async function finalizeBooking(sock, userId, senderPhone, opts) {
+    const { fullName, firstName, lang, service, location, callingPhone, mapLocation } = opts;
+    const isKN = lang === 'kn';
+
+    clearUserTimer(userId);
+    const startOtp = generate4DigitOtp();
+    const endOtp = generate4DigitOtp();
+    const now = new Date();
+    const resolvedCallingPhone = callingPhone || senderPhone;
+
+    saveCustomer(senderPhone, { name: fullName, firstName, lang, lastLocation: location, callingPhone: resolvedCallingPhone });
+
+    const newBooking = {
+        id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
+        customerJid: userId,
+        customerName: fullName,
+        customerPhone: senderPhone,
+        callingPhone: resolvedCallingPhone,
+        service,
+        location,
+        mapLocation: mapLocation || null,
+        status: 'Pending',
+        assignedVendor: null,
+        assignedVendorPhone: null,
+        startOtp,
+        endOtp,
+        startOtpVerified: false,
+        endOtpVerified: false,
+        startTimestamp: null,
+        endTimestamp: null,
+        totalDurationSeconds: null,
+        customerRating: null,
+        reviewComment: null,
+        date: now.toLocaleDateString('en-IN'),
+        timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    bookings.unshift(newBooking);
+    delete userStates[userId];
+    saveDatabaseToDisk();
+
+    const mapNote = mapLocation
+        ? (isKN ? '\n📍 ನಿಖರ ನಕ್ಷೆ ಸ್ಥಳ ಸ್ವೀಕರಿಸಲಾಗಿದೆ.' : '\n📍 Exact map location received, thank you!')
+        : '';
+
+    const confirmMsg = isKN
+        ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ: ${location}\n• ಕರೆ ಸಂಖ್ಯೆ: ${resolvedCallingPhone}${mapNote}\n• ಭೇಟಿ ಶುಲ್ಕ: ₹49 (ಸೇವೆ ಮುಂದುವರಿಸಿದರೆ ಬಿಲ್‌ನಿಂದ ಕಡಿತ)\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾವು ಯಾವಾಗಲೂ ಸಿದ್ಧ 🙏`
+        : `✅ *Booking Received, ${firstName}!*\n\n• Customer: ${fullName}\n• Service: ${service}\n• Location: ${location}\n• Calling Number: ${resolvedCallingPhone}${mapNote}\n• Visit Charge: ₹49 (adjusted into your bill if you proceed with the service)\n\nField Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you within 10 minutes.\n\nThank you for choosing FixMaadi! We're always happy to help with any questions 🙏`;
+
+    await sock.sendMessage(userId, { text: confirmMsg });
+    logMessage(`🎉 NEW BOOKING (${service}) from ${fullName} (${senderPhone})`);
+    logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Created Booking ${newBooking.id} for ${fullName} (${service})`);
+    logAgentTask("FM-EMP-501", "Bhuvan Nara", `Alerted Field Ops to assign provider for Booking ${newBooking.id}`);
+}
+
 function clearUserTimer(userId) {
     if (userStates[userId] && userStates[userId].timer) {
         clearTimeout(userStates[userId].timer);
@@ -830,10 +938,11 @@ async function startBot() {
                 if (!userId || userId.endsWith('@g.us') || userId === 'status@broadcast') continue;
 
                 const text = extractText(msg);
+                const locationMsg = msg.message?.locationMessage || msg.message?.ephemeralMessage?.message?.locationMessage || null;
                 const senderPhone = '+' + userId.replace(/[^0-9]/g, '');
-                logMessage(`📩 Message from ${senderPhone}: "${text || '[Media]'}"`);
+                logMessage(`📩 Message from ${senderPhone}: "${text || (locationMsg ? '[Location Pin]' : '[Media]')}"`);
 
-                if (!text) continue;
+                if (!text && !locationMsg) continue;
 
                 const lowerText = text.toLowerCase();
 
@@ -925,17 +1034,17 @@ async function startBot() {
                 else if (currentState.step === 'AWAITING_NAME') {
                     const fullName = text.trim();
                     const isKN = currentState.lang === 'kn';
+                    const nameParts = fullName.split(/\s+/).filter(Boolean);
 
-                    if (!isValidCustomerName(fullName)) {
+                    if (!isValidCustomerName(fullName) || nameParts.length < 2) {
                         const retryMsg = isKN
-                            ? `ಅದು ಸರಿಯಾದ ಹೆಸರಿನಂತೆ ಕಾಣುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಮನೆಹೆಸರು (Surname) ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ರಮೇಶ್ ಪಾಟೀಲ್):`
-                            : `That doesn't look like a valid name. Please type your Name and Surname (e.g. Ramesh Patil):`;
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಪೂರ್ಣ ಹೆಸರಿನಂತೆ ಕಾಣುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಹೆಸರು ಮತ್ತು ಮನೆಹೆಸರು (Surname)* ಎರಡನ್ನೂ ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ರಮೇಶ್ ಪಾಟೀಲ್):`
+                            : `❌ Sorry, that doesn't look like a full name. Please type both your *First Name and Surname* (e.g. Ramesh Patil):`;
                         await sock.sendMessage(userId, { text: retryMsg });
                         scheduleFollowUp(sock, userId);
                         return;
                     }
 
-                    const nameParts = fullName.split(' ');
                     const firstName = nameParts[0];
 
                     userStates[userId].fullName = fullName;
@@ -954,174 +1063,131 @@ async function startBot() {
 
                     if (selected) {
                         userStates[userId].service = `${selected.name} (${selected.price})`;
-                        
-                        // FAST-TRACK PREVIOUS LOCATION CONFIRMATION
-                        const savedLocation = userStates[userId].lastLocation || (knownCustomer ? knownCustomer.lastLocation : null);
-                        
-                        if (savedLocation) {
-                            userStates[userId].suggestedLocation = savedLocation;
-                            userStates[userId].step = 'AWAITING_LOCATION_CONFIRM';
-                            saveDatabaseToDisk();
+                        userStates[userId].step = 'AWAITING_PHONE_CONFIRM';
+                        saveDatabaseToDisk();
 
-                            const locPrompt = isKN
-                                ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\n📍 *ನಿಮ್ಮ ಹಿಂದಿನ ವಿಳಾಸ ಬಳಸಬೇಕೇ?*\n"${savedLocation}"\n\n1️⃣ ಹೌದು, ಇದೇ ವಿಳಾಸ ಬಳಸಿ - Reply "1"\n2️⃣ ಹೊಸ ವಿಳಾಸ ಮತ್ತು ಸಮಯ ಟೈಪ್ ಮಾಡಿ - Reply "2"`
-                                : `Great choice, ${firstName}! You selected *${selected.name}*.\n\n📍 *Use your previous address?*\n"${savedLocation}"\n\n1️⃣ Yes, use previous address - Reply "1"\n2️⃣ Type new address & time - Reply "2"`;
-
-                            await sock.sendMessage(userId, { text: locPrompt });
-                            logMessage(`📤 Sent Saved Address Fast-Track Prompt to ${firstName}`);
-                            scheduleFollowUp(sock, userId);
-                        } else {
-                            userStates[userId].step = 'AWAITING_LOCATION';
-                            saveDatabaseToDisk();
-                            const promptMsg = isKN 
-                                ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\nದಯವಿಟ್ಟು ನಿಮ್ಮ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ*ವನ್ನು ಕಳುಹಿಸಿ.`
-                                : `Great choice, ${firstName}! You selected *${selected.name}*.\n\nPlease reply with your *Area/Address* (e.g., Navanagar Sector 4) and *Preferred Time* (e.g., Today 5 PM).`;
-                            
-                            await sock.sendMessage(userId, { text: promptMsg });
-                            logMessage(`📤 Sent Location Prompt to ${firstName} (${senderPhone})`);
-                            scheduleFollowUp(sock, userId);
-                        }
+                        const greatChoice = isKN
+                            ? `ಉತ್ತಮ ಆಯ್ಕೆ ${firstName} ಅವರೇ! ನೀವು *${selected.name}* ಆಯ್ಕೆ ಮಾಡಿದ್ದೀರಿ.\n\n`
+                            : `Great choice, ${firstName}! You selected *${selected.name}*.\n\n`;
+                        await sock.sendMessage(userId, { text: greatChoice + getPhoneConfirmPrompt(isKN, senderPhone) });
+                        logMessage(`📤 Sent Calling Number Confirmation Prompt to ${firstName} (${senderPhone})`);
+                        scheduleFollowUp(sock, userId);
                     } else {
-                        const invalidMsg = isKN 
-                            ? `ದಯವಿಟ್ಟು 1 ರಿಂದ 12 ರವರೆಗಿನ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ ${firstName} ಅವರೇ (ಉದಾ: 3):`
-                            : `Please reply with a number from 1 to 12, ${firstName} (e.g. 3):`;
+                        const invalidMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇನ್‌ಪುಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ 🙏`
+                            : `❌ Sorry, that's not a valid option. Please check your input and try again 🙏`;
+                        await sock.sendMessage(userId, { text: invalidMsg });
                         await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
                         scheduleFollowUp(sock, userId);
                     }
                 }
-                else if (currentState.step === 'AWAITING_LOCATION_CONFIRM') {
+                else if (currentState.step === 'AWAITING_PHONE_CONFIRM') {
                     const isKN = currentState.lang === 'kn';
                     const firstName = currentState.firstName || 'Customer';
-                    const fullName = currentState.fullName || firstName;
-                    const service = currentState.service;
-
-                    let finalLocation = '';
 
                     if (lowerText === '1' || lowerText.includes('yes') || lowerText.includes('ಹೌದು') || lowerText.includes('1️⃣')) {
-                        finalLocation = currentState.suggestedLocation || 'Saved Customer Location';
-                        logMessage(`⚡ Fast-tracked booking using saved address for ${firstName}: "${finalLocation}"`);
-                    } else {
-                        userStates[userId].step = 'AWAITING_LOCATION';
+                        userStates[userId].callingPhone = senderPhone;
                         saveDatabaseToDisk();
-                        const promptMsg = isKN 
-                            ? `ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಹೊಸ ಏರಿಯಾ/ವಿಳಾಸ* ಮತ್ತು *ಸಮಯ*ವನ್ನು ಟೈಪ್ ಮಾಡಿ:`
-                            : `Please type your *New Area/Address* and *Preferred Time*:`;
-                        await sock.sendMessage(userId, { text: promptMsg });
+                        const savedLocation = userStates[userId].lastLocation || (knownCustomer ? knownCustomer.lastLocation : null);
+                        await promptForLocation(sock, userId, isKN, firstName, savedLocation);
+                    } else if (lowerText === '2' || lowerText.includes('no') || lowerText.includes('ಇಲ್ಲ') || lowerText.includes('2️⃣')) {
+                        userStates[userId].step = 'AWAITING_NEW_PHONE';
+                        saveDatabaseToDisk();
+                        const askNewPhone = isKN
+                            ? `ದಯವಿಟ್ಟು ನಮ್ಮ ಕೆಲಸಗಾರರು ಕರೆ ಮಾಡಬೇಕಾದ 10-ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ:`
+                            : `Please type the 10-digit mobile number our technician should call:`;
+                        await sock.sendMessage(userId, { text: askNewPhone });
                         scheduleFollowUp(sock, userId);
-                        return;
+                    } else {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ 🙏\n\n${getPhoneConfirmPrompt(isKN, senderPhone)}`
+                            : `❌ Sorry, that's not a valid option. Please check your input and try again 🙏\n\n${getPhoneConfirmPrompt(isKN, senderPhone)}`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
                     }
-
-                    clearUserTimer(userId);
-                    userStates[userId].step = 'COMPLETED';
-
-                    const startOtp = generate4DigitOtp();
-                    const endOtp = generate4DigitOtp();
-
-                    // SAVE CUSTOMER & LAST LOCATION TO PERSISTENT DATABASE
-                    saveCustomer(senderPhone, {
-                        name: fullName,
-                        firstName: firstName,
-                        lang: currentState.lang || 'kn',
-                        lastLocation: finalLocation
-                    });
-
-                    const newBooking = {
-                        id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
-                        customerJid: userId,
-                        customerName: fullName,
-                        customerPhone: senderPhone,
-                        service: service,
-                        location: finalLocation,
-                        status: 'Pending',
-                        assignedVendor: null,
-                        assignedVendorPhone: null,
-                        startOtp: startOtp,
-                        endOtp: endOtp,
-                        startOtpVerified: false,
-                        endOtpVerified: false,
-                        startTimestamp: null,
-                        endTimestamp: null,
-                        totalDurationSeconds: null,
-                        customerRating: null,
-                        reviewComment: null,
-                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    };
-                    bookings.unshift(newBooking);
-                    delete userStates[userId];
-                    saveDatabaseToDisk();
-
-                    const confirmMsg = isKN
-                        ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ! (ಅತಿ ವೇಗದ 1-ಟ್ಯಾಪ್ ಕಾಯ್ದಿರಿಸುವಿಕೆ)*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ: ${finalLocation}\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು!`
-                        : `✅ *Fast-Track Booking Received, ${firstName}!*\n\n• Customer: ${fullName}\n• Service: ${service}\n• Location: ${finalLocation}\n\nField Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you in 10 minutes.\n\nThank you for choosing FixMaadi!`;
-
-                    await sock.sendMessage(userId, { text: confirmMsg });
-                    logMessage(`🎉 FAST-TRACK REPEAT BOOKING (${service}) from ${fullName} (${senderPhone})`);
-                    logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Fast-tracked Booking ${newBooking.id} for repeat customer ${fullName}`);
-                    logAgentTask("FM-EMP-501", "Bhuvan Nara", `Alerted Field Ops to assign provider for Booking ${newBooking.id}`);
                 }
-                else if (currentState.step === 'AWAITING_LOCATION') {
+                else if (currentState.step === 'AWAITING_NEW_PHONE') {
                     const isKN = currentState.lang === 'kn';
                     const firstName = currentState.firstName || 'Customer';
-                    const fullName = currentState.fullName || firstName;
-                    const locationAndTime = text;
-                    const service = userStates[userId].service;
 
-                    if (!isValidLocationInput(locationAndTime)) {
+                    if (!isValidIndianMobile(text)) {
                         const retryMsg = isKN
-                            ? `ದಯವಿಟ್ಟು ಪೂರ್ಣ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ* (ಉದಾ: ಇಂದು ಸಂಜೆ 5) ಒಟ್ಟಿಗೆ ಟೈಪ್ ಮಾಡಿ:`
-                            : `Please type a complete *Area/Address* (e.g. Navanagar Sector 4) and *Time* (e.g. Today 5 PM) together:`;
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ 10-ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯಂತೆ ಕಾಣುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ (ಉದಾ: 9876543210):`
+                            : `❌ Sorry, that doesn't look like a valid 10-digit mobile number. Please try again (e.g. 9876543210):`;
                         await sock.sendMessage(userId, { text: retryMsg });
                         scheduleFollowUp(sock, userId);
                         return;
                     }
 
-                    clearUserTimer(userId);
-                    userStates[userId].step = 'COMPLETED';
-
-                    const startOtp = generate4DigitOtp();
-                    const endOtp = generate4DigitOtp();
-
-                    // SAVE CUSTOMER & LAST LOCATION TO PERSISTENT DATABASE
-                    saveCustomer(senderPhone, {
-                        name: fullName,
-                        firstName: firstName,
-                        lang: currentState.lang || 'kn',
-                        lastLocation: locationAndTime
-                    });
-
-                    const newBooking = {
-                        id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
-                        customerJid: userId,
-                        customerName: fullName,
-                        customerPhone: senderPhone,
-                        service: service,
-                        location: locationAndTime,
-                        status: 'Pending',
-                        assignedVendor: null,
-                        assignedVendorPhone: null,
-                        startOtp: startOtp,
-                        endOtp: endOtp,
-                        startOtpVerified: false,
-                        endOtpVerified: false,
-                        startTimestamp: null,
-                        endTimestamp: null,
-                        totalDurationSeconds: null,
-                        customerRating: null,
-                        reviewComment: null,
-                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    };
-                    bookings.unshift(newBooking);
-                    delete userStates[userId];
+                    userStates[userId].callingPhone = normalizeIndianMobile(text);
                     saveDatabaseToDisk();
+                    const savedLocation = userStates[userId].lastLocation || (knownCustomer ? knownCustomer.lastLocation : null);
+                    await promptForLocation(sock, userId, isKN, firstName, savedLocation);
+                }
+                else if (currentState.step === 'AWAITING_LOCATION_CONFIRM') {
+                    const isKN = currentState.lang === 'kn';
 
-                    const confirmMsg = isKN
-                        ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ & ಸಮಯ: ${locationAndTime}\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು!`
-                        : `✅ *Booking Received, ${firstName}!*\n\n• Customer: ${fullName}\n• Service: ${service}\n• Location & Time: ${locationAndTime}\n\nField Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you in 10 minutes.\n\nThank you for choosing FixMaadi!`;
+                    if (lowerText === '1' || lowerText.includes('yes') || lowerText.includes('ಹೌದು') || lowerText.includes('1️⃣')) {
+                        userStates[userId].confirmedLocation = currentState.suggestedLocation || 'Saved Customer Location';
+                        userStates[userId].step = 'AWAITING_MAP_LOCATION';
+                        saveDatabaseToDisk();
+                        await sock.sendMessage(userId, { text: getMapLocationPrompt(isKN) });
+                        scheduleFollowUp(sock, userId);
+                    } else if (lowerText === '2' || lowerText.includes('no') || lowerText.includes('ಇಲ್ಲ') || lowerText.includes('2️⃣')) {
+                        userStates[userId].step = 'AWAITING_LOCATION';
+                        saveDatabaseToDisk();
+                        const promptMsg = isKN
+                            ? `ದಯವಿಟ್ಟು ನಿಮ್ಮ *ಹೊಸ ಏರಿಯಾ/ವಿಳಾಸ* ಮತ್ತು *ಸಮಯ*ವನ್ನು ಟೈಪ್ ಮಾಡಿ:`
+                            : `Please type your *New Area/Address* and *Preferred Time*:`;
+                        await sock.sendMessage(userId, { text: promptMsg });
+                        scheduleFollowUp(sock, userId);
+                    } else {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಮತ್ತು "1" ಅಥವಾ "2" ಕಳುಹಿಸಿ:`
+                            : `❌ Sorry, that's not a valid option. Please check your input and reply "1" or "2":`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                    }
+                }
+                else if (currentState.step === 'AWAITING_LOCATION') {
+                    const isKN = currentState.lang === 'kn';
+                    const locationAndTime = text;
 
-                    await sock.sendMessage(userId, { text: confirmMsg });
-                    logMessage(`🎉 NEW BOOKING (${service}) from ${fullName} (${senderPhone})`);
-                    logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Created Booking ${newBooking.id} for ${fullName} (${service})`);
-                    logAgentTask("FM-EMP-501", "Bhuvan Nara", `Alerted Field Ops to assign provider for Booking ${newBooking.id}`);
+                    if (!isValidLocationInput(locationAndTime)) {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ದಯವಿಟ್ಟು ಪೂರ್ಣ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ* (ಉದಾ: ಇಂದು ಸಂಜೆ 5) ಒಟ್ಟಿಗೆ ಟೈಪ್ ಮಾಡಿ:`
+                            : `❌ Sorry, please type a complete *Area/Address* (e.g. Navanagar Sector 4) and *Time* (e.g. Today 5 PM) together:`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                        return;
+                    }
+
+                    userStates[userId].confirmedLocation = locationAndTime;
+                    userStates[userId].step = 'AWAITING_MAP_LOCATION';
+                    saveDatabaseToDisk();
+                    await sock.sendMessage(userId, { text: getMapLocationPrompt(isKN) });
+                    scheduleFollowUp(sock, userId);
+                }
+                else if (currentState.step === 'AWAITING_MAP_LOCATION') {
+                    const firstName = currentState.firstName || 'Customer';
+                    const fullName = currentState.fullName || firstName;
+
+                    // A shared pin is a bonus, not a requirement — anything that isn't an
+                    // actual location share (including "skip" or unrelated text) just
+                    // proceeds without one rather than blocking the booking here.
+                    const mapLocation = locationMsg
+                        ? { lat: locationMsg.degreesLatitude, lng: locationMsg.degreesLongitude }
+                        : null;
+
+                    await finalizeBooking(sock, userId, senderPhone, {
+                        fullName,
+                        firstName,
+                        lang: currentState.lang || 'kn',
+                        service: currentState.service,
+                        location: currentState.confirmedLocation,
+                        callingPhone: currentState.callingPhone || senderPhone,
+                        mapLocation
+                    });
                 }
             }
         } catch (err) {

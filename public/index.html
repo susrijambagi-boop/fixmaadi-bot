@@ -616,7 +616,7 @@
                 return;
             }
 
-            let html = '<table><thead><tr><th>Booking ID</th><th>Customer</th><th>Service</th><th>Location</th><th>Technician</th><th>Work Timer / Duration</th><th>Status</th><th>OTP Verification / Action</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Booking ID</th><th>Date</th><th>Time</th><th>Customer</th><th>Service</th><th>Location</th><th>Technician</th><th>Work Timer / Duration</th><th>Status</th><th>OTP Verification / Action</th></tr></thead><tbody>';
             bookings.forEach(b => {
                 let timerCell = '<span style="color:var(--text-muted);">--</span>';
                 if (b.status === 'In-Progress') {
@@ -637,12 +637,19 @@
                     actionCell = `<span style="color:var(--text-muted); font-size:11px;">${b.startOtpMasked || '🔐 Sent to Customer'}</span>`;
                 }
 
+                const callingPhoneNote = (b.callingPhone && b.callingPhone !== b.customerPhone)
+                    ? `<br><span style="font-size:10px; color:var(--text-muted);">📞 ${b.callingPhone}</span>` : '';
+                const mapLink = (b.mapLocation && b.mapLocation.lat)
+                    ? ` <a href="https://maps.google.com/?q=${b.mapLocation.lat},${b.mapLocation.lng}" target="_blank" rel="noopener">📍 Map</a>` : '';
+
                 html += `
                     <tr>
                         <td><strong>${b.id}</strong></td>
-                        <td><strong>${b.customerName || 'Customer'}</strong><br><span style="font-size:11px; color:var(--text-muted);">${b.customerPhone}</span></td>
+                        <td>${b.date || '--'}</td>
+                        <td>${b.timestamp || '--'}</td>
+                        <td><strong>${b.customerName || 'Customer'}</strong><br><span style="font-size:11px; color:var(--text-muted);">${b.customerPhone}</span>${callingPhoneNote}</td>
                         <td>${b.service}</td>
-                        <td>${b.location}</td>
+                        <td>${b.location}${mapLink}</td>
                         <td>${b.assignedVendor ? b.assignedVendor : '<span style="color:var(--text-muted);">Unassigned</span>'}</td>
                         <td>${timerCell}</td>
                         <td><span class="status-tag status-${b.status}">${b.status}</span></td>
