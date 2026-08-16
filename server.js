@@ -805,7 +805,7 @@ async function startBot() {
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
-        if (qr) { currentQR = qr; botStatus = 'WAITING_FOR_QR_SCAN'; logMessage('📱 New QR Code generated! Scan at http://localhost:3000'); }
+        if (qr) { currentQR = qr; botStatus = 'WAITING_FOR_QR_SCAN'; logMessage('📱 New QR Code generated! Open the dashboard URL to scan it.'); }
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
