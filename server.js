@@ -291,6 +291,29 @@ function saveCustomer(phoneStr, data) {
     logMessage(`💾 Saved persistent customer profile: ${key} -> ${JSON.stringify(customerDatabase[key])}`);
 }
 
+const OPEN_BOOKING_STATUSES = ['Pending', 'Assigned', 'In-Progress'];
+
+function findActiveBookingForCustomer(phoneStr) {
+    const key = get10DigitPhone(phoneStr);
+    if (!key) return null;
+    return bookings.find(b => get10DigitPhone(b.customerPhone) === key && OPEN_BOOKING_STATUSES.includes(b.status)) || null;
+}
+
+// Same customer, same service, same address/time text, booked today — treated as
+// an accidental duplicate rather than a genuinely separate request.
+function findCollidingBooking(phoneStr, service, location) {
+    const key = get10DigitPhone(phoneStr);
+    if (!key) return null;
+    const today = new Date().toLocaleDateString('en-IN');
+    return bookings.find(b =>
+        get10DigitPhone(b.customerPhone) === key &&
+        b.service === service &&
+        b.location === location &&
+        b.date === today &&
+        OPEN_BOOKING_STATUSES.includes(b.status)
+    ) || null;
+}
+
 // MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY
 app.get('/api/bookings', (req, res) => {
     const maskedBookings = bookings.map(b => ({
@@ -751,6 +774,29 @@ async function promptForLocation(sock, userId, isKN, firstName, savedLocation) {
     }
 }
 
+// Called once the address/time is confirmed (either path). If it exactly matches
+// an open booking made today, offer to modify that one instead of double-booking.
+async function proceedAfterLocationConfirmed(sock, userId, senderPhone, isKN) {
+    const state = userStates[userId];
+    const colliding = findCollidingBooking(senderPhone, state.service, state.confirmedLocation);
+
+    if (colliding) {
+        userStates[userId].step = 'AWAITING_MODIFY_CONFIRM';
+        userStates[userId].collidingBookingId = colliding.id;
+        saveDatabaseToDisk();
+        const msg = isKN
+            ? `ℹ️ ನೀವು ಈಗಾಗಲೇ ಇಂದು ಇದೇ ಸೇವೆಗೆ (*${colliding.service}*) *${colliding.location}* ವಿಳಾಸದಲ್ಲಿ ಬುಕಿಂಗ್ ಮಾಡಿದ್ದೀರಿ (Booking ${colliding.id}).\n\nಇದನ್ನೇ ಬದಲಾಯಿಸಬೇಕೇ, ಅಥವಾ ಇದು ಹೊಸ, ಪ್ರತ್ಯೇಕ ಬುಕಿಂಗ್ ಆಗಿದೆಯೇ?\n\n1️⃣ ಹೌದು, ಈ ಬುಕಿಂಗ್ ಬದಲಾಯಿಸಿ\n2️⃣ ಇಲ್ಲ, ಇದು ಪ್ರತ್ಯೇಕ ಬುಕಿಂಗ್`
+            : `ℹ️ You already have a booking today for the same service (*${colliding.service}*) at *${colliding.location}* (Booking ${colliding.id}).\n\nWould you like to modify that booking instead, or is this genuinely a new, separate one?\n\n1️⃣ Yes, modify that booking\n2️⃣ No, this is a separate booking`;
+        await sock.sendMessage(userId, { text: msg });
+        scheduleFollowUp(sock, userId);
+    } else {
+        userStates[userId].step = 'AWAITING_MAP_LOCATION';
+        saveDatabaseToDisk();
+        await sock.sendMessage(userId, { text: getMapLocationPrompt(isKN) });
+        scheduleFollowUp(sock, userId);
+    }
+}
+
 // Shared by both the fast-track and fresh-address paths so booking creation
 // (OTPs, disk save, confirmation message) lives in exactly one place.
 async function finalizeBooking(sock, userId, senderPhone, opts) {
@@ -962,9 +1008,16 @@ async function startBot() {
 
                 const currentState = userStates[userId];
                 const knownCustomer = findCustomer(senderPhone);
+                const isGreeting = lowerText === 'hi' || lowerText === 'hello' || lowerText === 'start' || lowerText === 'namaskara' || lowerText === 'ನಮಸ್ಕಾರ';
 
                 // REPEAT CUSTOMER RECOGNITION FLOW
-                if (currentState.step === 'NEW' || lowerText === 'hi' || lowerText === 'hello' || lowerText === 'start' || lowerText === 'namaskara' || lowerText === 'ನಮಸ್ಕಾರ') {
+                if (currentState.step === 'NEW' || isGreeting) {
+                    // A greeting is always a fresh start — drop any stale in-progress
+                    // fields (old service/location/etc.) instead of layering on top.
+                    if (isGreeting) {
+                        userStates[userId] = { step: 'NEW', followUpCount: 0, timer: null };
+                    }
+
                     if (knownCustomer && knownCustomer.name) {
                         userStates[userId].fullName = knownCustomer.name;
                         userStates[userId].firstName = knownCustomer.firstName || knownCustomer.name.split(' ')[0];
@@ -972,22 +1025,62 @@ async function startBot() {
                         userStates[userId].lastLocation = knownCustomer.lastLocation;
 
                         const isKN = userStates[userId].lang === 'kn';
-                        const repeatPrompt = isKN
-                            ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ${userStates[userId].firstName} ಆಗಿ ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಹೊಸ ಹೆಸರು / ಭಾಷೆ ಬದಲಾಯಿಸಿ - Reply "2"`
-                            : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi Bagalkot* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${userStates[userId].firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
+                        const activeBooking = findActiveBookingForCustomer(senderPhone);
 
-                        await sock.sendMessage(userId, { text: repeatPrompt });
-                        userStates[userId].step = 'AWAITING_REPEAT_CONFIRM';
-                        saveDatabaseToDisk();
-                        logMessage(`📤 Sent Repeat Customer Personal Greeting to ${userStates[userId].firstName} (${senderPhone})`);
-                        scheduleFollowUp(sock, userId);
+                        if (activeBooking) {
+                            userStates[userId].step = 'AWAITING_EXISTING_OR_NEW';
+                            const prompt = isKN
+                                ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! ಮತ್ತೆ ಸುಸ್ವಾಗತ 🙏\n\nನಿಮಗೆ ಈಗಾಗಲೇ ಒಂದು ಬುಕಿಂಗ್ ಇದೆ (${activeBooking.service}, ${activeBooking.location}).\n\n1️⃣ ನನ್ನ ಈಗಿನ ಬುಕಿಂಗ್ ಬಗ್ಗೆ ಪ್ರಶ್ನೆ ಇದೆ - Reply "1"\n2️⃣ ಹೊಸ ಸೇವೆ ಬುಕ್ ಮಾಡಬೇಕು - Reply "2"`
+                                : `Namaskara ${userStates[userId].firstName}! Welcome back again 🙏\n\nYou already have a booking with us (${activeBooking.service} at ${activeBooking.location}).\n\n1️⃣ I have a question about my existing booking - Reply "1"\n2️⃣ I want to book a new service - Reply "2"`;
+                            await sock.sendMessage(userId, { text: prompt });
+                            saveDatabaseToDisk();
+                            logMessage(`📤 Sent Existing-Booking vs New-Booking Prompt to ${userStates[userId].firstName} (${senderPhone})`);
+                            scheduleFollowUp(sock, userId);
+                        } else {
+                            const repeatPrompt = isKN
+                                ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ${userStates[userId].firstName} ಆಗಿ ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಹೊಸ ಹೆಸರು / ಭಾಷೆ ಬದಲಾಯಿಸಿ - Reply "2"`
+                                : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi Bagalkot* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${userStates[userId].firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
+
+                            await sock.sendMessage(userId, { text: repeatPrompt });
+                            userStates[userId].step = 'AWAITING_REPEAT_CONFIRM';
+                            saveDatabaseToDisk();
+                            logMessage(`📤 Sent Repeat Customer Personal Greeting to ${userStates[userId].firstName} (${senderPhone})`);
+                            scheduleFollowUp(sock, userId);
+                        }
                     } else {
                         const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call Bhuvan Nara: ${BHUVAN_PHONE})*`;
-                        
+
                         await sock.sendMessage(userId, { text: langPrompt });
                         userStates[userId].step = 'AWAITING_LANG';
                         saveDatabaseToDisk();
                         logMessage(`📤 Sent New Customer Language Selection to ${senderPhone}`);
+                        scheduleFollowUp(sock, userId);
+                    }
+                }
+                else if (currentState.step === 'AWAITING_EXISTING_OR_NEW') {
+                    const isKN = currentState.lang === 'kn';
+                    const firstName = currentState.firstName || 'Customer';
+
+                    if (lowerText === '1' || lowerText.includes('1️⃣')) {
+                        const msg = isKN
+                            ? `ನಿಮ್ಮ ಈಗಿನ ಬುಕಿಂಗ್‌ನಲ್ಲಿ ಏನಾದರೂ ಬದಲಾಯಿಸಬೇಕಿದ್ದರೆ ಅಥವಾ ಪ್ರಶ್ನೆ ಇದ್ದರೆ, ದಯವಿಟ್ಟು ನಮ್ಮ ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ — ಅವರು ತಕ್ಷಣ ಸಹಾಯ ಮಾಡುತ್ತಾರೆ 🙏`
+                            : `For any change or question about your existing booking, please contact our Field Operations Head Bhuvan Nara directly at ${BHUVAN_PHONE} — he'll help you right away 🙏`;
+                        await sock.sendMessage(userId, { text: msg });
+                        delete userStates[userId];
+                        saveDatabaseToDisk();
+                    } else if (lowerText === '2' || lowerText.includes('2️⃣')) {
+                        userStates[userId].step = 'AWAITING_SERVICE';
+                        saveDatabaseToDisk();
+                        const welcomeAgain = isKN
+                            ? `ಮತ್ತೆ ಸುಸ್ವಾಗತ ${firstName} ಅವರೇ! 🙏\n\n`
+                            : `Welcome back again, ${firstName}! 🙏\n\n`;
+                        await sock.sendMessage(userId, { text: welcomeAgain });
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
+                    } else {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು "1" ಅಥವಾ "2" ಕಳುಹಿಸಿ:`
+                            : `❌ Sorry, that's not a valid option. Please reply "1" or "2":`;
+                        await sock.sendMessage(userId, { text: retryMsg });
                         scheduleFollowUp(sock, userId);
                     }
                 }
@@ -1129,10 +1222,8 @@ async function startBot() {
 
                     if (lowerText === '1' || lowerText.includes('yes') || lowerText.includes('ಹೌದು') || lowerText.includes('1️⃣')) {
                         userStates[userId].confirmedLocation = currentState.suggestedLocation || 'Saved Customer Location';
-                        userStates[userId].step = 'AWAITING_MAP_LOCATION';
                         saveDatabaseToDisk();
-                        await sock.sendMessage(userId, { text: getMapLocationPrompt(isKN) });
-                        scheduleFollowUp(sock, userId);
+                        await proceedAfterLocationConfirmed(sock, userId, senderPhone, isKN);
                     } else if (lowerText === '2' || lowerText.includes('no') || lowerText.includes('ಇಲ್ಲ') || lowerText.includes('2️⃣')) {
                         userStates[userId].step = 'AWAITING_LOCATION';
                         saveDatabaseToDisk();
@@ -1163,10 +1254,119 @@ async function startBot() {
                     }
 
                     userStates[userId].confirmedLocation = locationAndTime;
-                    userStates[userId].step = 'AWAITING_MAP_LOCATION';
                     saveDatabaseToDisk();
-                    await sock.sendMessage(userId, { text: getMapLocationPrompt(isKN) });
-                    scheduleFollowUp(sock, userId);
+                    await proceedAfterLocationConfirmed(sock, userId, senderPhone, isKN);
+                }
+                else if (currentState.step === 'AWAITING_MODIFY_CONFIRM') {
+                    const isKN = currentState.lang === 'kn';
+
+                    if (lowerText === '1' || lowerText.includes('yes') || lowerText.includes('ಹೌದು') || lowerText.includes('1️⃣')) {
+                        userStates[userId].step = 'AWAITING_MODIFY_CHOICE';
+                        saveDatabaseToDisk();
+                        const msg = isKN
+                            ? `ಏನನ್ನು ಬದಲಾಯಿಸಬೇಕು?\n\n1️⃣ ಸೇವೆ\n2️⃣ ವಿಳಾಸ/ಸಮಯ\n3️⃣ ಕರೆ ಸಂಖ್ಯೆ`
+                            : `What would you like to change?\n\n1️⃣ Service\n2️⃣ Address/Time\n3️⃣ Calling Number`;
+                        await sock.sendMessage(userId, { text: msg });
+                        scheduleFollowUp(sock, userId);
+                    } else if (lowerText === '2' || lowerText.includes('no') || lowerText.includes('ಇಲ್ಲ') || lowerText.includes('2️⃣')) {
+                        userStates[userId].step = 'AWAITING_MAP_LOCATION';
+                        saveDatabaseToDisk();
+                        await sock.sendMessage(userId, { text: getMapLocationPrompt(isKN) });
+                        scheduleFollowUp(sock, userId);
+                    } else {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು "1" ಅಥವಾ "2" ಕಳುಹಿಸಿ:`
+                            : `❌ Sorry, that's not a valid option. Please reply "1" or "2":`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                    }
+                }
+                else if (currentState.step === 'AWAITING_MODIFY_CHOICE') {
+                    const isKN = currentState.lang === 'kn';
+
+                    if (['1', '2', '3'].includes(lowerText.replace(/[^123]/g, '')[0] || '')) {
+                        const field = lowerText.replace(/[^123]/g, '')[0];
+                        userStates[userId].modifyField = field;
+                        userStates[userId].step = 'AWAITING_MODIFY_VALUE';
+                        saveDatabaseToDisk();
+                        let askMsg;
+                        if (field === '1') {
+                            askMsg = isKN
+                                ? `ಹೊಸ ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 12):`
+                                : `Please send the new service number (1 to 12):`;
+                        } else if (field === '2') {
+                            askMsg = isKN
+                                ? `ಹೊಸ *ಏರಿಯಾ/ವಿಳಾಸ* ಮತ್ತು *ಸಮಯ*ವನ್ನು ಟೈಪ್ ಮಾಡಿ:`
+                                : `Please type the new *Area/Address* and *Time*:`;
+                        } else {
+                            askMsg = isKN
+                                ? `ಹೊಸ 10-ಅಂಕಿಯ ಕರೆ ಸಂಖ್ಯೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ:`
+                                : `Please type the new 10-digit calling number:`;
+                        }
+                        await sock.sendMessage(userId, { text: askMsg });
+                        scheduleFollowUp(sock, userId);
+                    } else {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು "1", "2" ಅಥವಾ "3" ಕಳುಹಿಸಿ:`
+                            : `❌ Sorry, that's not a valid option. Please reply "1", "2" or "3":`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                    }
+                }
+                else if (currentState.step === 'AWAITING_MODIFY_VALUE') {
+                    const isKN = currentState.lang === 'kn';
+                    const field = currentState.modifyField;
+                    const bookingIndex = bookings.findIndex(b => b.id === currentState.collidingBookingId);
+
+                    if (bookingIndex === -1) {
+                        await sock.sendMessage(userId, { text: isKN ? `❌ ಆ ಬುಕಿಂಗ್ ಕಂಡುಬಂದಿಲ್ಲ. ದಯವಿಟ್ಟು "hi" ಕಳುಹಿಸಿ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ.` : `❌ That booking could no longer be found. Please send "hi" to start again.` });
+                        delete userStates[userId];
+                        saveDatabaseToDisk();
+                        return;
+                    }
+
+                    let updatedField = {};
+                    let confirmedValueText = '';
+
+                    if (field === '1') {
+                        const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
+                        const selected = matchService(text, servicesDict);
+                        if (!selected) {
+                            await sock.sendMessage(userId, { text: isKN ? `❌ ಸರಿಯಾದ ಸೇವಾ ಸಂಖ್ಯೆ (1-12) ಕಳುಹಿಸಿ:` : `❌ Please send a valid service number (1-12):` });
+                            scheduleFollowUp(sock, userId);
+                            return;
+                        }
+                        updatedField = { service: `${selected.name} (${selected.price})` };
+                        confirmedValueText = updatedField.service;
+                    } else if (field === '2') {
+                        if (!isValidLocationInput(text)) {
+                            await sock.sendMessage(userId, { text: isKN ? `❌ ಪೂರ್ಣ ವಿಳಾಸ ಮತ್ತು ಸಮಯ ಟೈಪ್ ಮಾಡಿ:` : `❌ Please type a complete address and time:` });
+                            scheduleFollowUp(sock, userId);
+                            return;
+                        }
+                        updatedField = { location: text.trim() };
+                        confirmedValueText = updatedField.location;
+                    } else {
+                        if (!isValidIndianMobile(text)) {
+                            await sock.sendMessage(userId, { text: isKN ? `❌ ಸರಿಯಾದ 10-ಅಂಕಿಯ ಸಂಖ್ಯೆ ಟೈಪ್ ಮಾಡಿ:` : `❌ Please type a valid 10-digit number:` });
+                            scheduleFollowUp(sock, userId);
+                            return;
+                        }
+                        updatedField = { callingPhone: normalizeIndianMobile(text) };
+                        confirmedValueText = updatedField.callingPhone;
+                    }
+
+                    bookings[bookingIndex] = { ...bookings[bookingIndex], ...updatedField };
+                    saveDatabaseToDisk();
+
+                    const doneMsg = isKN
+                        ? `✅ ಬುಕಿಂಗ್ ${currentState.collidingBookingId} ನವೀಕರಿಸಲಾಗಿದೆ: *${confirmedValueText}*.\n\nಫಿಕ್ಸ್‌ಮಾಡಿ ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! 🙏`
+                        : `✅ Booking ${currentState.collidingBookingId} updated: *${confirmedValueText}*.\n\nThank you for choosing FixMaadi! 🙏`;
+                    await sock.sendMessage(userId, { text: doneMsg });
+                    logMessage(`✏️ Customer self-updated Booking ${currentState.collidingBookingId} field "${field}" -> ${confirmedValueText}`);
+                    logAgentTask("FM-EMP-201", "Rohan Deshmukh", `Booking ${currentState.collidingBookingId} updated by customer via WhatsApp (${confirmedValueText})`);
+                    delete userStates[userId];
+                    saveDatabaseToDisk();
                 }
                 else if (currentState.step === 'AWAITING_MAP_LOCATION') {
                     const firstName = currentState.firstName || 'Customer';
