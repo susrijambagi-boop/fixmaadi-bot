@@ -240,6 +240,8 @@ let vendors = [];
 let attendance = [];
 let userStates = {};
 let deletedVendorsLog = [];
+let cityRequests = [];
+let partnerApplications = [];
 
 // PERMANENT DISK DATABASE ENGINE (PREVENTS ANY DATA LOSS ON RESTART)
 function loadDatabaseFromDisk() {
@@ -253,6 +255,8 @@ function loadDatabaseFromDisk() {
             attendance = parsed.attendance || [];
             userStates = parsed.userStates || {};
             deletedVendorsLog = parsed.deletedVendorsLog || [];
+            cityRequests = parsed.cityRequests || [];
+            partnerApplications = parsed.partnerApplications || [];
             logMessage(`💾 PERMANENT DB ENGINE: Loaded ${bookings.length} Bookings, ${Object.keys(customerDatabase).length} Customers, and ${Object.keys(userStates).length} Active Sessions from disk!`);
             return;
         }
@@ -266,6 +270,8 @@ function loadDatabaseFromDisk() {
     attendance = [];
     userStates = {};
     deletedVendorsLog = [];
+    cityRequests = [];
+    partnerApplications = [];
     saveDatabaseToDisk();
 }
 
@@ -278,6 +284,8 @@ function saveDatabaseToDisk() {
             attendance,
             userStates,
             deletedVendorsLog,
+            cityRequests,
+            partnerApplications,
             lastSaved: new Date().toISOString()
         };
         fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf8');
@@ -786,6 +794,26 @@ app.get('/api/health-scan', (req, res) => {
           `\n\nPlease help me investigate and fix these.`;
 
     res.json({ checkedAt, issues, promptForClaude });
+});
+
+// LANDING PAGE: "BRING FIXMAADI TO MY CITY" REQUEST
+app.post('/api/city-request', (req, res) => {
+    const { name, phone, city } = req.body;
+    if (!name || !phone || !city) return res.status(400).json({ error: 'Name, phone, and city are required' });
+    cityRequests.unshift({ name, phone, city, submittedAt: new Date().toISOString() });
+    saveDatabaseToDisk();
+    logMessage(`🌍 City expansion request: ${city} (from ${name}, ${phone})`);
+    res.json({ success: true });
+});
+
+// LANDING PAGE: "JOIN AS A PARTNER" PROVIDER APPLICATION
+app.post('/api/partner-application', (req, res) => {
+    const { name, phone, city, service } = req.body;
+    if (!name || !phone || !service) return res.status(400).json({ error: 'Name, phone, and service are required' });
+    partnerApplications.unshift({ name, phone, city: city || '', service, submittedAt: new Date().toISOString() });
+    saveDatabaseToDisk();
+    logMessage(`🤝 New partner application: ${name} (${service}, ${phone})`);
+    res.json({ success: true });
 });
 
 // CONVERSATIONAL STATE & TEXT EXTRACTOR
