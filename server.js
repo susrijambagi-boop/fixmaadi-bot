@@ -93,6 +93,7 @@ app.get('/api/download', (req, res) => {
 
     const searchPaths = [
         path.join(__dirname, 'public', filename),
+        path.join(__dirname, 'docs', filename),
         path.join(__dirname, filename),
         path.join(ARTIFACT_DIR, filename)
     ];
@@ -196,7 +197,9 @@ function getLiveDocumentsList() {
         { filename: 'vendor_onboarding.md', title: '🤝 Vendor Onboarding Standard Operating Procedure', description: 'SOP for Bhuvan to physically verify and onboard local Bagalkot service providers.' },
         { filename: 'cloud_deployment_guide.md', title: '☁️ 24/7 Cloud Deployment Handoff Guide', description: 'Docker & Render.com 1-click free cloud hosting blueprint.' },
         { filename: 'walkthrough.md', title: '🚀 Master Project Launch Walkthrough', description: 'Complete summary of all built systems, links, and operational status.' },
-        { filename: 'business_strategy_plan.md', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' }
+        { filename: 'business_strategy_plan.md', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' },
+        { filename: 'ARCHITECTURE.md', title: '🗺️ Technical Architecture & Stack Tree Map', description: 'System diagram, full tech stack, data flow, and known architectural constraints.' },
+        { filename: 'MAINTENANCE_CALENDAR.md', title: '📅 Maintenance Calendar', description: 'Weekly/monthly/quarterly checklist — API keys, billing, data cleanup, health scans.' }
     ];
 }
 
@@ -732,6 +735,57 @@ app.get('/api/status-info', async (req, res) => {
         try { qrDataUrl = await QRCode.toDataURL(currentQR); } catch (e) {}
     }
     res.json({ botStatus, qrDataUrl, logs });
+});
+
+// FULL SYSTEM HEALTH SCAN — checks for stuck bookings, incomplete onboarding,
+// missing config, and connection issues. Returns a ready-to-paste prompt too.
+app.get('/api/health-scan', (req, res) => {
+    const issues = [];
+    const now = Date.now();
+    const STUCK_BOOKING_MS = 24 * 60 * 60 * 1000;
+
+    bookings.forEach(b => {
+        if ((b.status === 'Pending' || b.status === 'Assigned') && b.date) {
+            const bookingAge = now - new Date(`${b.date} ${b.timestamp || ''}`).getTime();
+            if (!isNaN(bookingAge) && bookingAge > STUCK_BOOKING_MS) {
+                issues.push({ severity: 'high', category: 'Stuck Booking', message: `Booking ${b.id} (${b.customerName || 'unknown customer'}) has been "${b.status}" for over 24 hours.` });
+            }
+        }
+    });
+
+    const incompleteVendors = vendors.filter(v => !v.photoUrl || !v.aadhaarUrl);
+    if (incompleteVendors.length > 0) {
+        issues.push({ severity: 'medium', category: 'Incomplete Provider Onboarding', message: `${incompleteVendors.length} provider(s) are missing a photo or Aadhaar on file: ${incompleteVendors.map(v => v.name).join(', ')}.` });
+    }
+
+    if (vendors.length === 0) {
+        issues.push({ severity: 'medium', category: 'Empty Provider Roster', message: 'No service providers are on file — dispatch cannot assign anyone right now.' });
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+        issues.push({ severity: 'low', category: 'Missing Config', message: 'RESEND_API_KEY is not set — email/CSAT digest dispatch is disabled.' });
+    }
+    if (!process.env.GEMINI_API_KEY) {
+        issues.push({ severity: 'low', category: 'Missing Config', message: 'GEMINI_API_KEY is not set — Gemini-powered conversation assist is disabled.' });
+    }
+
+    if (botStatus !== 'CONNECTED_AND_LIVE') {
+        issues.push({ severity: 'high', category: 'WhatsApp Disconnected', message: `Engine status is "${botStatus}", not connected — customers cannot reach the bot right now.` });
+    }
+
+    const openFeedbackSurveys = Object.values(userStates).filter(s => s.step === 'AWAITING_FEEDBACK_RATING').length;
+    if (openFeedbackSurveys > 5) {
+        issues.push({ severity: 'low', category: 'Unanswered Feedback Surveys', message: `${openFeedbackSurveys} customers haven't replied to their post-job feedback survey yet.` });
+    }
+
+    const checkedAt = new Date().toISOString();
+    const promptForClaude = issues.length === 0
+        ? `I ran the FixMaadi health scan on ${checkedAt} and it came back clean — no action needed.`
+        : `I ran the FixMaadi health scan on ${checkedAt} and it found ${issues.length} issue(s):\n\n` +
+          issues.map((i, idx) => `${idx + 1}. [${i.severity.toUpperCase()}] ${i.category}: ${i.message}`).join('\n') +
+          `\n\nPlease help me investigate and fix these.`;
+
+    res.json({ checkedAt, issues, promptForClaude });
 });
 
 // CONVERSATIONAL STATE & TEXT EXTRACTOR
