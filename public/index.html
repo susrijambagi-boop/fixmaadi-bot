@@ -266,6 +266,14 @@
                                 <label>Available Time Slot</label>
                                 <input type="text" id="v-time" placeholder="8:00 AM - 8:00 PM" required />
                             </div>
+                            <div class="form-group">
+                                <label>Provider Photo (mandatory)</label>
+                                <input type="file" id="v-photo" accept="image/*" required />
+                            </div>
+                            <div class="form-group">
+                                <label>Aadhaar Photo (mandatory)</label>
+                                <input type="file" id="v-aadhaar" accept="image/*" required />
+                            </div>
                         </div>
                         <button type="submit" class="btn-action">👤 Save Provider to Directory</button>
                     </form>
@@ -470,6 +478,16 @@
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
                 <button class="btn-danger" onclick="submitDeleteVendor()">🗑️ Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reviews-modal">
+        <div class="modal">
+            <h3 id="reviews-modal-title" style="margin-bottom: 12px;">⭐ Reviews</h3>
+            <div id="reviews-modal-body" style="max-height: 320px; overflow-y: auto;"></div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn-secondary" onclick="closeReviewsModal()">Close</button>
             </div>
         </div>
     </div>
@@ -695,19 +713,29 @@
                 container.innerHTML = '<p style="color: var(--text-muted); padding: 16px 0; text-align: center;">No service providers loaded.</p>';
                 return;
             }
-            let html = '<table><thead><tr><th>ID</th><th>Provider Name</th><th>Category</th><th>Phone</th><th>Area</th><th>Available Hours</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Photo</th><th>ID</th><th>Provider Name</th><th>Category</th><th>Phone</th><th>Area</th><th>Available Hours</th><th>Rating</th><th>ID Verification</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
             vendors.forEach(v => {
+                const photoCell = v.photoUrl
+                    ? `<img src="${v.photoUrl}" alt="${v.name}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;" />`
+                    : '<span style="color:var(--text-muted); font-size:11px;">No photo</span>';
+                const aadhaarCell = v.aadhaarUrl
+                    ? `<a href="${v.aadhaarUrl}" target="_blank" rel="noopener">🪪 View ID</a>`
+                    : '<span style="color:var(--text-muted); font-size:11px;">Not on file</span>';
+
                 html += `
                     <tr>
+                        <td>${photoCell}</td>
                         <td><strong>${v.id}</strong></td>
                         <td><strong>${v.name}</strong></td>
                         <td>${v.service}</td>
                         <td>${v.phone}</td>
                         <td>${v.area}</td>
                         <td>${v.availableTime}</td>
-                        <td><span style="color:#f59e0b; font-weight:700;">${v.rating} ★</span></td>
+                        <td><span style="color:#f59e0b; font-weight:700; cursor:pointer;" onclick="openReviewsModal('${v.name.replace(/'/g, "\\'")}')">${v.rating} ★ (${v.ratingCount || 0})</span></td>
+                        <td>${aadhaarCell}</td>
                         <td><span class="status-tag status-${v.status}">${v.status}</span></td>
                         <td>
+                            <button class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="openReviewsModal('${v.name.replace(/'/g, "\\'")}')">⭐ Reviews</button>
                             <button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="openDeleteModal('${v.id}', '${v.name}')">🗑️ Delete</button>
                         </td>
                     </tr>
@@ -976,6 +1004,55 @@
             } else {
                 alert('Error: ' + data.error);
             }
+        }
+
+        async function handleAddVendor(event) {
+            event.preventDefault();
+            const photoFile = document.getElementById('v-photo').files[0];
+            const aadhaarFile = document.getElementById('v-aadhaar').files[0];
+            if (!photoFile || !aadhaarFile) {
+                alert('Both a Provider Photo and an Aadhaar Photo are mandatory.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', document.getElementById('v-name').value);
+            formData.append('service', document.getElementById('v-service').value);
+            formData.append('phone', document.getElementById('v-phone').value);
+            formData.append('area', document.getElementById('v-area').value);
+            formData.append('availableTime', document.getElementById('v-time').value);
+            formData.append('photo', photoFile);
+            formData.append('aadhaar', aadhaarFile);
+
+            const res = await fetch('/api/vendors', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ ${data.vendor.name} added to the Service Providers roster.`);
+                document.getElementById('add-vendor-form').reset();
+                loadData();
+            } else {
+                alert('Error: ' + (data.error || 'Could not add provider.'));
+            }
+        }
+
+        function openReviewsModal(vendorName) {
+            const jobs = globalBookings.filter(b => b.assignedVendor === vendorName && b.customerRating);
+            const listHtml = jobs.length
+                ? jobs.map(b => `
+                    <div style="border-bottom:1px solid var(--border); padding:10px 0;">
+                        <strong>${b.id}</strong> — ${b.date || ''} ${b.timestamp || ''}
+                        <span style="color:#f59e0b; font-weight:700; float:right;">${b.customerRating}★</span>
+                        <div style="color:var(--text-muted); font-size:13px; margin-top:4px;">${b.reviewComment || ''}</div>
+                    </div>
+                `).join('')
+                : '<p style="color:var(--text-muted);">No reviews yet for this provider.</p>';
+            document.getElementById('reviews-modal-title').innerText = `⭐ Reviews — ${vendorName}`;
+            document.getElementById('reviews-modal-body').innerHTML = listHtml;
+            document.getElementById('reviews-modal').style.display = 'flex';
+        }
+
+        function closeReviewsModal() {
+            document.getElementById('reviews-modal').style.display = 'none';
         }
 
         function openDeleteModal(vendorId, vendorName) {

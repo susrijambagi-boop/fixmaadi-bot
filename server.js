@@ -8,6 +8,8 @@ const https = require('https');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +48,19 @@ const ARTIFACT_DIR = path.join(__dirname, '../../brain/a554415f-1f6b-469d-8b83-b
 // Without it (local dev, or no volume attached yet), data lives next to the app code.
 const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || __dirname;
 const DB_FILE = path.join(DATA_DIR, 'database.json');
+
+// PROVIDER PHOTO / AADHAAR UPLOAD STORAGE (persists on the same volume as DB_FILE)
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const uploadStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+    filename: (req, file, cb) => cb(null, crypto.randomUUID() + path.extname(file.originalname || ''))
+});
+const upload = multer({
+    storage: uploadStorage,
+    limits: { fileSize: 8 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype))
+});
 
 // RESEND API CLIENT INTEGRATION VIA SECURE ENV VARIABLE
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -126,6 +141,7 @@ app.get('/api/download', (req, res) => {
 
 // STATIC ASSET SERVING AFTER API ROUTES
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // EMAIL DIGEST ENGINE CONFIGURATION
 const emailDigestConfig = {
@@ -408,8 +424,27 @@ app.post('/api/verify-end-otp', async (req, res) => {
         if (sockInstance && booking.customerJid) {
             try {
                 const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
-                const completeNotice = `🎉 *Service Completed, ${firstName}!*\n\n• Technician: ${booking.assignedVendor}\n• Total Duration: *${durationStr}*\n\nThank you for using FixMaadi Bagalkot! 0% Commission community platform. 🙏`;
+                const customerRecord = findCustomer(booking.customerPhone);
+                const isKN = (customerRecord && customerRecord.lang) === 'kn';
+
+                const completeNotice = isKN
+                    ? `🎉 *ಸೇವೆ ಪೂರ್ಣಗೊಂಡಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಟೆಕ್ನಿಷಿಯನ್: ${booking.assignedVendor}\n• ಒಟ್ಟು ಅವಧಿ: *${durationStr}*\n\nFixMaadi Bagalkot ಬಳಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! 0% ಕಮಿಷನ್ ಸಮುದಾಯ ವೇದಿಕೆ. 🙏`
+                    : `🎉 *Service Completed, ${firstName}!*\n\n• Technician: ${booking.assignedVendor}\n• Total Duration: *${durationStr}*\n\nThank you for using FixMaadi Bagalkot! 0% Commission community platform. 🙏`;
                 await sockInstance.sendMessage(booking.customerJid, { text: completeNotice });
+
+                const surveyMsg = isKN
+                    ? `⭐ ${booking.assignedVendor || 'ನಮ್ಮ ಟೆಕ್ನಿಷಿಯನ್'} ಅವರ ಸೇವೆ ಹೇಗಿತ್ತು?\n\nದಯವಿಟ್ಟು 1 ರಿಂದ 5 ರವರೆಗಿನ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (5 = ಅತ್ಯುತ್ತಮ). ಬಯಸಿದರೆ ಒಂದು ಸಣ್ಣ ಕಮೆಂಟ್ ಸೇರಿಸಬಹುದು, ಉದಾ: "5 ಬಹಳ ಚೆನ್ನಾಗಿ ಕೆಲಸ ಮಾಡಿದರು".`
+                    : `⭐ How was ${booking.assignedVendor || 'our technician'}'s service?\n\nPlease reply with a number from 1 to 5 (5 = excellent). Feel free to add a short comment too, e.g. "5 did a great job".`;
+                await sockInstance.sendMessage(booking.customerJid, { text: surveyMsg });
+
+                userStates[booking.customerJid] = {
+                    step: 'AWAITING_FEEDBACK_RATING',
+                    bookingId: booking.id,
+                    lang: (customerRecord && customerRecord.lang) || 'kn',
+                    followUpCount: 0,
+                    timer: null
+                };
+                saveDatabaseToDisk();
             } catch (e) {}
         }
         return res.json({ success: true, message: 'End OTP verified! Work completed.', durationStr, booking });
@@ -469,14 +504,9 @@ app.post('/api/trigger-email-digest', async (req, res) => {
 });
 
 // RATE PROVIDER & SAVE REVIEW API
-app.post('/api/rate-provider', async (req, res) => {
-    const { bookingId, ratingScore, reviewComment } = req.body;
-    const booking = bookings.find(b => b.id === bookingId);
-    if (!booking) return res.status(404).json({ error: 'Booking not found' });
-
-    const score = parseFloat(ratingScore);
-    if (isNaN(score) || score < 1 || score > 5) return res.status(400).json({ error: 'Rating score must be between 1 and 5' });
-
+// Shared by the admin-entered rating endpoint and the WhatsApp feedback-survey
+// reply handler, so the vendor-average math lives in exactly one place.
+function applyProviderRating(booking, score, reviewComment) {
     booking.customerRating = score;
     booking.reviewComment = reviewComment || 'Great service!';
 
@@ -491,6 +521,17 @@ app.post('/api/rate-provider', async (req, res) => {
         }
     }
     saveDatabaseToDisk();
+}
+
+app.post('/api/rate-provider', async (req, res) => {
+    const { bookingId, ratingScore, reviewComment } = req.body;
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    const score = parseFloat(ratingScore);
+    if (isNaN(score) || score < 1 || score > 5) return res.status(400).json({ error: 'Rating score must be between 1 and 5' });
+
+    applyProviderRating(booking, score, reviewComment);
 
     if (sockInstance && booking.customerJid) {
         try {
@@ -534,7 +575,12 @@ app.post('/api/assign', async (req, res) => {
                 ? `🔄 *Technician Re-Assigned, ${firstName}!*\n\n• New Technician: ${vendor.name}\n• Phone: ${vendor.phone}\n• Area: ${vendor.area}\n• Expected Arrival: Within 30 Minutes\n\n🔐 *Your Start Service OTP:* *${booking.startOtp}*`
                 : `✅ *Provider Assigned, ${firstName}!*\n\n• Technician: ${vendor.name}\n• Phone: ${vendor.phone}\n• Area: ${vendor.area}\n• Expected Arrival: Within 30 Minutes\n\n🔐 *Your Start Service OTP:* *${booking.startOtp}*\n\nPlease share this 4-digit OTP with ${vendor.name} when he arrives at your home to start the service timer.`;
             
-            await sockInstance.sendMessage(booking.customerJid, { text: assignNotice });
+            if (vendor.photoUrl) {
+                const photoPath = path.join(UPLOADS_DIR, path.basename(vendor.photoUrl));
+                await sockInstance.sendMessage(booking.customerJid, { image: fs.readFileSync(photoPath), caption: assignNotice });
+            } else {
+                await sockInstance.sendMessage(booking.customerJid, { text: assignNotice });
+            }
             logMessage(`📲 Sent WhatsApp Vendor ${isReassign ? 'Re-Assignment' : 'Assignment'} & Start OTP (${booking.startOtp}) to ${firstName}`);
         } catch (e) {
             logMessage(`WhatsApp notification error: ${e.message}`);
@@ -569,13 +615,32 @@ app.post('/api/status', async (req, res) => {
 });
 
 // ADD NEW VENDOR
-app.post('/api/vendors', (req, res) => {
+app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'aadhaar', maxCount: 1 }]), (req, res) => {
     const { name, service, phone, area, availableTime, rating, status } = req.body;
     if (!name || !service || !phone) return res.status(400).json({ error: 'Name, Service, and Phone are required' });
-    const newVendor = { id: 'V' + Math.floor(100 + Math.random() * 900), name, service, phone, area: area || 'Bagalkot', availableTime: availableTime || '8:00 AM - 8:00 PM', rating: parseFloat(rating) || 4.8, ratingCount: 1, status: status || 'Available', delays: 0, leavesCount: 0 };
+
+    const photoFile = req.files?.photo?.[0];
+    const aadhaarFile = req.files?.aadhaar?.[0];
+    if (!photoFile || !aadhaarFile) {
+        return res.status(400).json({ error: 'A photo and an Aadhaar image are both mandatory for provider onboarding' });
+    }
+
+    const newVendor = {
+        id: 'V' + Math.floor(100 + Math.random() * 900),
+        name, service, phone,
+        area: area || 'Bagalkot',
+        availableTime: availableTime || '8:00 AM - 8:00 PM',
+        rating: parseFloat(rating) || 4.8,
+        ratingCount: 1,
+        status: status || 'Available',
+        delays: 0,
+        leavesCount: 0,
+        photoUrl: '/uploads/' + photoFile.filename,
+        aadhaarUrl: '/uploads/' + aadhaarFile.filename
+    };
     vendors.unshift(newVendor);
     saveDatabaseToDisk();
-    logMessage(`👤 Added new service provider: ${name} (${service})`);
+    logMessage(`👤 Added new service provider: ${name} (${service}) — photo & Aadhaar verified on file`);
     res.json({ success: true, vendor: newVendor });
 });
 
@@ -1056,6 +1121,34 @@ async function startBot() {
                         logMessage(`📤 Sent New Customer Language Selection to ${senderPhone}`);
                         scheduleFollowUp(sock, userId);
                     }
+                }
+                else if (currentState.step === 'AWAITING_FEEDBACK_RATING') {
+                    const isKN = currentState.lang === 'kn';
+                    const match = text.trim().match(/^([1-5])\s*(.*)$/);
+
+                    if (!match) {
+                        const retryMsg = isKN
+                            ? `❌ ಕ್ಷಮಿಸಿ, ದಯವಿಟ್ಟು 1 ರಿಂದ 5 ರವರೆಗಿನ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (5 = ಅತ್ಯುತ್ತಮ):`
+                            : `❌ Sorry, please reply with a number from 1 to 5 (5 = excellent):`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                        return;
+                    }
+
+                    const score = parseInt(match[1], 10);
+                    const reviewComment = match[2].trim();
+                    const booking = bookings.find(b => b.id === currentState.bookingId);
+
+                    if (booking) {
+                        applyProviderRating(booking, score, reviewComment);
+                    }
+
+                    const thankMsg = isKN
+                        ? `🙏 ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು! ನೀವು ${score} / 5 ಸ್ಟಾರ್ ನೀಡಿದ್ದೀರಿ. ಇದು ನಮಗೆ ಬಾಗಲಕೋಟೆಯಲ್ಲಿ ಉತ್ತಮ ಗುಣಮಟ್ಟ ಕಾಪಾಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ!`
+                        : `🙏 Thank you for your feedback! You rated us ${score} / 5 stars. This helps us keep quality high across Bagalkot!`;
+                    await sock.sendMessage(userId, { text: thankMsg });
+                    delete userStates[userId];
+                    saveDatabaseToDisk();
                 }
                 else if (currentState.step === 'AWAITING_EXISTING_OR_NEW') {
                     const isKN = currentState.lang === 'kn';
