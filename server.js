@@ -771,6 +771,20 @@ function matchService(text, servicesDict) {
 
 function generate4DigitOtp() { return Math.floor(1000 + Math.random() * 9000).toString(); }
 
+// A real name has letters in it and isn't just a stray character or emoji.
+function isValidCustomerName(text) {
+    const clean = text.trim();
+    if (clean.length < 2 || clean.length > 60) return false;
+    return /[a-zA-Zಀ-೿]/.test(clean);
+}
+
+// A real address/time reply has some alphanumeric content, not a stray tap or emoji.
+function isValidLocationInput(text) {
+    const clean = text.trim();
+    if (clean.length < 6 || clean.length > 200) return false;
+    return /[a-zA-Z0-9ಀ-೿]/.test(clean);
+}
+
 function clearUserTimer(userId) {
     if (userStates[userId] && userStates[userId].timer) {
         clearTimeout(userStates[userId].timer);
@@ -973,6 +987,17 @@ async function startBot() {
                 }
                 else if (currentState.step === 'AWAITING_NAME') {
                     const fullName = text.trim();
+                    const isKN = currentState.lang === 'kn';
+
+                    if (!isValidCustomerName(fullName)) {
+                        const retryMsg = isKN
+                            ? `ಅದು ಸರಿಯಾದ ಹೆಸರಿನಂತೆ ಕಾಣುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು ಮನೆಹೆಸರು (Surname) ಟೈಪ್ ಮಾಡಿ (ಉದಾ: ರಮೇಶ್ ಪಾಟೀಲ್):`
+                            : `That doesn't look like a valid name. Please type your Name and Surname (e.g. Ramesh Patil):`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                        return;
+                    }
+
                     const nameParts = fullName.split(' ');
                     const firstName = nameParts[0];
 
@@ -1103,7 +1128,16 @@ async function startBot() {
                     const fullName = currentState.fullName || firstName;
                     const locationAndTime = text;
                     const service = userStates[userId].service;
-                    
+
+                    if (!isValidLocationInput(locationAndTime)) {
+                        const retryMsg = isKN
+                            ? `ದಯವಿಟ್ಟು ಪೂರ್ಣ *ಏರಿಯಾ/ವಿಳಾಸ* (ಉದಾ: ನವನಗರ ಸೆಕ್ಟರ್ 4) ಮತ್ತು *ಸಮಯ* (ಉದಾ: ಇಂದು ಸಂಜೆ 5) ಒಟ್ಟಿಗೆ ಟೈಪ್ ಮಾಡಿ:`
+                            : `Please type a complete *Area/Address* (e.g. Navanagar Sector 4) and *Time* (e.g. Today 5 PM) together:`;
+                        await sock.sendMessage(userId, { text: retryMsg });
+                        scheduleFollowUp(sock, userId);
+                        return;
+                    }
+
                     clearUserTimer(userId);
                     userStates[userId].step = 'COMPLETED';
 
