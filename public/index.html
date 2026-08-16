@@ -1018,6 +1018,12 @@
                 if (data.logs) {
                     document.getElementById('system-logs').innerText = data.logs.join('\n');
                 }
+                const qrContainer = document.getElementById('qr-container');
+                if (qrContainer) {
+                    qrContainer.innerHTML = data.qrDataUrl
+                        ? `<img src="${data.qrDataUrl}" alt="WhatsApp QR Code" style="max-width: 280px; width: 100%;" />`
+                        : '';
+                }
             } catch (e) {}
 
             try {
