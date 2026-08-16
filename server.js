@@ -42,7 +42,10 @@ function logAgentTask(agentCode, agentName, taskDescription) {
 const BHUVAN_PHONE = '+91 8123909829';
 const INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
 const ARTIFACT_DIR = path.join(__dirname, '../../brain/a554415f-1f6b-469d-8b83-bb4664b7054b');
-const DB_FILE = path.join(__dirname, 'database.json');
+// Railway sets RAILWAY_VOLUME_MOUNT_PATH automatically when a persistent volume is attached.
+// Without it (local dev, or no volume attached yet), data lives next to the app code.
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH || __dirname;
+const DB_FILE = path.join(DATA_DIR, 'database.json');
 
 // RESEND API CLIENT INTEGRATION VIA SECURE ENV VARIABLE
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -212,95 +215,6 @@ const SERVICES_KN = {
     '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] }
 };
 
-// INITIAL DEFAULTS FOR DISK DATABASE SEEDING
-let defaultCustomerDatabase = {
-    '9844099887': { name: 'Shankar Patil', firstName: 'Shankar', lang: 'kn', lastLocation: 'Navanagar Sector 4, House #112' },
-    '9731188776': { name: 'Vijaylaxmi Joshi', firstName: 'Vijaylaxmi', lang: 'en', lastLocation: 'Vidyagiri, 3rd Cross' }
-};
-
-let defaultBookings = [
-    { 
-        id: 'BK-1003', 
-        customerJid: null, 
-        customerName: 'Hemant Patil', 
-        customerPhone: '+91 81239 09829', 
-        service: 'Electrician ⚡ (from ₹79)', 
-        location: 'Sector 61 Navanagar', 
-        status: 'Pending', 
-        assignedVendor: null, 
-        assignedVendorPhone: null, 
-        startOtp: '5921', 
-        endOtp: '3819', 
-        startOtpVerified: false, 
-        endOtpVerified: false, 
-        startTimestamp: null, 
-        endTimestamp: null, 
-        totalDurationSeconds: null, 
-        customerRating: null, 
-        reviewComment: null, 
-        timestamp: '03:50 PM' 
-    },
-    { 
-        id: 'BK-1001', 
-        customerJid: null, 
-        customerName: 'Shankar Patil', 
-        customerPhone: '+91 98440 99887', 
-        service: 'Plumber 💧 (from ₹99)', 
-        location: 'Navanagar Sector 4, House #112', 
-        status: 'Pending', 
-        assignedVendor: null, 
-        assignedVendorPhone: null, 
-        startOtp: '4829', 
-        endOtp: '9182', 
-        startOtpVerified: false, 
-        endOtpVerified: false, 
-        startTimestamp: null, 
-        endTimestamp: null, 
-        totalDurationSeconds: null, 
-        customerRating: null, 
-        reviewComment: null, 
-        timestamp: '10:15 AM' 
-    },
-    { 
-        id: 'BK-1002', 
-        customerJid: null, 
-        customerName: 'Vijaylaxmi Joshi', 
-        customerPhone: '+91 97311 88776', 
-        service: 'Septic Tank & Sump Cleaning 🚜 (from ₹499)', 
-        location: 'Vidyagiri, 3rd Cross', 
-        status: 'In-Progress', 
-        assignedVendor: 'Yellappa (Septic Tank Cleaning)', 
-        assignedVendorPhone: '+91 99805 77889', 
-        startOtp: '1432', 
-        endOtp: '8821', 
-        startOtpVerified: true, 
-        endOtpVerified: false, 
-        startTimestamp: Date.now() - (24 * 60 * 1000 + 12 * 1000), 
-        endTimestamp: null, 
-        totalDurationSeconds: null, 
-        customerRating: 5, 
-        reviewComment: 'Excellent punctual service!', 
-        timestamp: '11:30 AM' 
-    }
-];
-
-let defaultVendors = [
-    { id: 'V101', name: 'Anant Bhat (Purohit)', service: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', area: 'Navanagar', availableTime: '8:00 AM - 8:00 PM', rating: 4.9, ratingCount: 12, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V102', name: 'Ramesh Kumbar (Plumber)', service: 'Plumber 💧', phone: '+91 94481 22334', area: 'Vidyagiri', availableTime: '7:30 AM - 9:00 PM', rating: 4.8, ratingCount: 18, status: 'Available', delays: 1, leavesCount: 0 },
-    { id: 'V103', name: 'Suresh Patil (Electrician)', service: 'Electrician ⚡', phone: '+91 98802 33445', area: 'Old Bagalkot', availableTime: '8:00 AM - 9:00 PM', rating: 4.3, ratingCount: 8, status: 'Available', delays: 3, leavesCount: 4 },
-    { id: 'V104', name: 'Lakshmi Hegde (Beautician)', service: 'Beautician (Women) ✂️', phone: '+91 97413 44556', area: 'Navanagar Sector 3', availableTime: '9:00 AM - 7:00 PM', rating: 4.7, ratingCount: 15, status: 'Available', delays: 0, leavesCount: 2 },
-    { id: 'V105', name: 'Basavaraj (Mixie & Appliance)', service: 'Mixie & Appliance Repair 🔧', phone: '+91 99004 55667', area: 'Bus Stand Road', availableTime: '9:00 AM - 8:00 PM', rating: 4.8, ratingCount: 10, status: 'Available', delays: 0, leavesCount: 1 },
-    { id: 'V106', name: 'Santosh Barber (Men Haircut)', service: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', area: 'Vidyagiri Main Road', availableTime: '8:00 AM - 9:00 PM', rating: 4.8, ratingCount: 14, status: 'Available', delays: 2, leavesCount: 3 },
-    { id: 'V107', name: 'Yellappa (Septic Tank Cleaning)', service: 'Septic Tank & Sump Cleaning 🚜', phone: '+91 99805 77889', area: 'Muchakhandi Cross', availableTime: '6:00 AM - 6:00 PM', rating: 4.9, ratingCount: 22, status: 'Available', delays: 0, leavesCount: 0 }
-];
-
-let defaultAttendance = [
-    { id: 'ATT-101', date: new Date().toISOString().split('T')[0], vendorName: 'Ramesh Kumbar (Plumber)', category: 'Plumber 💧', phone: '+91 94481 22334', loginTime: '08:00 AM', logoutTime: '06:30 PM', status: 'Present' },
-    { id: 'ATT-102', date: new Date().toISOString().split('T')[0], vendorName: 'Anant Bhat (Purohit)', category: 'Purohit & Pujas 🙏', phone: '+91 98450 11223', loginTime: '08:15 AM', logoutTime: '05:00 PM', status: 'Present' },
-    { id: 'ATT-103', date: new Date().toISOString().split('T')[0], vendorName: 'Suresh Patil (Electrician)', category: 'Electrician ⚡', phone: '+91 98802 33445', loginTime: '09:45 AM', logoutTime: '--', status: 'On Service' },
-    { id: 'ATT-104', date: new Date().toISOString().split('T')[0], vendorName: 'Lakshmi Hegde (Beautician)', category: 'Beautician (Women) ✂️', phone: '+91 97413 44556', loginTime: '09:00 AM', logoutTime: '--', status: 'Present' },
-    { id: 'ATT-105', date: new Date().toISOString().split('T')[0], vendorName: 'Santosh Barber (Men Haircut)', category: 'Men Haircut & Grooming 💈', phone: '+91 98451 66778', loginTime: '--', logoutTime: '--', status: 'Absent' }
-];
 
 let bookings = [];
 let customerDatabase = {};
@@ -315,10 +229,10 @@ function loadDatabaseFromDisk() {
         if (fs.existsSync(DB_FILE)) {
             const raw = fs.readFileSync(DB_FILE, 'utf8');
             const parsed = JSON.parse(raw);
-            bookings = parsed.bookings || defaultBookings;
-            customerDatabase = parsed.customerDatabase || defaultCustomerDatabase;
-            vendors = parsed.vendors || defaultVendors;
-            attendance = parsed.attendance || defaultAttendance;
+            bookings = parsed.bookings || [];
+            customerDatabase = parsed.customerDatabase || {};
+            vendors = parsed.vendors || [];
+            attendance = parsed.attendance || [];
             userStates = parsed.userStates || {};
             deletedVendorsLog = parsed.deletedVendorsLog || [];
             logMessage(`💾 PERMANENT DB ENGINE: Loaded ${bookings.length} Bookings, ${Object.keys(customerDatabase).length} Customers, and ${Object.keys(userStates).length} Active Sessions from disk!`);
@@ -328,10 +242,10 @@ function loadDatabaseFromDisk() {
         logMessage(`⚠️ Error loading disk database: ${e.message}`);
     }
 
-    bookings = defaultBookings;
-    customerDatabase = defaultCustomerDatabase;
-    vendors = defaultVendors;
-    attendance = defaultAttendance;
+    bookings = [];
+    customerDatabase = {};
+    vendors = [];
+    attendance = [];
     userStates = {};
     deletedVendorsLog = [];
     saveDatabaseToDisk();
@@ -837,10 +751,33 @@ function scheduleFollowUp(sock, userId) {
 async function sendServiceMenu(sock, userId, lang, firstName) {
     const isKN = lang === 'kn';
     const textMenu = isKN
-        ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏\n(0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು)\n\nದಯವಿಟ್ಟು ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 12):\n\n1️⃣ ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2️⃣ ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3️⃣ ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4️⃣ ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5️⃣ ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6️⃣ ಪುರುಷರ ಹೇರ್‌ಕಟ್ (₹99 ರಿಂದ) 💈\n7️⃣ ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8️⃣ ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9️⃣ ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n🔟 ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n1️⃣1️⃣ ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499/ತಿಂಗಳಿಗೆ) 📚\n1️⃣2️⃣ ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಉದಾಹರಣೆಗೆ "3" ಅಥವಾ "ಪ್ಲಂಬರ್" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
-        : `Hi ${firstName}! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Home Services)\n\nPlease reply with a service number (1 to 12):\n\n1️⃣ Purohit & Pujas (from ₹501) 🙏\n2️⃣ Mixie & Fan Repair (from ₹79) 🔧\n3️⃣ Plumber (from ₹99) 💧\n4️⃣ Electrician (from ₹79) ⚡\n5️⃣ Beautician (Women) (from ₹149) ✂️\n6️⃣ Men Haircut & Grooming (from ₹99) 💈\n7️⃣ Septic Tank Cleaning (from ₹499) 🚜\n8️⃣ Event & Stage Decoration (from ₹999) 🎈\n9️⃣ Catering & Cooking Labour (from ₹499) 🍲\n🔟 Carpenter & Woodwork (from ₹149) 🪚\n1️⃣1️⃣ Home Tutors (from ₹499/mo) 📚\n1️⃣2️⃣ Civil Labour & Painting (from ₹299) 🎨\n\n*(For example, reply with "3" or "Plumber")*`;
+        ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏\n(0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು)\n\nದಯವಿಟ್ಟು ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 12), ಅಥವಾ ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ:\n\n1️⃣ ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2️⃣ ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3️⃣ ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4️⃣ ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5️⃣ ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6️⃣ ಪುರುಷರ ಹೇರ್‌ಕಟ್ (₹99 ರಿಂದ) 💈\n7️⃣ ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8️⃣ ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9️⃣ ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n🔟 ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n1️⃣1️⃣ ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499/ತಿಂಗಳಿಗೆ) 📚\n1️⃣2️⃣ ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಉದಾಹರಣೆಗೆ "3" ಅಥವಾ "ಪ್ಲಂಬರ್" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
+        : `Hi ${firstName}! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Home Services)\n\nPlease reply with a service number (1 to 12), or tap the button below:\n\n1️⃣ Purohit & Pujas (from ₹501) 🙏\n2️⃣ Mixie & Fan Repair (from ₹79) 🔧\n3️⃣ Plumber (from ₹99) 💧\n4️⃣ Electrician (from ₹79) ⚡\n5️⃣ Beautician (Women) (from ₹149) ✂️\n6️⃣ Men Haircut & Grooming (from ₹99) 💈\n7️⃣ Septic Tank Cleaning (from ₹499) 🚜\n8️⃣ Event & Stage Decoration (from ₹999) 🎈\n9️⃣ Catering & Cooking Labour (from ₹499) 🍲\n🔟 Carpenter & Woodwork (from ₹149) 🪚\n1️⃣1️⃣ Home Tutors (from ₹499/mo) 📚\n1️⃣2️⃣ Civil Labour & Painting (from ₹299) 🎨\n\n*(For example, reply with "3" or "Plumber")*`;
 
-    await sock.sendMessage(userId, { text: textMenu });
+    const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
+    const allRows = Object.entries(servicesDict).map(([key, svc]) => ({
+        title: svc.name,
+        rowId: key,
+        description: svc.price
+    }));
+
+    try {
+        await sock.sendMessage(userId, {
+            text: textMenu,
+            footer: 'FixMaadi Bagalkot',
+            title: isKN ? 'ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ' : 'Select a Service',
+            buttonText: isKN ? 'ಸೇವೆ ಆಯ್ಕೆಮಾಡಿ' : 'Choose a Service',
+            sections: [
+                { title: isKN ? 'ಸೇವೆಗಳು 1-6' : 'Services 1-6', rows: allRows.slice(0, 6) },
+                { title: isKN ? 'ಸೇವೆಗಳು 7-12' : 'Services 7-12', rows: allRows.slice(6, 12) }
+            ]
+        });
+    } catch (e) {
+        // Some phones/clients can't render interactive list messages — the numbered
+        // text above already covers them, so just fall back to a plain text send.
+        logMessage(`⚠️ List message failed, sent as plain text instead: ${e.message}`);
+        await sock.sendMessage(userId, { text: textMenu });
+    }
 }
 
 async function startBot() {
@@ -852,7 +789,7 @@ async function startBot() {
 
     logMessage('Starting FixMaadi Engine...');
     botStatus = 'Starting engine...';
-    const authFolder = path.join(__dirname, 'baileys_auth_info');
+    const authFolder = path.join(DATA_DIR, 'baileys_auth_info');
     const { state, saveCreds } = await useMultiFileAuthState(authFolder);
     
     const sock = makeWASocket({
