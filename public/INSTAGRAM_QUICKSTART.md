@@ -15,7 +15,7 @@ Once you take **60 seconds to create the account on your phone/browser**, our au
 1. Open Instagram App on your phone or go to **[https://instagram.com](https://instagram.com)**.
 2. Click **Sign Up** using your email: **`vinodachere@gmail.com`**
 3. Set Username: **`fixmaadi_bagalkot`**
-4. Set Password: **`***REDACTED***`**
+4. Set a strong password of your own choosing and store it in a password manager (never in this repo)
 5. Set Profile Name: **`FixMaadi Bagalkot | 0% Commission Home Services`**
 6. Copy & Paste this Bio:
    ```text

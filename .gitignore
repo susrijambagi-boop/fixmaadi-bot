@@ -3,3 +3,6 @@ node_modules/
 baileys_auth_info/
 .env
 database.json
+.wwebjs_auth/
+.wwebjs_cache/
+instagram_setup.json

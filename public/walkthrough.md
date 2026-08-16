@@ -13,7 +13,7 @@
 ## 📸 2. Official Instagram Account Credentials & Meta Graph Integration
 - **Instagram Handle**: **`@fixmaadi_bagalkot`**
 - **Login Email / Username**: `vinodachere@gmail.com` / `fixmaadi_bagalkot`
-- **Password**: **`***REDACTED***`**
+- **Password**: stored in a password manager, not in this repo
 - **Profile Name**: `FixMaadi Bagalkot | 0% Commission Home Services`
 - **Bio**: `ಬಾಗಲಕೋಟೆಯ ಪ್ರಥಮ 0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು! ⚡ Plumbing, Electrician, Purohit, Beautician, Septic Tank & Haircut.`
 - **Autonomous Meta Graph API**: Schedules and auto-publishes minimalist posters starting tomorrow at **08:30 AM IST**!

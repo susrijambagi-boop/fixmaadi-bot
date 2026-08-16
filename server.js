@@ -189,7 +189,6 @@ function getLiveDocumentsList() {
         { filename: 'branding_kit.md', title: '🎨 FixMaadi Master Brand Identity Kit', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs.' },
         { filename: 'master_operational_architecture.md', title: '🏢 70+ Virtual Company Structure', description: '7 Department breakdowns, headcount, leads, and Tier 2/3 UC gap analysis.' },
         { filename: 'instagram_content_calendar.md', title: '📸 Instagram Launch Campaign Calendar', description: '10 Launch post concepts, Kannada captions, visual guidelines, and hashtags.' },
-        { filename: 'instagram_setup.json', title: '🔐 Instagram Account Credentials & Config (buildfixmaadi@gmail.com)', description: 'Official credentials for @fixmaadi_bagalkot (buildfixmaadi@gmail.com) & Meta Graph API blueprint.' },
         { filename: 'INSTAGRAM_QUICKSTART.md', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
         { filename: 'EMAIL_SMTP_SETUP.md', title: '📧 Direct Email Inbox SMTP Setup Guide', description: 'Guide for sending real daily 6 AM & 8 PM report emails directly to vinodachere@gmail.com.' },
         { filename: 'CLOUD_DEPLOYMENT_STEPS.md', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
