@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const express = require('express');
 const QRCode = require('qrcode');
@@ -44,8 +45,11 @@ const ARTIFACT_DIR = path.join(__dirname, '../../brain/a554415f-1f6b-469d-8b83-b
 const DB_FILE = path.join(__dirname, 'database.json');
 
 // RESEND API CLIENT INTEGRATION VIA SECURE ENV VARIABLE
-const resendApiKey = process.env.RESEND_API_KEY || 're_aTd26' + 'GwH_E53qFt1wbZndww1YmvmWbK6z';
-const resend = new Resend(resendApiKey);
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+    console.warn('⚠️ RESEND_API_KEY not set — email/CSAT dispatch will be disabled until it is configured.');
+}
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // GEMINI AI INTEGRATION FOR SMOOTH CONVERSATIONAL FLOW
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -124,7 +128,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const emailDigestConfig = {
     userEmail: 'vinodachere@gmail.com',
     senderEmail: 'buildfixmaadi@gmail.com',
-    resendConfigured: true,
+    resendConfigured: !!resendApiKey,
     morningSchedule: 'Everyday at 06:00 AM IST',
     eveningSchedule: 'Everyday at 08:00 PM IST'
 };
@@ -495,6 +499,11 @@ async function sendLiveVirtualEmployeesEmail(typeLabel) {
             <p style="font-size: 12px; color: #666;">Sent automatically by FixMaadi Executive Engine via Resend API.</p>
         </div>
     `;
+
+    if (!resend) {
+        logMessage(`⚠️ Resend API Dispatch skipped: RESEND_API_KEY not configured.`);
+        return false;
+    }
 
     try {
         logMessage(`📧 Dispatching Resend API Email to buildfixmaadi@gmail.com...`);
