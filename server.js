@@ -215,7 +215,8 @@ const SERVICES_EN = {
     '9': { name: 'Catering & Cooking Labour 🍲', price: 'from ₹499', keywords: ['catering', 'cook', 'cooking', 'food', 'chef', '9'] },
     '10': { name: 'Carpenter & Woodwork 🪚', price: 'from ₹149', keywords: ['carpenter', 'wood', 'door', 'lock', 'table', '10'] },
     '11': { name: 'Home Tutors 📚', price: 'from ₹499/mo', keywords: ['tutor', 'tuition', 'teacher', 'class', '11'] },
-    '12': { name: 'Civil Labour & Painting 🎨', price: 'from ₹299', keywords: ['paint', 'painting', 'civil', 'mason', 'wall', '12'] }
+    '12': { name: 'Civil Labour & Painting 🎨', price: 'from ₹299', keywords: ['paint', 'painting', 'civil', 'mason', 'wall', '12'] },
+    '13': { name: 'Others (Not Listed) 📞', price: 'call for details', keywords: ['other', 'others', 'else', 'different', '13'] }
 };
 
 const SERVICES_KN = {
@@ -230,7 +231,8 @@ const SERVICES_KN = {
     '9': { name: 'ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು 🍲', price: '₹499 ರಿಂದ', keywords: ['ಅಡುಗೆ', 'ಕ್ಯಾಟರಿಂಗ್', 'ಸಂಪ್', '9'] },
     '10': { name: 'ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) 🪚', price: '₹149 ರಿಂದ', keywords: ['ಕಾರ್ಪೆಂಟರ್', 'ಮರಗೆಲಸ', 'ಬಾಗಿಲು', '10'] },
     '11': { name: 'ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) 📚', price: '₹499/ತಿಂಗಳಿಗೆ', keywords: ['ಟ್ಯೂಷನ್', 'ಪಾಠ', 'ಶಿಕ್ಷಕರು', '11'] },
-    '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] }
+    '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] },
+    '13': { name: 'ಇತರೆ (ಪಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ) 📞', price: 'ಕರೆ ಮಾಡಿ ವಿವರ ಪಡೆಯಿರಿ', keywords: ['ಇತರೆ', 'ಬೇರೆ', '13'] }
 };
 
 
@@ -989,9 +991,18 @@ async function finalizeBooking(sock, userId, senderPhone, opts) {
         ? (isKN ? '\n📍 ನಿಖರ ನಕ್ಷೆ ಸ್ಥಳ ಸ್ವೀಕರಿಸಲಾಗಿದೆ.' : '\n📍 Exact map location received, thank you!')
         : '';
 
+    const isOthers = service.includes('Others') || service.includes('ಇತರೆ');
+    const closingLine = isOthers
+        ? (isKN
+            ? `ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ನಿಮಗೆ ಶೀಘ್ರದಲ್ಲೇ ಕರೆ ಮಾಡಿ ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ತಿಳಿದುಕೊಳ್ಳುತ್ತಾರೆ.`
+            : `Bhuvan Nara (${BHUVAN_PHONE}) will call you shortly to understand exactly what you need.`)
+        : (isKN
+            ? `ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.`
+            : `Field Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you within 10 minutes.`);
+
     const confirmMsg = isKN
-        ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ: ${location}\n• ಕರೆ ಸಂಖ್ಯೆ: ${resolvedCallingPhone}${mapNote}\n• ಭೇಟಿ ಶುಲ್ಕ: ₹49 (ಸೇವೆ ಮುಂದುವರಿಸಿದರೆ ಬಿಲ್‌ನಿಂದ ಕಡಿತ)\n\nಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾವು ಯಾವಾಗಲೂ ಸಿದ್ಧ 🙏`
-        : `✅ *Booking Received, ${firstName}!*\n\n• Customer: ${fullName}\n• Service: ${service}\n• Location: ${location}\n• Calling Number: ${resolvedCallingPhone}${mapNote}\n• Visit Charge: ₹49 (adjusted into your bill if you proceed with the service)\n\nField Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you within 10 minutes.\n\nThank you for choosing FixMaadi! We're always happy to help with any questions 🙏`;
+        ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ: ${location}\n• ಕರೆ ಸಂಖ್ಯೆ: ${resolvedCallingPhone}${mapNote}\n• ಭೇಟಿ ಶುಲ್ಕ: ₹49 (ಸೇವೆ ಮುಂದುವರಿಸಿದರೆ ಬಿಲ್‌ನಿಂದ ಕಡಿತ)\n\n${closingLine}\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾವು ಯಾವಾಗಲೂ ಸಿದ್ಧ 🙏`
+        : `✅ *Booking Received, ${firstName}!*\n\n• Customer: ${fullName}\n• Service: ${service}\n• Location: ${location}\n• Calling Number: ${resolvedCallingPhone}${mapNote}\n• Visit Charge: ₹49 (adjusted into your bill if you proceed with the service)\n\n${closingLine}\n\nThank you for choosing FixMaadi! We're always happy to help with any questions 🙏`;
 
     await sock.sendMessage(userId, { text: confirmMsg });
     logMessage(`🎉 NEW BOOKING (${service}) from ${fullName} (${senderPhone})`);
@@ -1051,8 +1062,8 @@ function scheduleFollowUp(sock, userId) {
 async function sendServiceMenu(sock, userId, lang, firstName) {
     const isKN = lang === 'kn';
     const textMenu = isKN
-        ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏\n(0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು)\n\nದಯವಿಟ್ಟು ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 12), ಅಥವಾ ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ:\n\n1️⃣ ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2️⃣ ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3️⃣ ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4️⃣ ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5️⃣ ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6️⃣ ಪುರುಷರ ಹೇರ್‌ಕಟ್ (₹99 ರಿಂದ) 💈\n7️⃣ ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8️⃣ ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9️⃣ ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n🔟 ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n1️⃣1️⃣ ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499/ತಿಂಗಳಿಗೆ) 📚\n1️⃣2️⃣ ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n\n*(ಉದಾಹರಣೆಗೆ "3" ಅಥವಾ "ಪ್ಲಂಬರ್" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
-        : `Hi ${firstName}! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Home Services)\n\nPlease reply with a service number (1 to 12), or tap the button below:\n\n1️⃣ Purohit & Pujas (from ₹501) 🙏\n2️⃣ Mixie & Fan Repair (from ₹79) 🔧\n3️⃣ Plumber (from ₹99) 💧\n4️⃣ Electrician (from ₹79) ⚡\n5️⃣ Beautician (Women) (from ₹149) ✂️\n6️⃣ Men Haircut & Grooming (from ₹99) 💈\n7️⃣ Septic Tank Cleaning (from ₹499) 🚜\n8️⃣ Event & Stage Decoration (from ₹999) 🎈\n9️⃣ Catering & Cooking Labour (from ₹499) 🍲\n🔟 Carpenter & Woodwork (from ₹149) 🪚\n1️⃣1️⃣ Home Tutors (from ₹499/mo) 📚\n1️⃣2️⃣ Civil Labour & Painting (from ₹299) 🎨\n\n*(For example, reply with "3" or "Plumber")*`;
+        ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏\n(0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು)\n\nದಯವಿಟ್ಟು ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 13), ಅಥವಾ ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ:\n\n1️⃣ ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2️⃣ ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3️⃣ ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4️⃣ ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5️⃣ ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6️⃣ ಪುರುಷರ ಹೇರ್‌ಕಟ್ (₹99 ರಿಂದ) 💈\n7️⃣ ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8️⃣ ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9️⃣ ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n🔟 ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n1️⃣1️⃣ ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499/ತಿಂಗಳಿಗೆ) 📚\n1️⃣2️⃣ ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n1️⃣3️⃣ ಇತರೆ (ಪಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ) 📞\n\n*(ಉದಾಹರಣೆಗೆ "3" ಅಥವಾ "ಪ್ಲಂಬರ್" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
+        : `Hi ${firstName}! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Home Services)\n\nPlease reply with a service number (1 to 13), or tap the button below:\n\n1️⃣ Purohit & Pujas (from ₹501) 🙏\n2️⃣ Mixie & Fan Repair (from ₹79) 🔧\n3️⃣ Plumber (from ₹99) 💧\n4️⃣ Electrician (from ₹79) ⚡\n5️⃣ Beautician (Women) (from ₹149) ✂️\n6️⃣ Men Haircut & Grooming (from ₹99) 💈\n7️⃣ Septic Tank Cleaning (from ₹499) 🚜\n8️⃣ Event & Stage Decoration (from ₹999) 🎈\n9️⃣ Catering & Cooking Labour (from ₹499) 🍲\n🔟 Carpenter & Woodwork (from ₹149) 🪚\n1️⃣1️⃣ Home Tutors (from ₹499/mo) 📚\n1️⃣2️⃣ Civil Labour & Painting (from ₹299) 🎨\n1️⃣3️⃣ Others, Not Listed 📞\n\n*(For example, reply with "3" or "Plumber")*`;
 
     const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
     const allRows = Object.entries(servicesDict).map(([key, svc]) => ({
@@ -1069,7 +1080,7 @@ async function sendServiceMenu(sock, userId, lang, firstName) {
             buttonText: isKN ? 'ಸೇವೆ ಆಯ್ಕೆಮಾಡಿ' : 'Choose a Service',
             sections: [
                 { title: isKN ? 'ಸೇವೆಗಳು 1-6' : 'Services 1-6', rows: allRows.slice(0, 6) },
-                { title: isKN ? 'ಸೇವೆಗಳು 7-12' : 'Services 7-12', rows: allRows.slice(6, 12) }
+                { title: isKN ? 'ಸೇವೆಗಳು 7-13' : 'Services 7-13', rows: allRows.slice(6, 13) }
             ]
         });
     } catch (e) {
@@ -1466,8 +1477,8 @@ async function startBot() {
                         let askMsg;
                         if (field === '1') {
                             askMsg = isKN
-                                ? `ಹೊಸ ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 12):`
-                                : `Please send the new service number (1 to 12):`;
+                                ? `ಹೊಸ ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 13):`
+                                : `Please send the new service number (1 to 13):`;
                         } else if (field === '2') {
                             askMsg = isKN
                                 ? `ಹೊಸ *ಏರಿಯಾ/ವಿಳಾಸ* ಮತ್ತು *ಸಮಯ*ವನ್ನು ಟೈಪ್ ಮಾಡಿ:`
