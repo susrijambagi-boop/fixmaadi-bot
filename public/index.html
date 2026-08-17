@@ -865,6 +865,7 @@
                             <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">${d.description}</p>
                         </div>
                         <a href="/api/download?file=${d.filename}" class="btn-action">📥 Download File</a>
+                        ${d.filename === 'branding_kit.md' ? '<a href="/api/download-branding-kit" class="btn-secondary" style="margin-left:6px;">📦 Download Complete Kit (ZIP)</a>' : ''}
                     </div>
                 `;
             });

@@ -84,6 +84,34 @@ setInterval(() => {
     }
 }, 12 * 60 * 1000);
 
+// COMPLETE BRANDING KIT AS ONE ZIP (guide + every logo/poster variant)
+app.get('/api/download-branding-kit', (req, res) => {
+    const archiver = require('archiver');
+    const files = [
+        'branding_kit.md',
+        'fixmaadi_official_logo.jpg',
+        'fixmaadi_logo_light_1786549092449.jpg',
+        'fixmaadi_logo_dark_1786549114784.jpg',
+        'fixmaadi_social_dp_1786549137508.jpg',
+        'fixmaadi_minimal_poster_1786547765168.jpg',
+        'fixmaadi_instagram_post_1786547604296.jpg'
+    ];
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="FixMaadi_Branding_Kit.zip"');
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', (err) => { logMessage(`⚠️ Branding kit zip error: ${err.message}`); res.status(500).end(); });
+    archive.pipe(res);
+
+    files.forEach(filename => {
+        const filePath = path.join(__dirname, 'public', filename);
+        if (fs.existsSync(filePath)) archive.file(filePath, { name: filename });
+    });
+
+    archive.finalize();
+});
+
 // WINDOWS OS NATIVE MIME-TYPE DOWNLOAD ROUTE
 app.get('/api/download', (req, res) => {
     const rawFile = req.query.file || '';
@@ -118,10 +146,10 @@ app.get('/api/download', (req, res) => {
 
         if (filename.endsWith('.md') || filename.endsWith('.txt')) {
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         } else if (filename.endsWith('.json')) {
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
-            res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         } else if (filename.endsWith('.csv')) {
             res.setHeader('Content-Type', 'text/csv; charset=utf-8');
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -187,7 +215,12 @@ const departments = [
 function getLiveDocumentsList() {
     return [
         { filename: 'fixmaadi_official_logo.jpg', title: '⭐ FixMaadi Official Single Logo (Master Asset)', description: 'Official Sapphire Trust Blue logo for web, WhatsApp, Instagram DP, printables & signs.' },
-        { filename: 'branding_kit.md', title: '🎨 FixMaadi Master Brand Identity Kit', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs.' },
+        { filename: 'fixmaadi_logo_light_1786549092449.jpg', title: '🖼️ Logo — Light Background Variant', description: 'Use on light/white backgrounds.' },
+        { filename: 'fixmaadi_logo_dark_1786549114784.jpg', title: '🖼️ Logo — Dark Background Variant', description: 'Use on dark/navy backgrounds.' },
+        { filename: 'fixmaadi_social_dp_1786549137508.jpg', title: '🖼️ Logo — Social Profile Picture (pre-cropped square)', description: 'Instagram/WhatsApp Business profile picture, ready to upload.' },
+        { filename: 'fixmaadi_minimal_poster_1786547765168.jpg', title: '🖼️ Minimal Poster — Print-Ready Base', description: 'Base artwork for vinyl stickers, kirana posters, auto-rickshaw banners.' },
+        { filename: 'fixmaadi_instagram_post_1786547604296.jpg', title: '🖼️ Sample Instagram Post Artwork', description: 'Reference Instagram post visual.' },
+        { filename: 'branding_kit.md', title: '🎨 FixMaadi Master Brand Identity Kit (guide)', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs. The 5 image files above are the actual logo/poster assets this guide refers to — download them separately.' },
         { filename: 'master_operational_architecture.md', title: '🏢 70+ Virtual Company Structure', description: '7 Department breakdowns, headcount, leads, and Tier 2/3 UC gap analysis.' },
         { filename: 'instagram_content_calendar.md', title: '📸 Instagram Launch Campaign Calendar', description: '10 Launch post concepts, Kannada captions, visual guidelines, and hashtags.' },
         { filename: 'INSTAGRAM_QUICKSTART.md', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
