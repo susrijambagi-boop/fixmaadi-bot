@@ -232,7 +232,11 @@ function getLiveDocumentsList() {
         { filename: 'walkthrough.md', title: '🚀 Master Project Launch Walkthrough', description: 'Complete summary of all built systems, links, and operational status.' },
         { filename: 'business_strategy_plan.md', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' },
         { filename: 'ARCHITECTURE.md', title: '🗺️ Technical Architecture & Stack Tree Map', description: 'System diagram, full tech stack, data flow, and known architectural constraints.' },
-        { filename: 'MAINTENANCE_CALENDAR.md', title: '📅 Maintenance Calendar', description: 'Weekly/monthly/quarterly checklist — API keys, billing, data cleanup, health scans.' }
+        { filename: 'MAINTENANCE_CALENDAR.md', title: '📅 Maintenance Calendar', description: 'Weekly/monthly/quarterly checklist — API keys, billing, data cleanup, health scans.' },
+        { filename: 'fixmaadi_led_screen_ad.png', title: '📺 LED Screen Ad (1920x1080)', description: 'Static ad for Bagalkot LED display screens. WhatsApp QR + phone number included.' },
+        { filename: 'fixmaadi_pamphlet_front_english.png', title: '📄 Pamphlet — Front (English)', description: 'Print-ready pamphlet front side, English. Pair with the Kannada back side below.' },
+        { filename: 'fixmaadi_pamphlet_back_kannada.png', title: '📄 Pamphlet — Back (Kannada)', description: 'Print-ready pamphlet back side, Kannada. Print both sides of the same sheet.' },
+        { filename: 'fixmaadi_whatsapp_qr_code.png', title: '🔲 WhatsApp QR Code', description: 'Scans straight to a pre-filled "Hi" message on the FixMaadi WhatsApp number. Reuse anywhere.' }
     ];
 }
 
