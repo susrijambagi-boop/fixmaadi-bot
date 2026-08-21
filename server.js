@@ -16,6 +16,61 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// ADMIN DASHBOARD AUTHENTICATION (HTTP Basic Auth)
+// Everything is protected by default except the public landing page
+// (investors.html + its images), the two public lead-capture forms it
+// posts to, robots.txt/sitemap.xml for search crawlers, and the internal
+// status ping used by the keep-alive pinger and dashboard uptime widget.
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+const PUBLIC_PATHS = new Set([
+    '/investors.html',
+    '/fixmaadi_official_logo.jpg',
+    '/providers/plumber.jpg',
+    '/providers/electrician.jpg',
+    '/providers/beautician.jpg',
+    '/providers/nurse.jpg',
+    '/providers/driver.jpg',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/favicon.ico',
+    '/api/city-request',
+    '/api/partner-application',
+    '/api/status-info'
+]);
+
+function timingSafeStringEqual(a, b) {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function requireAdminAuth(req, res, next) {
+    if (PUBLIC_PATHS.has(req.path)) return next();
+
+    if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+        return res.status(503).send('Admin dashboard authentication is not configured. Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables and restart the server.');
+    }
+
+    const [scheme, encoded] = (req.headers.authorization || '').split(' ');
+    if (scheme === 'Basic' && encoded) {
+        const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+        const sepIndex = decoded.indexOf(':');
+        const user = decoded.slice(0, sepIndex);
+        const pass = decoded.slice(sepIndex + 1);
+        if (timingSafeStringEqual(user, ADMIN_USERNAME) && timingSafeStringEqual(pass, ADMIN_PASSWORD)) {
+            return next();
+        }
+    }
+
+    res.setHeader('WWW-Authenticate', 'Basic realm="FixMaadi Admin", charset="UTF-8"');
+    return res.status(401).send('Authentication required.');
+}
+
+app.use(requireAdminAuth);
+
 let currentQR = '';
 let botStatus = 'Initializing...';
 let logs = [];

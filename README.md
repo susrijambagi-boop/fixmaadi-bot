@@ -6,17 +6,21 @@ A WhatsApp-native, 0% commission home services platform for Bagalkot, Karnataka.
 - **Investor / info landing page:** https://fixmaadiadmin.up.railway.app/investors.html
 - **Architecture & tech stack:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - **Maintenance checklist:** [`docs/MAINTENANCE_CALENDAR.md`](docs/MAINTENANCE_CALENDAR.md)
-- **Brand kit:** [`public/branding_kit.md`](public/branding_kit.md)
+- **Brand kit:** [`public/branding_kit.pdf`](public/branding_kit.pdf)
 
 ## Quick start (local development)
 
 ```bash
 npm install
-cp .env.example .env   # fill in RESEND_API_KEY / GEMINI_API_KEY if you have them
+cp .env.example .env   # fill in RESEND_API_KEY / GEMINI_API_KEY / ADMIN_USERNAME / ADMIN_PASSWORD
 node server.js
 ```
 
 Opens the admin dashboard at `http://localhost:3000`, and the WhatsApp socket will print a QR code to scan.
+
+### Admin dashboard login
+
+The dashboard (everything except the public `investors.html` landing page) is protected by HTTP Basic Auth. `ADMIN_USERNAME` and `ADMIN_PASSWORD` are **required** — if either is missing, the server returns 503 for the dashboard and every admin API instead of opening unauthenticated. Set both in `.env` locally and in the Railway project's environment variables in production.
 
 ## Deployment
 
