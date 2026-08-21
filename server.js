@@ -710,7 +710,7 @@ app.post('/api/status', async (req, res) => {
             try {
                 const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
                 if (status === 'Cancelled') {
-                    const cancelMsg = `❌ *Booking Update, ${firstName}:*\n\nYour booking *${booking.id}* (${booking.service}) has been marked as *Cancelled*.\n\nIf you need assistance or want to re-book, please call Field Operations Manager Bhuvan Nara at *${BHUVAN_PHONE}*.`;
+                    const cancelMsg = `❌ *Booking Update, ${firstName}:*\n\nYour booking *${booking.id}* (${booking.service}) has been marked as *Cancelled*.\n\nIf you need assistance or want to re-book, please call our Field Operations Team at *${BHUVAN_PHONE}*.`;
                     await sockInstance.sendMessage(booking.customerJid, { text: cancelMsg });
                     logMessage(`📲 Sent Cancellation WhatsApp notification to ${firstName}`);
                 }
@@ -1101,11 +1101,11 @@ async function finalizeBooking(sock, userId, senderPhone, opts) {
     const isOthers = service.includes('Others') || service.includes('ಇತರೆ');
     const closingLine = isOthers
         ? (isKN
-            ? `ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ನಿಮಗೆ ಶೀಘ್ರದಲ್ಲೇ ಕರೆ ಮಾಡಿ ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ತಿಳಿದುಕೊಳ್ಳುತ್ತಾರೆ.`
-            : `Bhuvan Nara (${BHUVAN_PHONE}) will call you shortly to understand exactly what you need.`)
+            ? `ನಮ್ಮ ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ತಂಡ (${BHUVAN_PHONE}) ನಿಮಗೆ ಶೀಘ್ರದಲ್ಲೇ ಕರೆ ಮಾಡಿ ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ತಿಳಿದುಕೊಳ್ಳುತ್ತಾರೆ.`
+            : `Our Field Operations Team (${BHUVAN_PHONE}) will call you shortly to understand exactly what you need.`)
         : (isKN
-            ? `ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರು 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.`
-            : `Field Operations Head Bhuvan Nara (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you within 10 minutes.`);
+            ? `ನಮ್ಮ ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ತಂಡ (${BHUVAN_PHONE}) 10 ನಿಮಿಷದಲ್ಲಿ ಸ್ಥಳೀಯ ಕೆಲಸಗಾರರನ್ನು ನಿಯೋಜಿಸಿ ನಿಮಗೆ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ.`
+            : `Our Field Operations Team (${BHUVAN_PHONE}) is assigning a trusted local professional right now and will call you within 10 minutes.`);
 
     const confirmMsg = isKN
         ? `✅ *ಬುಕಿಂಗ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಗ್ರಾಹಕರು: ${fullName}\n• ಸೇವೆ: ${service}\n• ವಿಳಾಸ: ${location}\n• ಕರೆ ಸಂಖ್ಯೆ: ${resolvedCallingPhone}${mapNote}\n• ಭೇಟಿ ಶುಲ್ಕ: ₹49 (ಸೇವೆ ಮುಂದುವರಿಸಿದರೆ ಬಿಲ್‌ನಿಂದ ಕಡಿತ)\n\n${closingLine}\n\nFixMaadi ಆಯ್ಕೆ ಮಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಯಾವುದೇ ಪ್ರಶ್ನೆಗಳಿಗೆ ನಾವು ಯಾವಾಗಲೂ ಸಿದ್ಧ 🙏`
@@ -1141,8 +1141,8 @@ function scheduleFollowUp(sock, userId) {
                 logMessage(`⏰ Sending 1st Inactivity Follow-up to ${firstName}`);
 
                 const followUp1 = isKN
-                    ? `👋 ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ನೀವು ಇನ್ನೂ ನಿಮ್ಮ ಬುಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಿಲ್ಲ.\n\nನಿಮಗೆ ಸಹಾಯ ಬೇಕಿದ್ದರೆ, ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರಿಗೆ ಕರೆ ಮಾಡಿ.`
-                    : `👋 Hi ${firstName}! You haven't completed your FixMaadi booking yet.\n\nIf you need any assistance, call Bhuvan Nara at ${BHUVAN_PHONE}.`;
+                    ? `👋 ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ನೀವು ಇನ್ನೂ ನಿಮ್ಮ ಬುಕಿಂಗ್ ಪೂರ್ಣಗೊಳಿಸಿಲ್ಲ.\n\nನಿಮಗೆ ಸಹಾಯ ಬೇಕಿದ್ದರೆ, ನಮ್ಮ ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ತಂಡಕ್ಕೆ (${BHUVAN_PHONE}) ಕರೆ ಮಾಡಿ.`
+                    : `👋 Hi ${firstName}! You haven't completed your FixMaadi booking yet.\n\nIf you need any assistance, call our Field Operations Team at ${BHUVAN_PHONE}.`;
 
                 await sock.sendMessage(userId, { text: followUp1 });
                 scheduleFollowUp(sock, userId);
@@ -1317,7 +1317,7 @@ async function startBot() {
                             scheduleFollowUp(sock, userId);
                         }
                     } else {
-                        const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call Bhuvan Nara: ${BHUVAN_PHONE})*`;
+                        const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call our Field Operations Team: ${BHUVAN_PHONE})*`;
 
                         await sock.sendMessage(userId, { text: langPrompt });
                         userStates[userId].step = 'AWAITING_LANG';
@@ -1360,8 +1360,8 @@ async function startBot() {
 
                     if (lowerText === '1' || lowerText.includes('1️⃣')) {
                         const msg = isKN
-                            ? `ನಿಮ್ಮ ಈಗಿನ ಬುಕಿಂಗ್‌ನಲ್ಲಿ ಏನಾದರೂ ಬದಲಾಯಿಸಬೇಕಿದ್ದರೆ ಅಥವಾ ಪ್ರಶ್ನೆ ಇದ್ದರೆ, ದಯವಿಟ್ಟು ನಮ್ಮ ಕ್ಷೇತ್ರ ನಿರ್ವಾಹಕ ಭುವನ್ ನಾರಾ (${BHUVAN_PHONE}) ಅವರನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ — ಅವರು ತಕ್ಷಣ ಸಹಾಯ ಮಾಡುತ್ತಾರೆ 🙏`
-                            : `For any change or question about your existing booking, please contact our Field Operations Head Bhuvan Nara directly at ${BHUVAN_PHONE} — he'll help you right away 🙏`;
+                            ? `ನಿಮ್ಮ ಈಗಿನ ಬುಕಿಂಗ್‌ನಲ್ಲಿ ಏನಾದರೂ ಬದಲಾಯಿಸಬೇಕಿದ್ದರೆ ಅಥವಾ ಪ್ರಶ್ನೆ ಇದ್ದರೆ, ದಯವಿಟ್ಟು ನಮ್ಮ ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ತಂಡವನ್ನು ನೇರವಾಗಿ (${BHUVAN_PHONE}) ಸಂಪರ್ಕಿಸಿ — ಅವರು ತಕ್ಷಣ ಸಹಾಯ ಮಾಡುತ್ತಾರೆ 🙏`
+                            : `For any change or question about your existing booking, please contact our Field Operations Team directly at ${BHUVAN_PHONE} — they'll help you right away 🙏`;
                         await sock.sendMessage(userId, { text: msg });
                         delete userStates[userId];
                         saveDatabaseToDisk();
