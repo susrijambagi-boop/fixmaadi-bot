@@ -36,6 +36,13 @@
         .nav-item:hover { background: rgba(255,255,255,0.08); color: #ffffff; transform: translateX(3px); }
         .nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 4px 14px rgba(15,82,186,0.35); }
 
+        /* CITY SWITCHER — one login, two separate data panels */
+        .city-switcher { display: flex; flex-direction: column; gap: 6px; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 12px; border: 1px solid #1e293b; }
+        .city-switcher-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--sidebar-text); padding: 0 2px 2px; }
+        .city-btn { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px; border: none; background: transparent; color: var(--sidebar-text); font-weight: 700; font-size: 0.85rem; cursor: pointer; text-align: left; transition: all 0.15s ease; }
+        .city-btn:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+        .city-btn.active { background: var(--primary); color: #ffffff; box-shadow: 0 4px 14px rgba(15,82,186,0.35); }
+
         /* MAIN CONTENT AREA & BREADCRUMBS */
         .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
         header { background: var(--surface); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.02); }
@@ -122,6 +129,12 @@
             <div class="sidebar-title">FixMaadi</div>
         </div>
 
+        <div class="city-switcher" id="city-switcher">
+            <div class="city-switcher-label">City Panel</div>
+            <button class="city-btn active" id="city-btn-Bagalkot" onclick="switchCity('Bagalkot')">🏙️ Bagalkot</button>
+            <button class="city-btn" id="city-btn-Hospete" onclick="switchCity('Hospete')">🏙️ Hospete</button>
+        </div>
+
         <div class="sidebar-nav">
             <div class="nav-item active" onclick="switchNav('dispatch', 'Provider Dispatch', event)">⚡ Provider Dispatch</div>
             <div class="nav-item" onclick="switchNav('bookings', 'Customer Bookings', event)">📋 Customer Bookings</div>
@@ -140,7 +153,7 @@
             <div class="breadcrumb">
                 <span>FixMaadi Admin</span> / <span class="breadcrumb-active" id="breadcrumb-title">Provider Dispatch</span>
             </div>
-            <div class="badge-live" id="status-badge-wrap"><span class="pulse-dot"></span> Pilot: Bagalkot | Engine Status: <span id="status-badge">Not Connected</span></div>
+            <div class="badge-live" id="status-badge-wrap"><span class="pulse-dot"></span> Pilot: <span id="pilot-city-badge">Bagalkot</span> | Engine Status: <span id="status-badge">Not Connected</span></div>
         </header>
 
         <div class="container">
@@ -152,7 +165,7 @@
                         <div class="stat-card">
                             <div class="stat-lbl">Active Service Providers</div>
                             <div class="stat-val" id="stat-vendors">0</div>
-                            <div class="stat-sub">🟢 100% Bagalkot Coverage</div>
+                            <div class="stat-sub">🟢 100% <span id="stat-vendors-city">Bagalkot</span> Coverage</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-lbl">Dispatch Match Rate</div>
@@ -241,18 +254,14 @@
                             <div class="form-group">
                                 <label>Service Category</label>
                                 <select id="v-service" required>
-                                    <option value="Purohit & Pujas 🙏">Purohit & Pujas 🙏</option>
-                                    <option value="Mixie & Appliance Repair 🔧">Mixie & Appliance Repair 🔧</option>
-                                    <option value="Plumber 💧">Plumber 💧</option>
-                                    <option value="Electrician ⚡">Electrician ⚡</option>
-                                    <option value="Beautician (Women) ✂️">Beautician (Women) ✂️</option>
-                                    <option value="Men Haircut & Grooming 💈">Men Haircut & Grooming 💈</option>
-                                    <option value="Septic Tank & Sump Cleaning 🚜">Septic Tank & Sump Cleaning 🚜</option>
-                                    <option value="Event & Stage Decoration 🎈">Event & Stage Decoration 🎈</option>
-                                    <option value="Catering & Cooking Labour 🍲">Catering & Cooking Labour 🍲</option>
-                                    <option value="Carpenter & Woodwork 🪚">Carpenter & Woodwork 🪚</option>
-                                    <option value="Home Tutors 📚">Home Tutors 📚</option>
-                                    <option value="Civil Labour & Painting 🎨">Civil Labour & Painting 🎨</option>
+                                    <option value="Home Repair 🔧">Home Repair 🔧</option>
+                                    <option value="Personal Care ✂️">Personal Care ✂️</option>
+                                    <option value="Health & Wellness 🩺">Health & Wellness 🩺</option>
+                                    <option value="Transport & Roadside 🚗">Transport & Roadside 🚗</option>
+                                    <option value="Labour & Cleaning 🧹">Labour & Cleaning 🧹</option>
+                                    <option value="Events 🎉">Events 🎉</option>
+                                    <option value="Education 📚">Education 📚</option>
+                                    <option value="Pet Care 🐾">Pet Care 🐾</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -260,7 +269,14 @@
                                 <input type="text" id="v-phone" placeholder="+91 94481 22334" required />
                             </div>
                             <div class="form-group">
-                                <label>Bagalkot Area</label>
+                                <label>City</label>
+                                <select id="v-city" required>
+                                    <option value="Bagalkot">Bagalkot</option>
+                                    <option value="Hospete">Hospete</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Area / Locality</label>
                                 <input type="text" id="v-area" placeholder="Navanagar / Vidyagiri" required />
                             </div>
                             <div class="form-group">
@@ -482,7 +498,7 @@
                     <option value="Customer Quality Complaints">Customer Quality Complaints</option>
                     <option value="Repeated Work Delays / No-Show">Repeated Work Delays / No-Show</option>
                     <option value="Unprofessional Behavior">Unprofessional Behavior</option>
-                    <option value="Moved Away / Out of Bagalkot">Moved Away / Out of Bagalkot</option>
+                    <option value="Moved Away / Out of Service Area">Moved Away / Out of Service Area</option>
                     <option value="Other">Other Reason (Specify below)</option>
                 </select>
             </div>
@@ -517,6 +533,19 @@
         let activeRatingBookingId = null;
         let activeDeleteVendorId = null;
         let activeOtpBookingId = null;
+        let currentCity = localStorage.getItem('fixmaadi_city') === 'Hospete' ? 'Hospete' : 'Bagalkot';
+
+        function switchCity(city) {
+            currentCity = city === 'Hospete' ? 'Hospete' : 'Bagalkot';
+            localStorage.setItem('fixmaadi_city', currentCity);
+            document.getElementById('city-btn-Bagalkot').classList.toggle('active', currentCity === 'Bagalkot');
+            document.getElementById('city-btn-Hospete').classList.toggle('active', currentCity === 'Hospete');
+            document.getElementById('pilot-city-badge').innerText = currentCity;
+            document.getElementById('stat-vendors-city').innerText = currentCity;
+            const vCitySelect = document.getElementById('v-city');
+            if (vCitySelect) vCitySelect.value = currentCity;
+            loadData();
+        }
 
         function switchNav(tabId, title, e) {
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -540,13 +569,14 @@
 
         async function loadData() {
             try {
+                const cityQs = '?city=' + encodeURIComponent(currentCity);
                 const [bookings, vendors, attendance, employees, documents, deletedLogs, agentLogs] = await Promise.all([
-                    fetchSafe('/api/bookings', []),
-                    fetchSafe('/api/vendors', []),
-                    fetchSafe('/api/attendance', []),
+                    fetchSafe('/api/bookings' + cityQs, []),
+                    fetchSafe('/api/vendors' + cityQs, []),
+                    fetchSafe('/api/attendance' + cityQs, []),
                     fetchSafe('/api/virtual-employees', []),
                     fetchSafe('/api/documents', []),
-                    fetchSafe('/api/deleted-vendors', []),
+                    fetchSafe('/api/deleted-vendors' + cityQs, []),
                     fetchSafe('/api/agent-logs', [])
                 ]);
 
@@ -1078,6 +1108,7 @@
             formData.append('name', document.getElementById('v-name').value);
             formData.append('service', document.getElementById('v-service').value);
             formData.append('phone', document.getElementById('v-phone').value);
+            formData.append('city', document.getElementById('v-city').value);
             formData.append('area', document.getElementById('v-area').value);
             formData.append('availableTime', document.getElementById('v-time').value);
             formData.append('photo', photoFile);
@@ -1086,8 +1117,9 @@
             const res = await fetch('/api/vendors', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.success) {
-                alert(`✅ ${data.vendor.name} added to the Service Providers roster.`);
+                alert(`✅ ${data.vendor.name} added to the ${data.vendor.city} Service Providers roster.`);
                 document.getElementById('add-vendor-form').reset();
+                document.getElementById('v-city').value = currentCity;
                 loadData();
             } else {
                 alert('Error: ' + (data.error || 'Could not add provider.'));
@@ -1195,6 +1227,11 @@
             } catch (e) {}
         }, 3000);
 
+        document.getElementById('city-btn-Bagalkot').classList.toggle('active', currentCity === 'Bagalkot');
+        document.getElementById('city-btn-Hospete').classList.toggle('active', currentCity === 'Hospete');
+        document.getElementById('pilot-city-badge').innerText = currentCity;
+        document.getElementById('stat-vendors-city').innerText = currentCity;
+        document.getElementById('v-city').value = currentCity;
         loadData();
     </script>
 </body>

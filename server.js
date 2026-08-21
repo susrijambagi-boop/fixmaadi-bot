@@ -98,6 +98,14 @@ function logAgentTask(agentCode, agentName, taskDescription) {
 
 const BHUVAN_PHONE = '+91 8123909829';
 const INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
+
+// MULTI-CITY SUPPORT — one WhatsApp number serves both cities; every booking,
+// vendor, and attendance record is tagged with the city it belongs to so the
+// dashboard can show two separate panels behind a single login.
+const CITIES = ['Bagalkot', 'Hospete'];
+function resolveCity(value) {
+    return CITIES.includes(value) ? value : 'Bagalkot';
+}
 const ARTIFACT_DIR = path.join(__dirname, '../../brain/a554415f-1f6b-469d-8b83-bb4664b7054b');
 // Railway sets RAILWAY_VOLUME_MOUNT_PATH automatically when a persistent volume is attached.
 // Without it (local dev, or no volume attached yet), data lives next to the app code.
@@ -298,36 +306,32 @@ function getLiveDocumentsList() {
     ];
 }
 
+// Mirrors the 8 categories on the investors.html service grid (44 specific
+// trades total) plus "Others" — same grouping in both places so the landing
+// page's "44 things we cover" claim is actually bookable through the bot,
+// not just a handful of the categories that happened to get a menu number.
 const SERVICES_EN = {
-    '1': { name: 'Purohit & Pujas 🙏', price: 'from ₹501', keywords: ['purohit', 'puja', 'pooja', 'pandit', '1'] },
-    '2': { name: 'Mixie & Appliance Repair 🔧', price: 'from ₹79', keywords: ['mixie', 'appliance', 'repair', 'fan', '2'] },
-    '3': { name: 'Plumber 💧', price: 'from ₹99', keywords: ['plumber', 'pipe', 'tap', 'water', 'leak', '3'] },
-    '4': { name: 'Electrician ⚡', price: 'from ₹79', keywords: ['electrician', 'light', 'wire', 'mcb', 'fuse', '4'] },
-    '5': { name: 'Beautician (Women) ✂️', price: 'from ₹149', keywords: ['beautician', 'beauty', 'salon', 'facial', 'parlour', '5'] },
-    '6': { name: 'Men Haircut & Grooming 💈', price: 'from ₹99', keywords: ['haircut', 'barber', 'grooming', 'men', 'beard', '6'] },
-    '7': { name: 'Septic Tank & Sump Cleaning 🚜', price: 'from ₹499', keywords: ['septic', 'tank', 'sump', 'cleaning', 'drain', '7'] },
-    '8': { name: 'Event & Stage Decoration 🎈', price: 'from ₹999', keywords: ['event', 'stage', 'decoration', 'balloon', 'flower', '8'] },
-    '9': { name: 'Catering & Cooking Labour 🍲', price: 'from ₹499', keywords: ['catering', 'cook', 'cooking', 'food', 'chef', '9'] },
-    '10': { name: 'Carpenter & Woodwork 🪚', price: 'from ₹149', keywords: ['carpenter', 'wood', 'door', 'lock', 'table', '10'] },
-    '11': { name: 'Home Tutors 📚', price: 'from ₹499/mo', keywords: ['tutor', 'tuition', 'teacher', 'class', '11'] },
-    '12': { name: 'Civil Labour & Painting 🎨', price: 'from ₹299', keywords: ['paint', 'painting', 'civil', 'mason', 'wall', '12'] },
-    '13': { name: 'Others (Not Listed) 📞', price: 'call for details', keywords: ['other', 'others', 'else', 'different', '13'] }
+    '1': { name: 'Home Repair 🔧', price: 'from ₹79', keywords: ['plumber', 'pipe', 'tap', 'leak', 'electrician', 'wire', 'mcb', 'fuse', 'light', 'mixie', 'appliance', 'carpenter', 'wood', 'door', 'lock', 'table', 'paint', 'painting', 'civil', 'mason', 'wall', 'ac repair', 'ac service', 'air conditioner', 'ro repair', 'water purifier', 'tv repair', 'electronics repair', 'furniture assembly', 'pest control', 'termite', 'cockroach', '1'] },
+    '2': { name: 'Personal Care ✂️', price: 'from ₹149', keywords: ['beautician', 'beauty', 'salon', 'facial', 'parlour', 'haircut', 'barber', 'grooming', 'beard', 'bridal makeup', 'makeup', 'mehendi', 'henna', 'massage', 'spa', '2'] },
+    '3': { name: 'Health & Wellness 🩺', price: 'from ₹299', keywords: ['nurse', 'nursing', 'physiotherapist', 'physio', 'elderly care', 'attendant', 'baby care', 'nanny', 'babysitter', 'yoga', 'diet', 'nutrition', 'dietician', '3'] },
+    '4': { name: 'Transport & Roadside 🚗', price: 'from ₹99', keywords: ['driver', 'jump start', 'battery', 'puncture', 'tyre', 'tire', 'bike wash', 'car wash', 'towing', 'tow', '4'] },
+    '5': { name: 'Labour & Cleaning 🧹', price: 'from ₹299', keywords: ['loading', 'unloading', 'labour', 'labor', 'shifting', 'house shifting', 'gardening', 'garden', 'deep cleaning', 'sofa cleaning', 'carpet cleaning', 'water tank', 'sump', 'septic', 'drain', '5'] },
+    '6': { name: 'Events 🎉', price: 'from ₹501', keywords: ['purohit', 'puja', 'pooja', 'pandit', 'stage', 'decoration', 'balloon', 'flower', 'catering', 'cook', 'cooking', 'chef', 'dj', 'sound system', 'photography', 'photographer', '6'] },
+    '7': { name: 'Education 📚', price: 'from ₹499/mo', keywords: ['tutor', 'tuition', 'teacher', 'class', 'music teacher', 'dance teacher', '7'] },
+    '8': { name: 'Pet Care 🐾', price: 'from ₹299', keywords: ['pet grooming', 'dog walking', 'pet', 'dog', 'cat', '8'] },
+    '9': { name: 'Others (Not Listed) 📞', price: 'call for details', keywords: ['other', 'others', 'else', 'different', '9'] }
 };
 
 const SERVICES_KN = {
-    '1': { name: 'ಪುರೋಹಿತರು & ಪೂಜೆಗಳು 🙏', price: '₹501 ರಿಂದ', keywords: ['ಪುರೋಹಿತ', 'ಪೂಜೆ', 'ಪಂಡಿತ', '1'] },
-    '2': { name: 'ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ 🔧', price: '₹79 ರಿಂದ', keywords: ['ಮಿಕ್ಸಿ', 'ಫ್ಯಾನ್', 'ರಿಪೇರಿ', '2'] },
-    '3': { name: 'ಪ್ಲಂಬರ್ 💧', price: '₹99 ರಿಂದ', keywords: ['ಪ್ಲಂಬರ್', 'ನೀರ', 'ನಲ್ಲಿ', '3'] },
-    '4': { name: 'ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ ⚡', price: '₹79 ರಿಂದ', keywords: ['ಎಲೆಕ್ಟ್ರಿಷಿಯನ್', 'ಲೈಟ್', 'ವೈರ್', '4'] },
-    '5': { name: 'ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ ✂️', price: '₹149 ರಿಂದ', keywords: ['ಬ್ಯೂಟಿಷಿಯನ್', 'ಪಾರ್ಲರ್', 'ಫೇಶಿಯಲ್', '5'] },
-    '6': { name: 'ಪುರುಷರ ಹೇರ್‌ಕಟ್ & ಗೂಮಿಂಗ್ 💈', price: '₹99 ರಿಂದ', keywords: ['ಹೇರ್‌ಕಟ್', 'ಕ್ಷೌರ', 'ಬಾರ್ಬರ್', '6'] },
-    '7': { name: 'ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ & ಸಂಪ್ ಕ್ಲೀನಿಂಗ್ 🚜', price: '₹499 ರಿಂದ', keywords: ['ಸೆಪ್ಟಿಕ್', 'ಟ್ಯಾಂಕ್', 'ಸಂಪ್', 'ಕ್ಲೀನಿಂಗ್', '7'] },
-    '8': { name: 'ಕಾರ್ಯಕ್ರಮ & ವೇದಿಕೆ ಅಲಂಕಾರ 🎈', price: '₹999 ರಿಂದ', keywords: ['ಅಲಂಕಾರ', 'ವೇದಿಕೆ', 'ಫ್ಲವರ್', '8'] },
-    '9': { name: 'ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು 🍲', price: '₹499 ರಿಂದ', keywords: ['ಅಡುಗೆ', 'ಕ್ಯಾಟರಿಂಗ್', 'ಸಂಪ್', '9'] },
-    '10': { name: 'ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) 🪚', price: '₹149 ರಿಂದ', keywords: ['ಕಾರ್ಪೆಂಟರ್', 'ಮರಗೆಲಸ', 'ಬಾಗಿಲು', '10'] },
-    '11': { name: 'ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) 📚', price: '₹499/ತಿಂಗಳಿಗೆ', keywords: ['ಟ್ಯೂಷನ್', 'ಪಾಠ', 'ಶಿಕ್ಷಕರು', '11'] },
-    '12': { name: 'ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ 🎨', price: '₹299 ರಿಂದ', keywords: ['ಪೇಂಟಿಂಗ್', 'ಗਾਰੇ', 'ಬಣ್ಣ', '12'] },
-    '13': { name: 'ಇತರೆ (ಪಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ) 📞', price: 'ಕರೆ ಮಾಡಿ ವಿವರ ಪಡೆಯಿರಿ', keywords: ['ಇತರೆ', 'ಬೇರೆ', '13'] }
+    '1': { name: 'ಮನೆ ರಿಪೇರಿ 🔧', price: '₹79 ರಿಂದ', keywords: ['ಪ್ಲಂಬರ್', 'ನೀರ', 'ನಲ್ಲಿ', 'ಎಲೆಕ್ಟ್ರಿಷಿಯನ್', 'ಲೈಟ್', 'ವೈರ್', 'ಮಿಕ್ಸಿ', 'ಫ್ಯಾನ್', 'ಕಾರ್ಪೆಂಟರ್', 'ಮರಗೆಲಸ', 'ಬಾಗಿಲು', 'ಪೇಂಟಿಂಗ್', 'ಗಾರೆ', 'ಬಣ್ಣ', 'ಎಸಿ', 'ವಾಟರ್ ಪ್ಯೂರಿಫೈಯರ್', 'ಟಿವಿ ರಿಪೇರಿ', 'ಪೀಠೋಪಕರಣ', 'ಕೀಟ ನಿಯಂತ್ರಣ', '1'] },
+    '2': { name: 'ವೈಯಕ್ತಿಕ ಆರೈಕೆ ✂️', price: '₹149 ರಿಂದ', keywords: ['ಬ್ಯೂಟಿಷಿಯನ್', 'ಪಾರ್ಲರ್', 'ಫೇಶಿಯಲ್', 'ಹೇರ್‌ಕಟ್', 'ಕ್ಷೌರ', 'ಬಾರ್ಬರ್', 'ಬ್ರೈಡಲ್ ಮೇಕಪ್', 'ಮೆಹೆಂದಿ', 'ಮಸಾಜ್', 'ಸ್ಪಾ', '2'] },
+    '3': { name: 'ಆರೋಗ್ಯ 🩺', price: '₹299 ರಿಂದ', keywords: ['ದಾದಿ', 'ಫಿಸಿಯೋಥೆರಪಿ', 'ವೃದ್ಧರ ಆರೈಕೆ', 'ಮಗುವಿನ ಆರೈಕೆ', 'ಯೋಗ', 'ಆಹಾರ ಸಲಹೆ', '3'] },
+    '4': { name: 'ಸಾರಿಗೆ 🚗', price: '₹99 ರಿಂದ', keywords: ['ಡ್ರೈವರ್', 'ಜಂಪ್ ಸ್ಟಾರ್ಟ್', 'ಪಂಕ್ಚರ್', 'ಬೈಕ್ ವಾಶ್', 'ಕಾರ್ ವಾಶ್', 'ಟೋಯಿಂಗ್', '4'] },
+    '5': { name: 'ಕಾರ್ಮಿಕ & ಕ್ಲೀನಿಂಗ್ 🧹', price: '₹299 ರಿಂದ', keywords: ['ಲೋಡಿಂಗ್', 'ಶಿಫ್ಟಿಂಗ್', 'ತೋಟಗಾರಿಕೆ', 'ಡೀಪ್ ಕ್ಲೀನಿಂಗ್', 'ಸೋಫಾ ಕ್ಲೀನಿಂಗ್', 'ನೀರಿನ ಟ್ಯಾಂಕ್', 'ಸೆಪ್ಟಿಕ್', 'ಸಂಪ್', '5'] },
+    '6': { name: 'ಕಾರ್ಯಕ್ರಮಗಳು 🎉', price: '₹501 ರಿಂದ', keywords: ['ಪುರೋಹಿತ', 'ಪೂಜೆ', 'ಪಂಡಿತ', 'ಅಲಂಕಾರ', 'ವೇದಿಕೆ', 'ಕ್ಯಾಟರಿಂಗ್', 'ಅಡುಗೆ', 'ಡಿಜೆ', 'ಫೋಟೋಗ್ರಫಿ', '6'] },
+    '7': { name: 'ಶಿಕ್ಷಣ 📚', price: '₹499/ತಿಂಗಳಿಗೆ', keywords: ['ಟ್ಯೂಷನ್', 'ಪಾಠ', 'ಶಿಕ್ಷಕರು', 'ಸಂಗೀತ ಶಿಕ್ಷಕ', 'ನೃತ್ಯ ಶಿಕ್ಷಕ', '7'] },
+    '8': { name: 'ಸಾಕುಪ್ರಾಣಿ ಆರೈಕೆ 🐾', price: '₹299 ರಿಂದ', keywords: ['ಸಾಕುಪ್ರಾಣಿ', 'ನಾಯಿ', 'ಗ್ರೂಮಿಂಗ್', 'ವಾಕಿಂಗ್', '8'] },
+    '9': { name: 'ಇತರೆ (ಪಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ) 📞', price: 'ಕರೆ ಮಾಡಿ ವಿವರ ಪಡೆಯಿರಿ', keywords: ['ಇತರೆ', 'ಬೇರೆ', '9'] }
 };
 
 
@@ -438,8 +442,11 @@ function findCollidingBooking(phoneStr, service, location) {
 }
 
 // MASK OTPS IN API RESPONSE FOR ADMIN PRIVACY
+// ?city=Bagalkot|Hospete scopes results to one city's panel; omit it to get everything.
 app.get('/api/bookings', (req, res) => {
-    const maskedBookings = bookings.map(b => ({
+    const cityFilter = req.query.city;
+    const scoped = cityFilter ? bookings.filter(b => resolveCity(b.city) === cityFilter) : bookings;
+    const maskedBookings = scoped.map(b => ({
         ...b,
         startOtpMasked: b.startOtpVerified ? '✅ Verified' : '🔐 Sent to Customer',
         endOtpMasked: b.endOtpVerified ? '✅ Verified' : '🔐 Sent to Customer'
@@ -447,13 +454,22 @@ app.get('/api/bookings', (req, res) => {
     res.json(maskedBookings);
 });
 
-app.get('/api/vendors', (req, res) => res.json(vendors));
-app.get('/api/attendance', (req, res) => res.json(attendance));
+app.get('/api/vendors', (req, res) => {
+    const cityFilter = req.query.city;
+    res.json(cityFilter ? vendors.filter(v => resolveCity(v.city) === cityFilter) : vendors);
+});
+app.get('/api/attendance', (req, res) => {
+    const cityFilter = req.query.city;
+    res.json(cityFilter ? attendance.filter(a => resolveCity(a.city) === cityFilter) : attendance);
+});
 app.get('/api/departments', (req, res) => res.json(departments));
 app.get('/api/virtual-employees', (req, res) => res.json(virtualEmployees));
 app.get('/api/agent-logs', (req, res) => res.json(agentLogs));
 app.get('/api/documents', (req, res) => res.json(getLiveDocumentsList()));
-app.get('/api/deleted-vendors', (req, res) => res.json(deletedVendorsLog));
+app.get('/api/deleted-vendors', (req, res) => {
+    const cityFilter = req.query.city;
+    res.json(cityFilter ? deletedVendorsLog.filter(v => resolveCity(v.city) === cityFilter) : deletedVendorsLog);
+});
 app.get('/api/email-digest-config', (req, res) => res.json(emailDigestConfig));
 app.get('/api/instagram-info', (req, res) => res.json(instagramAccountInfo));
 
@@ -535,8 +551,8 @@ app.post('/api/verify-end-otp', async (req, res) => {
                 const isKN = (customerRecord && customerRecord.lang) === 'kn';
 
                 const completeNotice = isKN
-                    ? `🎉 *ಸೇವೆ ಪೂರ್ಣಗೊಂಡಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಟೆಕ್ನಿಷಿಯನ್: ${booking.assignedVendor}\n• ಒಟ್ಟು ಅವಧಿ: *${durationStr}*\n\nFixMaadi Bagalkot ಬಳಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! 0% ಕಮಿಷನ್ ಸಮುದಾಯ ವೇದಿಕೆ. 🙏`
-                    : `🎉 *Service Completed, ${firstName}!*\n\n• Technician: ${booking.assignedVendor}\n• Total Duration: *${durationStr}*\n\nThank you for using FixMaadi Bagalkot! 0% Commission community platform. 🙏`;
+                    ? `🎉 *ಸೇವೆ ಪೂರ್ಣಗೊಂಡಿದೆ, ${firstName} ಅವರೇ!*\n\n• ಟೆಕ್ನಿಷಿಯನ್: ${booking.assignedVendor}\n• ಒಟ್ಟು ಅವಧಿ: *${durationStr}*\n\nFixMaadi ${resolveCity(booking.city)} ಬಳಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು! 0% ಕಮಿಷನ್ ಸಮುದಾಯ ವೇದಿಕೆ. 🙏`
+                    : `🎉 *Service Completed, ${firstName}!*\n\n• Technician: ${booking.assignedVendor}\n• Total Duration: *${durationStr}*\n\nThank you for using FixMaadi ${resolveCity(booking.city)}! 0% Commission community platform. 🙏`;
                 await sockInstance.sendMessage(booking.customerJid, { text: completeNotice });
 
                 const surveyMsg = isKN
@@ -564,7 +580,7 @@ async function sendLiveVirtualEmployeesEmail(typeLabel) {
     const mailSubject = `FixMaadi Operations Report: ${typeLabel || 'Daily Update'}`;
     const htmlBody = `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #1e3a8a;"> FixMaadi Bagalkot Operations Report</h2>
+            <h2 style="color: #1e3a8a;"> FixMaadi Operations Report (Bagalkot + Hospete)</h2>
             <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
             <p><strong>Platform Status:</strong> 100% Active & Connected to WhatsApp</p>
             <hr />
@@ -643,7 +659,7 @@ app.post('/api/rate-provider', async (req, res) => {
     if (sockInstance && booking.customerJid) {
         try {
             const firstName = booking.customerName ? booking.customerName.split(' ')[0] : 'Customer';
-            const thankMsg = `⭐ *Thank you for your rating, ${firstName}!*\n\nYou rated ${booking.assignedVendor || 'technician'}: *${score} / 5.0 Stars* 🙏\nYour feedback helps us maintain top quality in Bagalkot!`;
+            const thankMsg = `⭐ *Thank you for your rating, ${firstName}!*\n\nYou rated ${booking.assignedVendor || 'technician'}: *${score} / 5.0 Stars* 🙏\nYour feedback helps us maintain top quality in ${resolveCity(booking.city)}!`;
             await sockInstance.sendMessage(booking.customerJid, { text: thankMsg });
         } catch (e) {}
     }
@@ -658,15 +674,22 @@ app.post('/api/assign', async (req, res) => {
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     const isReassign = booking.status === 'Assigned' || booking.status === 'In-Progress';
+    const bookingCity = resolveCity(booking.city);
 
-    let vendor = vendors.find(v => v.name === vendorName);
+    // Prefer a same-city match first (two cities can have same-named providers);
+    // fall back to a bare name match only for legacy vendors with no city on file.
+    let vendor = vendors.find(v => v.name === vendorName && resolveCity(v.city) === bookingCity)
+        || vendors.find(v => v.name === vendorName);
     if (!vendor && vendorName === 'AUTO_ASSIGN') {
         const serviceClean = booking.service.toLowerCase();
-        const matched = vendors.filter(v => v.status === 'Available');
+        const matched = vendors.filter(v => v.status === 'Available' && resolveCity(v.city) === bookingCity);
         vendor = matched.find(v => serviceClean.includes(v.service.toLowerCase().split(' ')[0])) || matched[0];
     }
 
     if (!vendor) return res.status(400).json({ error: 'No available vendor found for assignment' });
+    if (resolveCity(vendor.city) !== bookingCity) {
+        return res.status(400).json({ error: `${vendor.name} is a ${resolveCity(vendor.city)} provider — this booking is in ${bookingCity}` });
+    }
 
     booking.assignedVendor = vendor.name;
     booking.assignedVendorPhone = vendor.phone;
@@ -723,7 +746,7 @@ app.post('/api/status', async (req, res) => {
 
 // ADD NEW VENDOR
 app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'aadhaar', maxCount: 1 }]), (req, res) => {
-    const { name, service, phone, area, availableTime, rating, status } = req.body;
+    const { name, service, phone, area, availableTime, rating, status, city } = req.body;
     if (!name || !service || !phone) return res.status(400).json({ error: 'Name, Service, and Phone are required' });
 
     const photoFile = req.files?.photo?.[0];
@@ -735,6 +758,7 @@ app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 
     const newVendor = {
         id: 'V' + Math.floor(100 + Math.random() * 900),
         name, service, phone,
+        city: resolveCity(city),
         area: area || 'Bagalkot',
         availableTime: availableTime || '8:00 AM - 8:00 PM',
         rating: parseFloat(rating) || 4.8,
@@ -754,12 +778,13 @@ app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 
 // EDIT EXISTING VENDOR
 app.put('/api/vendors/:id', (req, res) => {
     const id = req.params.id;
-    const { name, service, phone, area, availableTime, rating, status, delays, leavesCount } = req.body;
+    const { name, service, phone, area, availableTime, rating, status, delays, leavesCount, city } = req.body;
     const vendor = vendors.find(v => v.id === id);
     if (vendor) {
         if (name) vendor.name = name;
         if (service) vendor.service = service;
         if (phone) vendor.phone = phone;
+        if (city) vendor.city = resolveCity(city);
         if (area) vendor.area = area;
         if (availableTime) vendor.availableTime = availableTime;
         if (rating !== undefined) vendor.rating = parseFloat(rating);
@@ -788,6 +813,7 @@ app.delete('/api/vendors/:id', (req, res) => {
             service: deleted.service,
             phone: deleted.phone,
             area: deleted.area,
+            city: resolveCity(deleted.city),
             reasonCategory: reasonCategory,
             customReason: customReason || '',
             deletedBy: deletedBy || 'Bhuvan Nara',
@@ -803,8 +829,8 @@ app.delete('/api/vendors/:id', (req, res) => {
 
 // ATTENDANCE LOGGING
 app.post('/api/attendance', (req, res) => {
-    const { vendorName, category, phone, status, loginTime, logoutTime } = req.body;
-    const newRecord = { id: 'ATT-' + Math.floor(100 + Math.random() * 900), date: new Date().toISOString().split('T')[0], vendorName, category: category || 'General', phone: phone || '+91 90000 00000', loginTime: loginTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), logoutTime: logoutTime || '--', status: status || 'Present' };
+    const { vendorName, category, phone, status, loginTime, logoutTime, city } = req.body;
+    const newRecord = { id: 'ATT-' + Math.floor(100 + Math.random() * 900), date: new Date().toISOString().split('T')[0], vendorName, category: category || 'General', phone: phone || '+91 90000 00000', city: resolveCity(city), loginTime: loginTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), logoutTime: logoutTime || '--', status: status || 'Present' };
     attendance.unshift(newRecord);
     saveDatabaseToDisk();
     logMessage(`📅 Marked attendance for ${vendorName}: ${status}`);
@@ -1055,8 +1081,9 @@ async function proceedAfterLocationConfirmed(sock, userId, senderPhone, isKN) {
 // Shared by both the fast-track and fresh-address paths so booking creation
 // (OTPs, disk save, confirmation message) lives in exactly one place.
 async function finalizeBooking(sock, userId, senderPhone, opts) {
-    const { fullName, firstName, lang, service, location, callingPhone, mapLocation } = opts;
+    const { fullName, firstName, lang, city, service, location, callingPhone, mapLocation } = opts;
     const isKN = lang === 'kn';
+    const bookingCity = resolveCity(city);
 
     clearUserTimer(userId);
     const startOtp = generate4DigitOtp();
@@ -1064,7 +1091,7 @@ async function finalizeBooking(sock, userId, senderPhone, opts) {
     const now = new Date();
     const resolvedCallingPhone = callingPhone || senderPhone;
 
-    saveCustomer(senderPhone, { name: fullName, firstName, lang, lastLocation: location, callingPhone: resolvedCallingPhone });
+    saveCustomer(senderPhone, { name: fullName, firstName, lang, city: bookingCity, lastLocation: location, callingPhone: resolvedCallingPhone });
 
     const newBooking = {
         id: 'BK-' + Math.floor(1000 + Math.random() * 9000),
@@ -1072,6 +1099,7 @@ async function finalizeBooking(sock, userId, senderPhone, opts) {
         customerName: fullName,
         customerPhone: senderPhone,
         callingPhone: resolvedCallingPhone,
+        city: bookingCity,
         service,
         location,
         mapLocation: mapLocation || null,
@@ -1166,13 +1194,18 @@ function scheduleFollowUp(sock, userId) {
 }
 
 // SEND CLEAR TEXT MENU WITH NUMBERED CHOICES (100% VISIBLE ON ALL PHONES)
-async function sendServiceMenu(sock, userId, lang, firstName) {
+async function sendServiceMenu(sock, userId, lang, firstName, city) {
     const isKN = lang === 'kn';
-    const textMenu = isKN
-        ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ಬಾಗಲಕೋಟೆಯ FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏\n(0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು)\n\nದಯವಿಟ್ಟು ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 13), ಅಥವಾ ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ:\n\n1️⃣ ಪುರೋಹಿತರು & ಪೂಜೆಗಳು (₹501 ರಿಂದ) 🙏\n2️⃣ ಮಿಕ್ಸಿ & ಫ್ಯಾನ್ ರಿಪೇರಿ (₹79 ರಿಂದ) 🔧\n3️⃣ ಪ್ಲಂಬರ್ (₹99 ರಿಂದ) 💧\n4️⃣ ಎಲೆಕ್ಟ್ರಿಷಿಯನ್ (₹79 ರಿಂದ) ⚡\n5️⃣ ಮಹಿಳೆಯರ ಬ್ಯೂಟಿಷಿಯನ್ (₹149 ರಿಂದ) ✂️\n6️⃣ ಪುರುಷರ ಹೇರ್‌ಕಟ್ (₹99 ರಿಂದ) 💈\n7️⃣ ಸೆಪ್ಟಿಕ್ ಟ್ಯಾಂಕ್ ಕ್ಲೀನಿಂಗ್ (₹499 ರಿಂದ) 🚜\n8️⃣ ವೇದಿಕೆ ಅಲಂಕಾರ (₹999 ರಿಂದ) 🎈\n9️⃣ ಅಡುಗೆ & ಕ್ಯಾಟರಿಂಗ್ ಕಾರ್ಮಿಕರು (₹499 ರಿಂದ) 🍲\n🔟 ಕಾರ್ಪೆಂಟರ್ (ಮರಗೆಲಸ) (₹149 ರಿಂದ) 🪚\n1️⃣1️⃣ ಮನೆ ಪಾಠ (ಟ್ಯೂಷನ್) (₹499/ತಿಂಗಳಿಗೆ) 📚\n1️⃣2️⃣ ಪೇಂಟಿಂಗ್ & ಗਾਰੇ ಕೆಲಸ (₹299 ರಿಂದ) 🎨\n1️⃣3️⃣ ಇತರೆ (ಪಟ್ಟಿಯಲ್ಲಿ ಇಲ್ಲ) 📞\n\n*(ಉದಾಹರಣೆಗೆ "3" ಅಥವಾ "ಪ್ಲಂಬರ್" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
-        : `Hi ${firstName}! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Home Services)\n\nPlease reply with a service number (1 to 13), or tap the button below:\n\n1️⃣ Purohit & Pujas (from ₹501) 🙏\n2️⃣ Mixie & Fan Repair (from ₹79) 🔧\n3️⃣ Plumber (from ₹99) 💧\n4️⃣ Electrician (from ₹79) ⚡\n5️⃣ Beautician (Women) (from ₹149) ✂️\n6️⃣ Men Haircut & Grooming (from ₹99) 💈\n7️⃣ Septic Tank Cleaning (from ₹499) 🚜\n8️⃣ Event & Stage Decoration (from ₹999) 🎈\n9️⃣ Catering & Cooking Labour (from ₹499) 🍲\n🔟 Carpenter & Woodwork (from ₹149) 🪚\n1️⃣1️⃣ Home Tutors (from ₹499/mo) 📚\n1️⃣2️⃣ Civil Labour & Painting (from ₹299) 🎨\n1️⃣3️⃣ Others, Not Listed 📞\n\n*(For example, reply with "3" or "Plumber")*`;
-
+    const cityLabel = resolveCity(city);
     const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
+    const menuLines = Object.entries(servicesDict)
+        .map(([key, svc]) => `${key}️⃣ ${svc.name} (${svc.price})`)
+        .join('\n');
+
+    const textMenu = isKN
+        ? `ನಮಸ್ಕಾರ ${firstName} ಅವರೇ! ${cityLabel} FixMaadi ಗೆ ಸುಸ್ವಾಗತ 🙏\n(0% ಕಮಿಷನ್ ಗೃಹ ಸೇವೆಗಳು)\n\nದಯವಿಟ್ಟು ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 9), ಅಥವಾ ಕೆಳಗಿನ ಬಟನ್ ಒತ್ತಿ:\n\n${menuLines}\n\n*(ಉದಾಹರಣೆಗೆ "1" ಅಥವಾ "ಪ್ಲಂಬರ್" ಎಂದು ಟೈಪ್ ಮಾಡಿ)*`
+        : `Hi ${firstName}! Welcome to *FixMaadi ${cityLabel}* 🙏\n(0% Commission Home Services)\n\nPlease reply with a service number (1 to 9), or tap the button below:\n\n${menuLines}\n\n*(For example, reply with "1" or "Plumber")*`;
+
     const allRows = Object.entries(servicesDict).map(([key, svc]) => ({
         title: svc.name,
         rowId: key,
@@ -1182,12 +1215,12 @@ async function sendServiceMenu(sock, userId, lang, firstName) {
     try {
         await sock.sendMessage(userId, {
             text: textMenu,
-            footer: 'FixMaadi Bagalkot',
+            footer: `FixMaadi ${cityLabel}`,
             title: isKN ? 'ಸೇವೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ' : 'Select a Service',
             buttonText: isKN ? 'ಸೇವೆ ಆಯ್ಕೆಮಾಡಿ' : 'Choose a Service',
             sections: [
-                { title: isKN ? 'ಸೇವೆಗಳು 1-6' : 'Services 1-6', rows: allRows.slice(0, 6) },
-                { title: isKN ? 'ಸೇವೆಗಳು 7-13' : 'Services 7-13', rows: allRows.slice(6, 13) }
+                { title: isKN ? 'ಸೇವೆಗಳು 1-5' : 'Services 1-5', rows: allRows.slice(0, 5) },
+                { title: isKN ? 'ಸೇವೆಗಳು 6-9' : 'Services 6-9', rows: allRows.slice(5, 9) }
             ]
         });
     } catch (e) {
@@ -1291,6 +1324,7 @@ async function startBot() {
                         userStates[userId].fullName = knownCustomer.name;
                         userStates[userId].firstName = knownCustomer.firstName || knownCustomer.name.split(' ')[0];
                         userStates[userId].lang = knownCustomer.lang || 'kn';
+                        userStates[userId].city = resolveCity(knownCustomer.city);
                         userStates[userId].lastLocation = knownCustomer.lastLocation;
 
                         const isKN = userStates[userId].lang === 'kn';
@@ -1308,7 +1342,7 @@ async function startBot() {
                         } else {
                             const repeatPrompt = isKN
                                 ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ${userStates[userId].firstName} ಆಗಿ ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಹೊಸ ಹೆಸರು / ಭಾಷೆ ಬದಲಾಯಿಸಿ - Reply "2"`
-                                : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi Bagalkot* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${userStates[userId].firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
+                                : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi ${userStates[userId].city}* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${userStates[userId].firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
 
                             await sock.sendMessage(userId, { text: repeatPrompt });
                             userStates[userId].step = 'AWAITING_REPEAT_CONFIRM';
@@ -1317,14 +1351,34 @@ async function startBot() {
                             scheduleFollowUp(sock, userId);
                         }
                     } else {
-                        const langPrompt = `Namaskara! Welcome to *FixMaadi Bagalkot* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call our Field Operations Team: ${BHUVAN_PHONE})*`;
+                        const cityPrompt = `Namaskara! Welcome to *FixMaadi* 🙏\n(0% Commission Home Services)\n\nWhich city are you in? / ನೀವು ಯಾವ ಊರಿನಲ್ಲಿದ್ದೀರಿ?\n\n1️⃣ Bagalkot (ಬಾಗಲಕೋಟೆ)\n2️⃣ Hospete (ಹೊಸಪೇಟೆ)\n\n*(Reply with a number / ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ)*`;
 
-                        await sock.sendMessage(userId, { text: langPrompt });
-                        userStates[userId].step = 'AWAITING_LANG';
+                        await sock.sendMessage(userId, { text: cityPrompt });
+                        userStates[userId].step = 'AWAITING_CITY';
                         saveDatabaseToDisk();
-                        logMessage(`📤 Sent New Customer Language Selection to ${senderPhone}`);
+                        logMessage(`📤 Sent New Customer City Selection to ${senderPhone}`);
                         scheduleFollowUp(sock, userId);
                     }
+                }
+                else if (currentState.step === 'AWAITING_CITY') {
+                    if (lowerText === '1' || lowerText.includes('bagalkot') || lowerText.includes('ಬಾಗಲಕೋಟೆ') || lowerText.includes('1️⃣')) {
+                        userStates[userId].city = 'Bagalkot';
+                    } else if (lowerText === '2' || lowerText.includes('hospete') || lowerText.includes('hospet') || lowerText.includes('hosapete') || lowerText.includes('ಹೊಸಪೇಟೆ') || lowerText.includes('2️⃣')) {
+                        userStates[userId].city = 'Hospete';
+                    } else {
+                        await sock.sendMessage(userId, { text: `Please reply "1" for Bagalkot or "2" for Hospete / ಬಾಗಲಕೋಟೆಗೆ "1" ಅಥವಾ ಹೊಸಪೇಟೆಗೆ "2" ಕಳುಹಿಸಿ.` });
+                        scheduleFollowUp(sock, userId);
+                        return;
+                    }
+
+                    saveDatabaseToDisk();
+                    const langPrompt = `Namaskara! Welcome to *FixMaadi ${userStates[userId].city}* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call our Field Operations Team: ${BHUVAN_PHONE})*`;
+
+                    await sock.sendMessage(userId, { text: langPrompt });
+                    userStates[userId].step = 'AWAITING_LANG';
+                    saveDatabaseToDisk();
+                    logMessage(`📤 Sent New Customer Language Selection to ${senderPhone} (${userStates[userId].city})`);
+                    scheduleFollowUp(sock, userId);
                 }
                 else if (currentState.step === 'AWAITING_FEEDBACK_RATING') {
                     const isKN = currentState.lang === 'kn';
@@ -1347,9 +1401,10 @@ async function startBot() {
                         applyProviderRating(booking, score, reviewComment);
                     }
 
+                    const feedbackCity = resolveCity(booking && booking.city);
                     const thankMsg = isKN
-                        ? `🙏 ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು! ನೀವು ${score} / 5 ಸ್ಟಾರ್ ನೀಡಿದ್ದೀರಿ. ಇದು ನಮಗೆ ಬಾಗಲಕೋಟೆಯಲ್ಲಿ ಉತ್ತಮ ಗುಣಮಟ್ಟ ಕಾಪಾಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ!`
-                        : `🙏 Thank you for your feedback! You rated us ${score} / 5 stars. This helps us keep quality high across Bagalkot!`;
+                        ? `🙏 ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆಗೆ ಧನ್ಯವಾದಗಳು! ನೀವು ${score} / 5 ಸ್ಟಾರ್ ನೀಡಿದ್ದೀರಿ. ಇದು ನಮಗೆ ${feedbackCity}ದಲ್ಲಿ ಉತ್ತಮ ಗುಣಮಟ್ಟ ಕಾಪಾಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ!`
+                        : `🙏 Thank you for your feedback! You rated us ${score} / 5 stars. This helps us keep quality high across ${feedbackCity}!`;
                     await sock.sendMessage(userId, { text: thankMsg });
                     delete userStates[userId];
                     saveDatabaseToDisk();
@@ -1372,7 +1427,7 @@ async function startBot() {
                             ? `ಮತ್ತೆ ಸುಸ್ವಾಗತ ${firstName} ಅವರೇ! 🙏\n\n`
                             : `Welcome back again, ${firstName}! 🙏\n\n`;
                         await sock.sendMessage(userId, { text: welcomeAgain });
-                        await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, firstName, userStates[userId].city);
                     } else {
                         const retryMsg = isKN
                             ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು "1" ಅಥವಾ "2" ಕಳುಹಿಸಿ:`
@@ -1386,7 +1441,7 @@ async function startBot() {
                         logMessage(`✅ Repeat Customer ${currentState.firstName} confirmed identity`);
                         userStates[userId].step = 'AWAITING_SERVICE';
                         saveDatabaseToDisk();
-                        await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName);
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName, userStates[userId].city);
                     } else {
                         logMessage(`🔄 Customer requested new name/language flow`);
                         const langPrompt = `Please select your language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"`;
@@ -1409,7 +1464,7 @@ async function startBot() {
                     if (userStates[userId].firstName) {
                         userStates[userId].step = 'AWAITING_SERVICE';
                         saveDatabaseToDisk();
-                        await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName);
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName, userStates[userId].city);
                     } else {
                         userStates[userId].step = 'AWAITING_NAME';
                         saveDatabaseToDisk();
@@ -1443,7 +1498,7 @@ async function startBot() {
 
                     userStates[userId].step = 'AWAITING_SERVICE';
                     saveDatabaseToDisk();
-                    await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
+                    await sendServiceMenu(sock, userId, userStates[userId].lang, firstName, userStates[userId].city);
                 }
                 else if (currentState.step === 'AWAITING_SERVICE') {
                     const isKN = currentState.lang === 'kn';
@@ -1467,7 +1522,7 @@ async function startBot() {
                             ? `❌ ಕ್ಷಮಿಸಿ, ಅದು ಸರಿಯಾದ ಆಯ್ಕೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಇನ್‌ಪುಟ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ 🙏`
                             : `❌ Sorry, that's not a valid option. Please check your input and try again 🙏`;
                         await sock.sendMessage(userId, { text: invalidMsg });
-                        await sendServiceMenu(sock, userId, userStates[userId].lang, firstName);
+                        await sendServiceMenu(sock, userId, userStates[userId].lang, firstName, userStates[userId].city);
                         scheduleFollowUp(sock, userId);
                     }
                 }
@@ -1589,8 +1644,8 @@ async function startBot() {
                         let askMsg;
                         if (field === '1') {
                             askMsg = isKN
-                                ? `ಹೊಸ ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 13):`
-                                : `Please send the new service number (1 to 13):`;
+                                ? `ಹೊಸ ಸೇವೆಯ ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ (1 ರಿಂದ 9):`
+                                : `Please send the new service number (1 to 9):`;
                         } else if (field === '2') {
                             askMsg = isKN
                                 ? `ಹೊಸ *ಏರಿಯಾ/ವಿಳಾಸ* ಮತ್ತು *ಸಮಯ*ವನ್ನು ಟೈಪ್ ಮಾಡಿ:`
@@ -1629,7 +1684,7 @@ async function startBot() {
                         const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
                         const selected = matchService(text, servicesDict);
                         if (!selected) {
-                            await sock.sendMessage(userId, { text: isKN ? `❌ ಸರಿಯಾದ ಸೇವಾ ಸಂಖ್ಯೆ (1-12) ಕಳುಹಿಸಿ:` : `❌ Please send a valid service number (1-12):` });
+                            await sock.sendMessage(userId, { text: isKN ? `❌ ಸರಿಯಾದ ಸೇವಾ ಸಂಖ್ಯೆ (1-9) ಕಳುಹಿಸಿ:` : `❌ Please send a valid service number (1-9):` });
                             scheduleFollowUp(sock, userId);
                             return;
                         }
@@ -1680,6 +1735,7 @@ async function startBot() {
                         fullName,
                         firstName,
                         lang: currentState.lang || 'kn',
+                        city: resolveCity(currentState.city),
                         service: currentState.service,
                         location: currentState.confirmedLocation,
                         callingPhone: currentState.callingPhone || senderPhone,
