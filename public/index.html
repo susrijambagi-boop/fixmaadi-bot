@@ -89,6 +89,8 @@
         .status-In-Progress { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
         .status-Completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .status-Cancelled { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .status-Available { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .status-Unverified { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
         .progress-bar-container { background: #e2e8f0; border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin: 8px 0; }
         .progress-bar-fill { background: var(--primary); height: 100%; border-radius: 10px; transition: width 0.3s ease; }
@@ -300,7 +302,7 @@
                     <div class="card-title">
                         <span>👥 Verified Local Service Providers Roster</span>
                         <div style="display: flex; gap: 10px;">
-                            <a href="/api/download?file=bagalkot_vendors_template.csv" class="btn-secondary">📄 Download Excel/CSV Template</a>
+                            <a href="/api/download?file=fixmaadi_vendors_template.csv" class="btn-secondary">📄 Download Excel/CSV Template</a>
                             <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="handleCsvUpload(event)" />
                             <button class="btn-secondary" onclick="document.getElementById('csv-file-input').click()">📥 Bulk CSV Upload</button>
                         </div>
@@ -650,7 +652,8 @@
 
             let html = '<table><thead><tr><th>Booking ID</th><th>Customer Name & Phone</th><th>Service Requested</th><th>Area & Address</th><th>Assigned Technician</th><th>Actions</th></tr></thead><tbody>';
             pending.forEach(b => {
-                const matchedOptions = vendors.map(v => `<option value="${v.name}" ${b.assignedVendor === v.name ? 'selected' : ''}>${v.name} (${v.area} - ${v.rating}★)</option>`).join('');
+                const assignableVendors = vendors.filter(v => v.status === 'Available' || v.name === b.assignedVendor);
+                const matchedOptions = assignableVendors.map(v => `<option value="${v.name}" ${b.assignedVendor === v.name ? 'selected' : ''}>${v.name} (${v.area} - ${v.rating}★)${v.status !== 'Available' ? ' — ' + v.status : ''}</option>`).join('');
                 html += `
                     <tr>
                         <td><strong>${b.id}</strong><br><span style="font-size:11px; color:var(--text-muted);">${b.timestamp}</span></td>
@@ -1123,6 +1126,26 @@
                 loadData();
             } else {
                 alert('Error: ' + (data.error || 'Could not add provider.'));
+            }
+        }
+
+        async function handleCsvUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('csvFile', file);
+            formData.append('city', currentCity);
+
+            const res = await fetch('/api/vendors/bulk-csv', { method: 'POST', body: formData });
+            const data = await res.json();
+            event.target.value = '';
+
+            if (data.success) {
+                alert(`✅ Imported ${data.added} provider(s) into ${currentCity}${data.skipped ? ` (${data.skipped} row(s) skipped — missing name/service/phone)` : ''}.\n\nA CSV can't carry photos, so they're marked "Unverified" and can't be dispatched to a customer yet. Once you have their photo and Aadhaar, delete the "Unverified" entry and re-add them properly through the form above.`);
+                loadData();
+            } else {
+                alert('Error: ' + (data.error || 'Could not import CSV.'));
             }
         }
 

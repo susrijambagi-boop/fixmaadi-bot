@@ -125,6 +125,14 @@ const upload = multer({
     fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype))
 });
 
+// Bulk vendor CSV import — kept in memory, never written to disk, since we
+// only need to parse the text and discard the upload once rows are read.
+const uploadCsv = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => cb(null, file.mimetype === 'text/csv' || /\.csv$/i.test(file.originalname || ''))
+});
+
 // RESEND API CLIENT INTEGRATION VIA SECURE ENV VARIABLE
 const resendApiKey = process.env.RESEND_API_KEY;
 if (!resendApiKey) {
@@ -775,6 +783,66 @@ app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 
     res.json({ success: true, vendor: newVendor });
 });
 
+// BULK VENDOR IMPORT VIA CSV — roster info only. A CSV can't carry photo or
+// Aadhaar images, so imported providers always land with status
+// 'Unverified' (never 'Available', regardless of what the CSV says) —
+// there's no edit-with-photo UI yet, so the roster's real path to "live"
+// is deleting the Unverified stub and re-adding through the manual form
+// once ID documents are in hand. /api/assign's AUTO_ASSIGN and the
+// dispatch dropdown both require 'Available', so an unverified import
+// can't reach a customer by accident in the meantime.
+app.post('/api/vendors/bulk-csv', uploadCsv.single('csvFile'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No CSV file uploaded' });
+
+    const defaultCity = resolveCity(req.body.city);
+    const rows = parseCsvRows(req.file.buffer.toString('utf8'));
+    if (rows.length < 2) return res.status(400).json({ error: 'CSV has no data rows' });
+
+    const header = rows[0].map(h => h.trim().toLowerCase());
+    const col = (label) => header.indexOf(label);
+    const nameCol = col('name');
+    const serviceCol = col('service');
+    const phoneCol = col('phone');
+    const areaCol = col('area');
+    const cityCol = col('city');
+    const ratingCol = col('rating');
+
+    if (nameCol === -1 || serviceCol === -1 || phoneCol === -1) {
+        return res.status(400).json({ error: 'CSV must have name, service, and phone columns' });
+    }
+
+    const added = [];
+    let skipped = 0;
+    for (const r of rows.slice(1)) {
+        const name = (r[nameCol] || '').trim();
+        const service = (r[serviceCol] || '').trim();
+        const phone = (r[phoneCol] || '').trim();
+        if (!name || !service || !phone) { skipped++; continue; }
+
+        const parsedRating = ratingCol !== -1 ? parseFloat(r[ratingCol]) : NaN;
+        const newVendor = {
+            id: 'V' + Math.floor(100 + Math.random() * 900),
+            name, service, phone,
+            city: (cityCol !== -1 && r[cityCol]) ? resolveCity(r[cityCol].trim()) : defaultCity,
+            area: (areaCol !== -1 && r[areaCol]) ? r[areaCol].trim() : '',
+            availableTime: '8:00 AM - 8:00 PM',
+            rating: isNaN(parsedRating) ? 4.8 : parsedRating,
+            ratingCount: 1,
+            status: 'Unverified',
+            delays: 0,
+            leavesCount: 0,
+            photoUrl: null,
+            aadhaarUrl: null
+        };
+        vendors.unshift(newVendor);
+        added.push(newVendor);
+    }
+
+    if (added.length > 0) saveDatabaseToDisk();
+    logMessage(`📥 Bulk CSV import: added ${added.length} providers as Unverified (${skipped} rows skipped)`);
+    res.json({ success: true, added: added.length, skipped });
+});
+
 // EDIT EXISTING VENDOR
 app.put('/api/vendors/:id', (req, res) => {
     const id = req.params.id;
@@ -972,6 +1040,42 @@ function extractText(msg) {
     ).trim();
 }
 
+// Minimal RFC4180-ish CSV parser — handles quoted fields with embedded
+// commas/newlines, which a plain split(',') would break on.
+function parseCsvRows(text) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+    const chars = text.replace(/\r\n/g, '\n');
+    for (let i = 0; i < chars.length; i++) {
+        const c = chars[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (chars[i + 1] === '"') { field += '"'; i++; }
+                else inQuotes = false;
+            } else field += c;
+        } else if (c === '"') {
+            inQuotes = true;
+        } else if (c === ',') {
+            row.push(field);
+            field = '';
+        } else if (c === '\n') {
+            row.push(field);
+            rows.push(row);
+            row = [];
+            field = '';
+        } else {
+            field += c;
+        }
+    }
+    if (field.length > 0 || row.length > 0) {
+        row.push(field);
+        rows.push(row);
+    }
+    return rows.filter(r => r.some(f => f.trim() !== ''));
+}
+
 function matchService(text, servicesDict) {
     const clean = text.toLowerCase().trim();
     if (clean.startsWith('svc_')) {
@@ -1011,6 +1115,24 @@ function isValidIndianMobile(text) {
 function normalizeIndianMobile(text) {
     const digits = text.replace(/[^0-9]/g, '').replace(/^91/, '');
     return '+91 ' + digits;
+}
+
+function getCityPrompt() {
+    return `Namaskara! Welcome to *FixMaadi* 🙏\n(0% Commission Home Services)\n\nWhere are you from? / ನೀವು ಎಲ್ಲಿಂದ?\n\n1️⃣ Bagalkot (ಬಾಗಲಕೋಟೆ)\n2️⃣ Hospete (ಹೊಸಪೇಟೆ)\n\n*(Reply with a number, or just type your city/area / ಸಂಖ್ಯೆ ಕಳುಹಿಸಿ ಅಥವಾ ನಿಮ್ಮ ಊರಿನ ಹೆಸರು ಟೈಪ್ ಮಾಡಿ)*`;
+}
+
+// Filters a free-text "where are you from" answer down to Bagalkot or
+// Hospete — accepts the quick-reply numbers, the city name in either
+// language, common misspellings, and nearby landmarks people actually
+// say instead of the city name (e.g. Hampi is right next to Hospete).
+function detectCityFromText(lowerText) {
+    if (lowerText === '1' || lowerText.includes('1️⃣') || lowerText.includes('bagalkot') || lowerText.includes('bagalkote') || lowerText.includes('ಬಾಗಲಕೋಟೆ')) {
+        return 'Bagalkot';
+    }
+    if (lowerText === '2' || lowerText.includes('2️⃣') || lowerText.includes('hospete') || lowerText.includes('hospet') || lowerText.includes('hosapete') || lowerText.includes('hampi') || lowerText.includes('ಹೊಸಪೇಟೆ') || lowerText.includes('ಹಂಪಿ')) {
+        return 'Hospete';
+    }
+    return null;
 }
 
 function getVisitChargeNote(isKN) {
@@ -1341,8 +1463,8 @@ async function startBot() {
                             scheduleFollowUp(sock, userId);
                         } else {
                             const repeatPrompt = isKN
-                                ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ${userStates[userId].firstName} ಆಗಿ ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಹೊಸ ಹೆಸರು / ಭಾಷೆ ಬದಲಾಯಿಸಿ - Reply "2"`
-                                : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi ${userStates[userId].city}* 🙏\n\nAre you looking for service as *${knownCustomer.name}* today?\n\n1️⃣ Yes, continue as ${userStates[userId].firstName} - Reply "1"\n2️⃣ Change Name / Language - Reply "2"`;
+                                ? `ನಮಸ್ಕಾರ ${userStates[userId].firstName} ಅವರೇ! FixMaadi ಗೆ ಪುನಃ ಸುಸ್ವಾಗತ 🙏\n\nನೀವು *${knownCustomer.name}* ಅವರಾಗಿ ${userStates[userId].city} ನಿಂದ ಸೇವೆಯನ್ನು ಕಾಯ್ದಿರಿಸಲು ಬಯಸುತ್ತೀರಾ?\n\n1️⃣ ಹೌದು, ಮುಂದುವರಿಯಿರಿ - Reply "1"\n2️⃣ ಬೇರೆ ಊರು / ಭಾಷೆ - Reply "2"`
+                                : `Namaskara ${userStates[userId].firstName}! Welcome back to *FixMaadi ${userStates[userId].city}* 🙏\n\nAre you looking for service as *${knownCustomer.name}* in ${userStates[userId].city} today?\n\n1️⃣ Yes, continue - Reply "1"\n2️⃣ Different city / language - Reply "2"`;
 
                             await sock.sendMessage(userId, { text: repeatPrompt });
                             userStates[userId].step = 'AWAITING_REPEAT_CONFIRM';
@@ -1351,9 +1473,7 @@ async function startBot() {
                             scheduleFollowUp(sock, userId);
                         }
                     } else {
-                        const cityPrompt = `Namaskara! Welcome to *FixMaadi* 🙏\n(0% Commission Home Services)\n\nWhich city are you in? / ನೀವು ಯಾವ ಊರಿನಲ್ಲಿದ್ದೀರಿ?\n\n1️⃣ Bagalkot (ಬಾಗಲಕೋಟೆ)\n2️⃣ Hospete (ಹೊಸಪೇಟೆ)\n\n*(Reply with a number / ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ)*`;
-
-                        await sock.sendMessage(userId, { text: cityPrompt });
+                        await sock.sendMessage(userId, { text: getCityPrompt() });
                         userStates[userId].step = 'AWAITING_CITY';
                         saveDatabaseToDisk();
                         logMessage(`📤 Sent New Customer City Selection to ${senderPhone}`);
@@ -1361,15 +1481,13 @@ async function startBot() {
                     }
                 }
                 else if (currentState.step === 'AWAITING_CITY') {
-                    if (lowerText === '1' || lowerText.includes('bagalkot') || lowerText.includes('ಬಾಗಲಕೋಟೆ') || lowerText.includes('1️⃣')) {
-                        userStates[userId].city = 'Bagalkot';
-                    } else if (lowerText === '2' || lowerText.includes('hospete') || lowerText.includes('hospet') || lowerText.includes('hosapete') || lowerText.includes('ಹೊಸಪೇಟೆ') || lowerText.includes('2️⃣')) {
-                        userStates[userId].city = 'Hospete';
-                    } else {
-                        await sock.sendMessage(userId, { text: `Please reply "1" for Bagalkot or "2" for Hospete / ಬಾಗಲಕೋಟೆಗೆ "1" ಅಥವಾ ಹೊಸಪೇಟೆಗೆ "2" ಕಳುಹಿಸಿ.` });
+                    const detectedCity = detectCityFromText(lowerText);
+                    if (!detectedCity) {
+                        await sock.sendMessage(userId, { text: `Sorry, I didn't catch that — please reply "1" for Bagalkot or "2" for Hospete (or just type your city/area name) / ಕ್ಷಮಿಸಿ, ದಯವಿಟ್ಟು ಬಾಗಲಕೋಟೆಗೆ "1" ಅಥವಾ ಹೊಸಪೇಟೆಗೆ "2" ಕಳುಹಿಸಿ.` });
                         scheduleFollowUp(sock, userId);
                         return;
                     }
+                    userStates[userId].city = detectedCity;
 
                     saveDatabaseToDisk();
                     const langPrompt = `Namaskara! Welcome to *FixMaadi ${userStates[userId].city}* 🙏\n(0% Commission Local Community Network)\n\nPlease reply with a number to select language / ದಯವಿಟ್ಟು ಸಂಖ್ಯೆಯನ್ನು ಕಳುಹಿಸಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"\n\n*(For help/queries, call our Field Operations Team: ${BHUVAN_PHONE})*`;
@@ -1443,10 +1561,9 @@ async function startBot() {
                         saveDatabaseToDisk();
                         await sendServiceMenu(sock, userId, userStates[userId].lang, userStates[userId].firstName, userStates[userId].city);
                     } else {
-                        logMessage(`🔄 Customer requested new name/language flow`);
-                        const langPrompt = `Please select your language / ದಯವಿಟ್ಟು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ:\n\n1️⃣ ಕನ್ನಡ (Kannada) - Reply "1"\n2️⃣ English - Reply "2"`;
-                        await sock.sendMessage(userId, { text: langPrompt });
-                        userStates[userId].step = 'AWAITING_LANG';
+                        logMessage(`🔄 Customer requested new city/language flow`);
+                        await sock.sendMessage(userId, { text: getCityPrompt() });
+                        userStates[userId].step = 'AWAITING_CITY';
                         saveDatabaseToDisk();
                     }
                 }
