@@ -88,7 +88,7 @@ setInterval(() => {
 app.get('/api/download-branding-kit', (req, res) => {
     const archiver = require('archiver');
     const files = [
-        'branding_kit.md',
+        'branding_kit.pdf',
         'fixmaadi_official_logo.jpg',
         'fixmaadi_logo_light_1786549092449.jpg',
         'fixmaadi_logo_dark_1786549114784.jpg',
@@ -152,6 +152,9 @@ app.get('/api/download', (req, res) => {
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         } else if (filename.endsWith('.csv')) {
             res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        } else if (filename.endsWith('.pdf')) {
+            res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         } else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg')) {
             res.setHeader('Content-Type', 'image/jpeg');
@@ -220,19 +223,19 @@ function getLiveDocumentsList() {
         { filename: 'fixmaadi_social_dp_1786549137508.jpg', title: '🖼️ Logo — Social Profile Picture (pre-cropped square)', description: 'Instagram/WhatsApp Business profile picture, ready to upload.' },
         { filename: 'fixmaadi_minimal_poster_1786547765168.jpg', title: '🖼️ Minimal Poster — Print-Ready Base', description: 'Base artwork for vinyl stickers, kirana posters, auto-rickshaw banners.' },
         { filename: 'fixmaadi_instagram_post_1786547604296.jpg', title: '🖼️ Sample Instagram Post Artwork', description: 'Reference Instagram post visual.' },
-        { filename: 'branding_kit.md', title: '🎨 FixMaadi Master Brand Identity Kit (guide)', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs. The 5 image files above are the actual logo/poster assets this guide refers to — download them separately.' },
-        { filename: 'master_operational_architecture.md', title: '🏢 70+ Virtual Company Structure', description: '7 Department breakdowns, headcount, leads, and Tier 2/3 UC gap analysis.' },
-        { filename: 'instagram_content_calendar.md', title: '📸 Instagram Launch Campaign Calendar', description: '10 Launch post concepts, Kannada captions, visual guidelines, and hashtags.' },
-        { filename: 'INSTAGRAM_QUICKSTART.md', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
-        { filename: 'EMAIL_SMTP_SETUP.md', title: '📧 Direct Email Inbox SMTP Setup Guide', description: 'Guide for sending real daily 6 AM & 8 PM report emails directly to vinodachere@gmail.com.' },
-        { filename: 'CLOUD_DEPLOYMENT_STEPS.md', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
-        { filename: 'whatsapp_community_playbook.md', title: '💬 WhatsApp Group Penetration Playbook', description: 'High-converting Kannada broadcast templates for family, kitty party & RWA groups.' },
-        { filename: 'vendor_onboarding.md', title: '🤝 Vendor Onboarding Standard Operating Procedure', description: 'SOP for Bhuvan to physically verify and onboard local Bagalkot service providers.' },
-        { filename: 'cloud_deployment_guide.md', title: '☁️ 24/7 Cloud Deployment Handoff Guide', description: 'Docker & Render.com 1-click free cloud hosting blueprint.' },
-        { filename: 'walkthrough.md', title: '🚀 Master Project Launch Walkthrough', description: 'Complete summary of all built systems, links, and operational status.' },
-        { filename: 'business_strategy_plan.md', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' },
-        { filename: 'ARCHITECTURE.md', title: '🗺️ Technical Architecture & Stack Tree Map', description: 'System diagram, full tech stack, data flow, and known architectural constraints.' },
-        { filename: 'MAINTENANCE_CALENDAR.md', title: '📅 Maintenance Calendar', description: 'Weekly/monthly/quarterly checklist — API keys, billing, data cleanup, health scans.' },
+        { filename: 'branding_kit.pdf', title: '🎨 FixMaadi Master Brand Identity Kit (guide)', description: 'Single logo guidelines, HEX colors, typography scale & auto sticker specs. The 5 image files above are the actual logo/poster assets this guide refers to — download them separately.' },
+        { filename: 'master_operational_architecture.pdf', title: '🏢 70+ Virtual Company Structure', description: '7 Department breakdowns, headcount, leads, and Tier 2/3 UC gap analysis.' },
+        { filename: 'instagram_content_calendar.pdf', title: '📸 Instagram Launch Campaign Calendar', description: '10 Launch post concepts, Kannada captions, visual guidelines, and hashtags.' },
+        { filename: 'INSTAGRAM_QUICKSTART.pdf', title: '📸 Instagram Account Registration Quickstart', description: '60-second Instagram registration guide for buildfixmaadi@gmail.com.' },
+        { filename: 'EMAIL_SMTP_SETUP.pdf', title: '📧 Direct Email Inbox SMTP Setup Guide', description: 'Guide for sending real daily 6 AM & 8 PM report emails directly to vinodachere@gmail.com.' },
+        { filename: 'CLOUD_DEPLOYMENT_STEPS.pdf', title: '☁️ Render.com 1-Click 24/7 Cloud Deployment Guide', description: 'Complete 1-click cloud deployment guide for running 24/7 even when laptop is off.' },
+        { filename: 'whatsapp_community_playbook.pdf', title: '💬 WhatsApp Group Penetration Playbook', description: 'High-converting Kannada broadcast templates for family, kitty party & RWA groups.' },
+        { filename: 'vendor_onboarding.pdf', title: '🤝 Vendor Onboarding Standard Operating Procedure', description: 'SOP for Bhuvan to physically verify and onboard local Bagalkot service providers.' },
+        { filename: 'cloud_deployment_guide.pdf', title: '☁️ 24/7 Cloud Deployment Handoff Guide', description: 'Docker & Render.com 1-click free cloud hosting blueprint.' },
+        { filename: 'walkthrough.pdf', title: '🚀 Master Project Launch Walkthrough', description: 'Complete summary of all built systems, links, and operational status.' },
+        { filename: 'business_strategy_plan.pdf', title: '📈 FixMaadi Business Strategy & Monetization Plan', description: 'Zero-commission model, revenue streams, referral mechanics, and Bagalkot expansion strategy.' },
+        { filename: 'ARCHITECTURE.pdf', title: '🗺️ Technical Architecture & Stack Tree Map', description: 'System diagram, full tech stack, data flow, and known architectural constraints.' },
+        { filename: 'MAINTENANCE_CALENDAR.pdf', title: '📅 Maintenance Calendar', description: 'Weekly/monthly/quarterly checklist — API keys, billing, data cleanup, health scans.' },
         { filename: 'fixmaadi_led_screen_ad.png', title: '📺 LED Screen Ad (1920x1080)', description: 'Static ad for Bagalkot LED display screens. WhatsApp QR + phone number included.' },
         { filename: 'fixmaadi_pamphlet_front_english.png', title: '📄 Pamphlet — Front (English)', description: 'Print-ready pamphlet front side, English. Pair with the Kannada back side below.' },
         { filename: 'fixmaadi_pamphlet_back_kannada.png', title: '📄 Pamphlet — Back (Kannada)', description: 'Print-ready pamphlet back side, Kannada. Print both sides of the same sheet.' },
@@ -836,6 +839,18 @@ app.get('/api/health-scan', (req, res) => {
 });
 
 // LANDING PAGE: "BRING FIXMAADI TO MY CITY" REQUEST
+// DELETE A CUSTOMER BOOKING PERMANENTLY (admin dashboard "Delete" action)
+app.delete('/api/bookings/:id', (req, res) => {
+    const id = req.params.id;
+    const existed = bookings.some(b => b.id === id);
+    if (!existed) return res.status(404).json({ error: 'Booking not found' });
+
+    bookings = bookings.filter(b => b.id !== id);
+    saveDatabaseToDisk();
+    logMessage(`🗑️ Booking ${id} permanently deleted from dashboard`);
+    res.json({ success: true });
+});
+
 app.post('/api/city-request', (req, res) => {
     const { name, phone, city } = req.body;
     if (!name || !phone || !city) return res.status(400).json({ error: 'Name, phone, and city are required' });
@@ -1179,7 +1194,12 @@ async function startBot() {
 
                 const text = extractText(msg);
                 const locationMsg = msg.message?.locationMessage || msg.message?.ephemeralMessage?.message?.locationMessage || null;
-                const senderPhone = '+' + userId.replace(/[^0-9]/g, '');
+                // WhatsApp's privacy layer can send remoteJid as an opaque @lid
+                // (Linked ID) instead of the real phone-number JID — those digits
+                // are NOT a phone number. remoteJidAlt carries the actual
+                // phone-number JID when Baileys has it; prefer that for storage.
+                const phoneJid = (userId.endsWith('@lid') && msg.key.remoteJidAlt) ? msg.key.remoteJidAlt : userId;
+                const senderPhone = '+' + phoneJid.replace(/[^0-9]/g, '');
                 logMessage(`📩 Message from ${senderPhone}: "${text || (locationMsg ? '[Location Pin]' : '[Media]')}"`);
 
                 if (!text && !locationMsg) continue;

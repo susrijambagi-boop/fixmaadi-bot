@@ -284,6 +284,7 @@
                     <div class="card-title">
                         <span>👥 Verified Local Service Providers Roster</span>
                         <div style="display: flex; gap: 10px;">
+                            <a href="/api/download?file=bagalkot_vendors_template.csv" class="btn-secondary">📄 Download Excel/CSV Template</a>
                             <input type="file" id="csv-file-input" accept=".csv" style="display: none;" onchange="handleCsvUpload(event)" />
                             <button class="btn-secondary" onclick="document.getElementById('csv-file-input').click()">📥 Bulk CSV Upload</button>
                         </div>
@@ -643,6 +644,17 @@
             container.innerHTML = html;
         }
 
+        async function deleteBooking(id) {
+            if (!confirm(`Delete booking ${id} permanently? This cannot be undone. Click Cancel to keep it.`)) return;
+            const res = await fetch('/api/bookings/' + id, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadData();
+            } else {
+                alert('Error: ' + (data.error || 'Could not delete booking.'));
+            }
+        }
+
         function renderBookingsTable(bookings) {
             const container = document.getElementById('bookings-table-container');
             if (bookings.length === 0) {
@@ -670,6 +682,8 @@
                 } else {
                     actionCell = `<span style="color:var(--text-muted); font-size:11px;">${b.startOtpMasked || '🔐 Sent to Customer'}</span>`;
                 }
+
+                actionCell += `<button class="btn-danger" style="margin-left:6px; padding:4px 8px; font-size:11px;" onclick="deleteBooking('${b.id}')">🗑️ Delete</button>`;
 
                 const callingPhoneNote = (b.callingPhone && b.callingPhone !== b.customerPhone)
                     ? `<br><span style="font-size:10px; color:var(--text-muted);">📞 ${b.callingPhone}</span>` : '';
@@ -865,7 +879,7 @@
                             <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">${d.description}</p>
                         </div>
                         <a href="/api/download?file=${d.filename}" class="btn-action">📥 Download File</a>
-                        ${d.filename === 'branding_kit.md' ? '<a href="/api/download-branding-kit" class="btn-secondary" style="margin-left:6px;">📦 Download Complete Kit (ZIP)</a>' : ''}
+                        ${d.filename === 'branding_kit.pdf' ? '<a href="/api/download-branding-kit" class="btn-secondary" style="margin-left:6px;">📦 Download Complete Kit (ZIP)</a>' : ''}
                     </div>
                 `;
             });
