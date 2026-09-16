@@ -474,6 +474,11 @@ app.get('/api/departments', (req, res) => res.json(departments));
 app.get('/api/virtual-employees', (req, res) => res.json(virtualEmployees));
 app.get('/api/agent-logs', (req, res) => res.json(agentLogs));
 app.get('/api/documents', (req, res) => res.json(getLiveDocumentsList()));
+// Category + subcategory list for the Add Vendor form's Sub Category dropdown
+// (English only — this panel is staff-facing, unlike the bilingual WhatsApp bot).
+app.get('/api/service-categories', (req, res) => {
+    res.json(Object.values(SERVICES_EN).map(svc => ({ name: svc.name, subcategories: svc.subcategories })));
+});
 app.get('/api/deleted-vendors', (req, res) => {
     const cityFilter = req.query.city;
     res.json(cityFilter ? deletedVendorsLog.filter(v => resolveCity(v.city) === cityFilter) : deletedVendorsLog);
@@ -754,7 +759,7 @@ app.post('/api/status', async (req, res) => {
 
 // ADD NEW VENDOR
 app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'aadhaar', maxCount: 1 }]), (req, res) => {
-    const { name, service, phone, area, availableTime, rating, status, city } = req.body;
+    const { name, service, subCategory, phone, area, availableTime, rating, status, city } = req.body;
     if (!name || !service || !phone) return res.status(400).json({ error: 'Name, Service, and Phone are required' });
 
     const photoFile = req.files?.photo?.[0];
@@ -765,7 +770,9 @@ app.post('/api/vendors', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 
 
     const newVendor = {
         id: 'V' + Math.floor(100 + Math.random() * 900),
-        name, service, phone,
+        name, service,
+        subCategory: subCategory || '',
+        phone,
         city: resolveCity(city),
         area: area || 'Bagalkot',
         availableTime: availableTime || '8:00 AM - 8:00 PM',
@@ -802,6 +809,7 @@ app.post('/api/vendors/bulk-csv', uploadCsv.single('csvFile'), (req, res) => {
     const col = (label) => header.indexOf(label);
     const nameCol = col('name');
     const serviceCol = col('service');
+    const subCategoryCol = col('subcategory');
     const phoneCol = col('phone');
     const areaCol = col('area');
     const cityCol = col('city');
@@ -822,7 +830,9 @@ app.post('/api/vendors/bulk-csv', uploadCsv.single('csvFile'), (req, res) => {
         const parsedRating = ratingCol !== -1 ? parseFloat(r[ratingCol]) : NaN;
         const newVendor = {
             id: 'V' + Math.floor(100 + Math.random() * 900),
-            name, service, phone,
+            name, service,
+            subCategory: (subCategoryCol !== -1 && r[subCategoryCol]) ? r[subCategoryCol].trim() : '',
+            phone,
             city: (cityCol !== -1 && r[cityCol]) ? resolveCity(r[cityCol].trim()) : defaultCity,
             area: (areaCol !== -1 && r[areaCol]) ? r[areaCol].trim() : '',
             availableTime: '8:00 AM - 8:00 PM',
@@ -846,11 +856,12 @@ app.post('/api/vendors/bulk-csv', uploadCsv.single('csvFile'), (req, res) => {
 // EDIT EXISTING VENDOR
 app.put('/api/vendors/:id', (req, res) => {
     const id = req.params.id;
-    const { name, service, phone, area, availableTime, rating, status, delays, leavesCount, city } = req.body;
+    const { name, service, subCategory, phone, area, availableTime, rating, status, delays, leavesCount, city } = req.body;
     const vendor = vendors.find(v => v.id === id);
     if (vendor) {
         if (name) vendor.name = name;
         if (service) vendor.service = service;
+        if (subCategory !== undefined) vendor.subCategory = subCategory;
         if (phone) vendor.phone = phone;
         if (city) vendor.city = resolveCity(city);
         if (area) vendor.area = area;

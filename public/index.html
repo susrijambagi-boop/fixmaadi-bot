@@ -255,7 +255,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Service Category</label>
-                                <select id="v-service" required>
+                                <select id="v-service" required onchange="populateSubCategories()">
                                     <option value="Home Repair 🔧">Home Repair 🔧</option>
                                     <option value="Personal Care ✂️">Personal Care ✂️</option>
                                     <option value="Health & Wellness 🩺">Health & Wellness 🩺</option>
@@ -265,6 +265,10 @@
                                     <option value="Education 📚">Education 📚</option>
                                     <option value="Pet Care 🐾">Pet Care 🐾</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sub Category</label>
+                                <select id="v-subcategory"></select>
                             </div>
                             <div class="form-group">
                                 <label>Phone Number</label>
@@ -531,11 +535,29 @@
         let globalBookings = [];
         let globalVendors = [];
         let globalEmployees = [];
+        let serviceCategories = [];
         let selectedRatingScore = 5;
         let activeRatingBookingId = null;
         let activeDeleteVendorId = null;
         let activeOtpBookingId = null;
         let currentCity = localStorage.getItem('fixmaadi_city') === 'Hospete' ? 'Hospete' : 'Bagalkot';
+
+        async function loadServiceCategories() {
+            serviceCategories = await fetchSafe('/api/service-categories', []);
+            populateSubCategories();
+        }
+
+        function populateSubCategories() {
+            const serviceSelect = document.getElementById('v-service');
+            const subSelect = document.getElementById('v-subcategory');
+            if (!serviceSelect || !subSelect) return;
+
+            const category = serviceCategories.find(c => c.name === serviceSelect.value);
+            const subs = (category && category.subcategories) || [];
+            subSelect.innerHTML = subs.length
+                ? subs.map(s => `<option value="${s}">${s}</option>`).join('')
+                : '<option value="">— none —</option>';
+        }
 
         function switchCity(city) {
             currentCity = city === 'Hospete' ? 'Hospete' : 'Bagalkot';
@@ -790,7 +812,7 @@
                         <td>${photoCell}</td>
                         <td><strong>${v.id}</strong></td>
                         <td><strong>${v.name}</strong></td>
-                        <td>${v.service}</td>
+                        <td>${v.service}${v.subCategory ? `<br><span style="font-size:11px; color:var(--text-muted);">${v.subCategory}</span>` : ''}</td>
                         <td>${v.phone}</td>
                         <td>${v.area}</td>
                         <td>${v.availableTime}</td>
@@ -1110,6 +1132,7 @@
             const formData = new FormData();
             formData.append('name', document.getElementById('v-name').value);
             formData.append('service', document.getElementById('v-service').value);
+            formData.append('subCategory', document.getElementById('v-subcategory').value);
             formData.append('phone', document.getElementById('v-phone').value);
             formData.append('city', document.getElementById('v-city').value);
             formData.append('area', document.getElementById('v-area').value);
@@ -1123,6 +1146,7 @@
                 alert(`✅ ${data.vendor.name} added to the ${data.vendor.city} Service Providers roster.`);
                 document.getElementById('add-vendor-form').reset();
                 document.getElementById('v-city').value = currentCity;
+                populateSubCategories();
                 loadData();
             } else {
                 alert('Error: ' + (data.error || 'Could not add provider.'));
@@ -1255,6 +1279,7 @@
         document.getElementById('pilot-city-badge').innerText = currentCity;
         document.getElementById('stat-vendors-city').innerText = currentCity;
         document.getElementById('v-city').value = currentCity;
+        loadServiceCategories();
         loadData();
     </script>
 </body>
