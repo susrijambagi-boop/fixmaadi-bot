@@ -2,8 +2,7 @@
 
 A WhatsApp-native, 0% commission home services platform for Bagalkot, Karnataka.
 
-- **Live dashboard:** https://fixmaadiadmin.up.railway.app
-- **Investor / info landing page:** https://fixmaadiadmin.up.railway.app/investors.html
+- **Live dashboard / investor landing page:** set once the Render service is created — see Deployment below
 - **Architecture & tech stack:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - **Maintenance checklist:** [`docs/MAINTENANCE_CALENDAR.md`](docs/MAINTENANCE_CALENDAR.md)
 - **Brand kit:** [`public/branding_kit.pdf`](public/branding_kit.pdf)
@@ -20,11 +19,13 @@ Opens the admin dashboard at `http://localhost:3000`, and the WhatsApp socket wi
 
 ### Admin dashboard login
 
-The dashboard (everything except the public `investors.html` landing page) is protected by HTTP Basic Auth. `ADMIN_USERNAME` and `ADMIN_PASSWORD` are **required** — if either is missing, the server returns 503 for the dashboard and every admin API instead of opening unauthenticated. Set both in `.env` locally and in the Railway project's environment variables in production.
+The dashboard (everything except the public `investors.html` landing page) is protected by HTTP Basic Auth. `ADMIN_USERNAME` and `ADMIN_PASSWORD` are **required** — if either is missing, the server returns 503 for the dashboard and every admin API instead of opening unauthenticated. Set both in `.env` locally and in Render's environment variables in production.
 
 ## Deployment
 
-Deployed on Railway, auto-deploying on every push to `main`. A persistent Volume mounted at `/data` keeps `database.json` and the WhatsApp session (`baileys_auth_info/`) alive across redeploys — see `docs/ARCHITECTURE.md` for why that matters.
+Deployed on **Render** (free tier, no card required), auto-deploying on every push to `main`. Render's free tier has no persistent disk, so `bookings`/`vendors`/`customerDatabase`/etc. are stored in **MongoDB Atlas** (also free, no card) instead of a local file — set `MONGODB_URI` in Render's environment variables (see `.env.example`). Without it set, the app falls back to a local `database.json` file, which is fine for local dev but would lose data on every restart in production.
+
+**Known limitation:** the WhatsApp session (`baileys_auth_info/`) and any uploaded vendor photo/Aadhaar files still live on Render's local disk, which is wiped on restart — so a restart means rescanning the WhatsApp QR code once, and any vendor added since the last restart needs its photo/Aadhaar re-uploaded. The self-ping in `server.js` (pings `RENDER_EXTERNAL_URL` every 12 minutes) keeps the free instance from sleeping due to inactivity, but Render can still restart the container periodically for its own maintenance — that's an accepted tradeoff of the free tier, not a bug.
 
 ## Repository layout
 

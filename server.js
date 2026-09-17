@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { MongoClient } = require('mongodb');
 const express = require('express');
 const QRCode = require('qrcode');
 const { Resend } = require('resend');
@@ -352,12 +353,36 @@ let deletedVendorsLog = [];
 let cityRequests = [];
 let partnerApplications = [];
 
-// PERMANENT DISK DATABASE ENGINE (PREVENTS ANY DATA LOSS ON RESTART)
-function loadDatabaseFromDisk() {
+// PERMANENT DATABASE ENGINE (PREVENTS ANY DATA LOSS ON RESTART)
+// Uses MongoDB Atlas when MONGODB_URI is set (survives ephemeral-disk hosts
+// like Render's free tier, which wipes local files on every restart) —
+// falls back to the local JSON file when it isn't (local dev convenience).
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'fixmaadi';
+const MONGODB_DOC_ID = 'fixmaadi_state';
+let mongoClient = null;
+let mongoCollection = null;
+
+async function connectMongo() {
+    if (!MONGODB_URI || mongoCollection) return mongoCollection;
+    mongoClient = new MongoClient(MONGODB_URI);
+    await mongoClient.connect();
+    mongoCollection = mongoClient.db(MONGODB_DB_NAME).collection('app_state');
+    logMessage('🍃 Connected to MongoDB Atlas for persistent storage.');
+    return mongoCollection;
+}
+
+async function loadDatabaseFromDisk() {
     try {
-        if (fs.existsSync(DB_FILE)) {
-            const raw = fs.readFileSync(DB_FILE, 'utf8');
-            const parsed = JSON.parse(raw);
+        let parsed = null;
+        if (MONGODB_URI) {
+            await connectMongo();
+            parsed = await mongoCollection.findOne({ _id: MONGODB_DOC_ID });
+        } else if (fs.existsSync(DB_FILE)) {
+            parsed = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        }
+
+        if (parsed) {
             bookings = parsed.bookings || [];
             customerDatabase = parsed.customerDatabase || {};
             vendors = parsed.vendors || [];
@@ -366,11 +391,11 @@ function loadDatabaseFromDisk() {
             deletedVendorsLog = parsed.deletedVendorsLog || [];
             cityRequests = parsed.cityRequests || [];
             partnerApplications = parsed.partnerApplications || [];
-            logMessage(`💾 PERMANENT DB ENGINE: Loaded ${bookings.length} Bookings, ${Object.keys(customerDatabase).length} Customers, and ${Object.keys(userStates).length} Active Sessions from disk!`);
+            logMessage(`💾 PERMANENT DB ENGINE (${MONGODB_URI ? 'MongoDB Atlas' : 'local disk'}): Loaded ${bookings.length} Bookings, ${Object.keys(customerDatabase).length} Customers, and ${Object.keys(userStates).length} Active Sessions!`);
             return;
         }
     } catch (e) {
-        logMessage(`⚠️ Error loading disk database: ${e.message}`);
+        logMessage(`⚠️ Error loading database: ${e.message}`);
     }
 
     bookings = [];
@@ -381,30 +406,35 @@ function loadDatabaseFromDisk() {
     deletedVendorsLog = [];
     cityRequests = [];
     partnerApplications = [];
-    saveDatabaseToDisk();
+    await saveDatabaseToDisk();
 }
 
-function saveDatabaseToDisk() {
+async function saveDatabaseToDisk() {
+    const payload = {
+        bookings,
+        customerDatabase,
+        vendors,
+        attendance,
+        userStates,
+        deletedVendorsLog,
+        cityRequests,
+        partnerApplications,
+        lastSaved: new Date().toISOString()
+    };
     try {
-        const payload = {
-            bookings,
-            customerDatabase,
-            vendors,
-            attendance,
-            userStates,
-            deletedVendorsLog,
-            cityRequests,
-            partnerApplications,
-            lastSaved: new Date().toISOString()
-        };
-        fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf8');
+        if (MONGODB_URI && mongoCollection) {
+            await mongoCollection.replaceOne({ _id: MONGODB_DOC_ID }, { _id: MONGODB_DOC_ID, ...payload }, { upsert: true });
+        } else if (!MONGODB_URI) {
+            fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), 'utf8');
+        }
     } catch (e) {
-        logMessage(`⚠️ Error saving disk database: ${e.message}`);
+        logMessage(`⚠️ Error saving database: ${e.message}`);
     }
 }
 
-// LOAD DATABASE AT INITIALIZATION
-loadDatabaseFromDisk();
+// Database is loaded at the bottom of this file, right before app.listen() —
+// loadDatabaseFromDisk() is async now (MongoDB needs a connection round-trip),
+// so it has to be awaited before the server starts accepting traffic.
 
 function get10DigitPhone(phoneStr) {
     const digits = (phoneStr || '').replace(/[^0-9]/g, '');
@@ -1365,8 +1395,11 @@ async function sendServiceMenu(sock, userId, lang, firstName, city) {
 }
 
 async function startBot() {
-    if (process.env.DISABLE_WHATSAPP_SOCKET === 'true' || process.env.RENDER || process.env.RENDER_EXTERNAL_URL) {
-        logMessage('ℹ️ Render Cloud instance running in Web Command Center mode. WhatsApp Bot socket active on Primary Host.');
+    // Render is the primary (only) host now, so it must run the real WhatsApp
+    // socket. This flag stays only for local dev, where you don't want to
+    // open a second competing session against the live bot.
+    if (process.env.DISABLE_WHATSAPP_SOCKET === 'true') {
+        logMessage('ℹ️ WhatsApp socket disabled via DISABLE_WHATSAPP_SOCKET — running in Web Command Center mode only.');
         botStatus = 'COMMAND_CENTER_WEB_MODE';
         return;
     }
@@ -1877,7 +1910,10 @@ async function startBot() {
     });
 }
 
-app.listen(PORT, () => {
-    logMessage(`🌐 FixMaadi Executive Control Center running at http://localhost:${PORT}`);
-    startBot();
-});
+(async () => {
+    await loadDatabaseFromDisk();
+    app.listen(PORT, () => {
+        logMessage(`🌐 FixMaadi Executive Control Center running at http://localhost:${PORT}`);
+        startBot();
+    });
+})();
