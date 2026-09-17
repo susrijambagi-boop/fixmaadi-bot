@@ -1132,6 +1132,39 @@ function matchService(text, servicesDict) {
     return null;
 }
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+// When the rule-based matchService() can't find a category (no keyword hit),
+// ask Gemini to pick the best fit instead of immediately telling the
+// customer their reply is invalid. Falls back to "no match" — same as
+// today's behavior — on any error, missing key, or an unclear reply, so
+// this can only ever help, never break the existing flow.
+async function matchServiceWithAiFallback(text, servicesDict) {
+    const direct = matchService(text, servicesDict);
+    if (direct) return direct;
+    if (!process.env.GEMINI_API_KEY) return null;
+
+    try {
+        const categoryList = Object.entries(servicesDict)
+            .filter(([key]) => key !== '9')
+            .map(([key, svc]) => `${key}: ${svc.name.replace(/[^\p{L}\p{N} &/]/gu, '').trim()}`)
+            .join('\n');
+
+        const prompt = `A customer messaged a home-services WhatsApp bot in Bagalkot/Hospete, India. Their message: "${text}"\n\nWhich ONE of these categories best fits what they need? Reply with ONLY the number, nothing else. If none fit or the message is unclear/unrelated, reply with 0.\n\n${categoryList}`;
+
+        const response = await ai.models.generateContent({ model: GEMINI_MODEL, contents: prompt });
+        const key = (response.text || '').trim().match(/\d+/)?.[0];
+        if (key && key !== '0' && servicesDict[key]) {
+            logMessage(`🤖 Gemini fallback matched "${text}" -> ${servicesDict[key].name}`);
+            return servicesDict[key];
+        }
+        return null;
+    } catch (e) {
+        logMessage(`⚠️ Gemini fallback match failed: ${e.message}`);
+        return null;
+    }
+}
+
 function generate4DigitOtp() { return Math.floor(1000 + Math.random() * 9000).toString(); }
 
 // A real name has letters in it and isn't just a stray character or emoji.
@@ -1665,7 +1698,7 @@ async function startBot() {
                     const isKN = currentState.lang === 'kn';
                     const firstName = currentState.firstName || 'Customer';
                     const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
-                    const selected = matchService(text, servicesDict);
+                    const selected = await matchServiceWithAiFallback(text, servicesDict);
 
                     if (selected) {
                         userStates[userId].service = `${selected.name} (${selected.price})`;
@@ -1843,7 +1876,7 @@ async function startBot() {
 
                     if (field === '1') {
                         const servicesDict = isKN ? SERVICES_KN : SERVICES_EN;
-                        const selected = matchService(text, servicesDict);
+                        const selected = await matchServiceWithAiFallback(text, servicesDict);
                         if (!selected) {
                             await sock.sendMessage(userId, { text: isKN ? `❌ ಸರಿಯಾದ ಸೇವಾ ಸಂಖ್ಯೆ (1-9) ಕಳುಹಿಸಿ:` : `❌ Please send a valid service number (1-9):` });
                             scheduleFollowUp(sock, userId);
