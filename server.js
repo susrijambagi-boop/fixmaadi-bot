@@ -1132,7 +1132,7 @@ function matchService(text, servicesDict) {
     return null;
 }
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
 
 // When the rule-based matchService() can't find a category (no keyword hit),
 // ask Gemini to pick the best fit instead of immediately telling the
@@ -1160,7 +1160,7 @@ async function matchServiceWithAiFallback(text, servicesDict) {
         }
         return null;
     } catch (e) {
-        logMessage(`⚠️ Gemini fallback match failed: ${e.message}`);
+        logMessage(`⚠️ Gemini fallback match failed (model: ${GEMINI_MODEL}): ${e.status || ''} ${e.message}`);
         return null;
     }
 }
